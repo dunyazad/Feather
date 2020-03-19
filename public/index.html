@@ -1,15 +1,21 @@
 <!doctype html>
 <html>
 
+<head>
+    <script src="js/Feather.js"></script>
+    <script src="js/index.js"></script>
+</head>
+
 <body>
-    <canvas width="570" height="570" id="my_Canvas"></canvas>
+    <canvas width="300" height="300" id="canvas"></canvas>
 
     <script>
-        /*============= Creating a canvas ======================*/
-        var canvas = document.getElementById('my_Canvas');
-        gl = canvas.getContext('experimental-webgl');
+        /* Step1: Prepare the canvas and get WebGL context */
 
-        /*========== Defining and storing the geometry ==========*/
+        var canvas = document.getElementById('canvas');
+        var gl = canvas.getContext('experimental-webgl');
+
+        /* Step2: Define the geometry and store it in buffer objects */
 
         var vertices = [
             -1, -1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1,
