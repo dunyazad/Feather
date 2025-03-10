@@ -3,17 +3,17 @@ project(libFeather)
 
 include(FetchContent)
 
-# C++17 활성화
+# Enable C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# MSVC에서는 /std:c++17 강제 적용
+# MSVC-specific options
 if (MSVC)
     add_compile_options(/std:c++17 /Zc:__cplusplus)
 endif()
 
-# glad
+# Fetch dependencies
 FetchContent_Declare(
     glad
     GIT_REPOSITORY https://github.com/Dav1dde/glad.git
@@ -21,7 +21,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glad)
 
-# glfw
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Do not build GLFW examples" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "Do not build GLFW tests" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "Do not build GLFW documentation" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "Disable GLFW installation target" FORCE)
+set(GLFW_BUILD_SHARED_LIBS OFF CACHE BOOL "Build GLFW as a static library" FORCE)  # Ensure static build
+
 FetchContent_Declare(
     glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
@@ -29,7 +34,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glfw)
 
-# imgui
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
@@ -37,7 +41,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
-# implot
 FetchContent_Declare(
     implot
     GIT_REPOSITORY https://github.com/epezent/implot.git
@@ -45,42 +48,101 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(implot)
 
-add_library(libFeather
+set(source_list
     src/libFeather.cpp
+    src/Core/MiniMath.cpp
+    src/Core/FeatherWindow.cpp
+    src/Core/Shader.cpp
+
+    ${CMAKE_SOURCE_DIR}/include/libFeather.h
+    ${CMAKE_SOURCE_DIR}/include/libFeatherCommon.h
+    ${CMAKE_SOURCE_DIR}/include/Core/MiniMath.h
+    ${CMAKE_SOURCE_DIR}/include/Core/FeatherWindow.h
+    ${CMAKE_SOURCE_DIR}/include/Core/Shader.h
 )
 
-target_include_directories(libFeather PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${glad_SOURCE_DIR}/include
-    ${glfw_SOURCE_DIR}/include
-    ${imgui_SOURCE_DIR}
-    ${implot_SOURCE_DIR}
-    ${eigen_SOURCE_DIR}  # Eigen 추가
-)
+# Define the library
+add_library(libFeather
+    ${source_list}
 
-# Docking 기능을 PUBLIC으로 설정
-target_compile_definitions(libFeather PUBLIC IMGUI_ENABLE_DOCKING IMGUI_DEFINE_MATH_OPERATORS)
-
-target_sources(libFeather PRIVATE
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_demo.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
-
     ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
-
+    
     ${implot_SOURCE_DIR}/implot.cpp
     ${implot_SOURCE_DIR}/implot_demo.cpp
     ${implot_SOURCE_DIR}/implot_items.cpp
 )
 
+source_group("Source Files\\imgui\\imgui" FILES
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+)
+
+source_group("Source Files\\imgui\\imgui\\Backends" FILES
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+
+source_group("Source Files\\imgui\\implot" FILES
+    ${implot_SOURCE_DIR}/implot.cpp
+    ${implot_SOURCE_DIR}/implot_demo.cpp
+    ${implot_SOURCE_DIR}/implot_items.cpp
+)
+
+# Include directories
+target_include_directories(libFeather PUBLIC
+    ${CMAKE_SOURCE_DIR}/include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${glad_SOURCE_DIR}/include
+    ${glfw_SOURCE_DIR}/include
+    ${imgui_SOURCE_DIR}
+    ${implot_SOURCE_DIR}
+)
+
+# Enable Docking feature for ImGui
+target_compile_definitions(libFeather PUBLIC IMGUI_ENABLE_DOCKING IMGUI_DEFINE_MATH_OPERATORS)
+
+# Link dependencies
 target_link_libraries(libFeather
     glfw
     glad
 )
 
+# Group source files in IDE
+function(assign_source_group)
+    foreach(_source IN ITEMS ${ARGN})
+        if (IS_ABSOLUTE "${_source}")
+            file(RELATIVE_PATH _source_rel "${CMAKE_SOURCE_DIR}" "${_source}")
+        else()
+            set(_source_rel "${_source}")
+        endif()
+        get_filename_component(_source_path "${_source_rel}" PATH)
+        string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
+        source_group("${_source_path_msvc}" FILES "${_source}")
+    endforeach()
+endfunction(assign_source_group)
+
+assign_source_group(${source_list})
+
+# Organizing the Visual Studio Solution Explorer
+set_target_properties(glad PROPERTIES FOLDER "Libraries")
+set_target_properties(glad-generate-files PROPERTIES FOLDER "Libraries")
+set_target_properties(glfw PROPERTIES FOLDER "Libraries")
+# Move update_mappings into Libraries folder (if it exists)
+if (TARGET update_mappings)
+    set_target_properties(update_mappings PROPERTIES FOLDER "Libraries")
+endif()
+#set_target_properties(glfw-static PROPERTIES FOLDER "Libraries")
+
+# Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin/Debug)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin/Release)

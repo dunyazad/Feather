@@ -1,7 +1,5 @@
 #include <libFeather.h>
 
-#include <iostream>
-
 libFeather::libFeather()
 {
 }
@@ -10,19 +8,96 @@ libFeather::~libFeather()
 {
 }
 
-#define _USE_MATH_DEFINES  // M_PI 활성화
-#include <cmath>  // 수학 관련 함수 및 상수 포함
-#include <vector>
-#include <iostream>
-#include <cstring>  // memset
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+void libFeather::Initialize()
+{
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImPlot::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+}
 
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "implot.h"
+void libFeather::Terminate()
+{
+    ImPlot::DestroyContext();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    for (auto& s : shaders)
+    {
+        if (nullptr != s)
+        {
+            delete s;
+        }
+    }
+    shaders.clear();
+
+    for (auto& w : featherWindows)
+    {
+        if (nullptr != w)
+        {
+            delete w;
+        }
+    }
+    featherWindows.clear();
+}
+
+void libFeather::Run()
+{
+    ImGui_ImplGlfw_InitForOpenGL(featherWindows.front()->GetGLFWwindow(), true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
+    while (!glfwWindowShouldClose(glfwGetCurrentContext()))
+    {
+        glfwPollEvents();
+
+        if (needFontReload) {
+            ReloadFont(fontSize);
+            needFontReload = false;
+        }
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        //ShowUIPanel();
+        //ShowGraphPanel();
+        //ShowTeapotPanel();
+
+        ImGui::Render();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(glfwGetCurrentContext());
+    }
+}
+
+FeatherWindow* libFeather::CreateWindow(ui32 width, ui32 height)
+{
+    auto w = new FeatherWindow();
+    w->Initialize(width, height);
+    featherWindows.push_back(w);
+    return w;
+}
+
+Shader* libFeather::CreateShader()
+{
+    auto s = new Shader();
+    s->Initialize();
+    shaders.push_back(s);
+    return s;
+}
+
+void libFeather::ReloadFont(float newFontSize)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->Clear();
+    io.Fonts->AddFontFromFileTTF("../../res/Fonts/NanumGothic/NanumGothic-Regular.ttf", newFontSize);
+    ImGui_ImplOpenGL3_DestroyFontsTexture();
+    ImGui_ImplOpenGL3_CreateFontsTexture();
+}
 
 // Window dimensions
 const int WIDTH = 800, HEIGHT = 600;
@@ -69,33 +144,6 @@ const char* fragmentShaderSource = R"(
     }
 )";
 
-// GLFW 초기화
-GLFWwindow* InitGLFW() {
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW\n";
-        return nullptr;
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "GLFW + ImGui + OpenGL", nullptr, nullptr);
-    if (!window) {
-        std::cerr << "Failed to create GLFW window\n";
-        glfwTerminate();
-        return nullptr;
-    }
-
-    glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize GLAD\n";
-        return nullptr;
-    }
-
-    return window;
-}
-
 // 셰이더 컴파일 및 링크 오류 체크 함수
 void CheckShaderCompileErrors(GLuint shader, const std::string& type) {
     GLint success;
@@ -140,26 +188,6 @@ void InitOpenGL() {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
-    // Shader 초기화
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-    glCompileShader(vertexShader);
-    CheckShaderCompileErrors(vertexShader, "VERTEX");
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-    glCompileShader(fragmentShader);
-    CheckShaderCompileErrors(fragmentShader, "FRAGMENT");
-
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    CheckShaderCompileErrors(shaderProgram, "PROGRAM");
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
 }
 
 // ImGui 초기화
@@ -413,21 +441,6 @@ void RenderLoop() {
         glfwSwapBuffers(glfwGetCurrentContext());
     }
 }
-// libFeather::Test()
-void libFeather::Test() {
-    GLFWwindow* window = InitGLFW();
-    if (!window) return;
-
-    InitOpenGL();
-    InitImGui(window);
-
-    RenderLoop();
-
-    CleanupImGui();
-    glfwDestroyWindow(window);
-    glfwTerminate();
-}
-
 
 //
 //#include <glad/glad.h>

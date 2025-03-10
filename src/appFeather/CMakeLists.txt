@@ -6,6 +6,7 @@ add_executable(appFeather
 )
 
 target_include_directories(appFeather PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/libFeather/include
 )
 
