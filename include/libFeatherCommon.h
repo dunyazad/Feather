@@ -1,16 +1,46 @@
 #pragma once
 
-#define _USE_MATH_DEFINES  // M_PI 활성화
-#include <cmath>  // 수학 관련 함수 및 상수 포함
-#include <cstring>  // memset
+#include <cstdio>
+#include <stdio.h>
+#include <limits.h>
+
+#include <algorithm>
+#include <chrono>
+#include <filesystem>
+
+#define _USE_MATH_DEFINES
+#include <cmath>
+
+#include <bitset>
+#include <cstddef>
 #include <functional>
 #include <iostream>
+#include <limits>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <queue>
+#include <random>
+#include <set>
+#include <sstream>
+#include <string>
+#include <thread>
 #include <vector>
-
 using namespace std;
+
+#include <omp.h>
+
+#define WIN32_LEAN_AND_MEAN
+#define NO_MINMAX
+#define NO_BYTE
+#include <windows.h>
+#include <shellapi.h>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32  // Win32 관련 기능을 활성화
+#include <GLFW/glfw3native.h>
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -30,3 +60,17 @@ typedef unsigned long ui64;
 
 typedef float f32;
 typedef double f64;
+
+namespace Time
+{
+    chrono::steady_clock::time_point Now();
+
+    uint64_t Microseconds(chrono::steady_clock::time_point& from, chrono::steady_clock::time_point& now);
+
+    chrono::steady_clock::time_point End(chrono::steady_clock::time_point& from, const string& message = "", int number = -1);
+
+    string DateTime();
+}
+
+#define alog(...) printf("\033[38;5;1m\033[48;5;15m(^(OO)^) /V/\033[0m\t" __VA_ARGS__)
+#define alogt(tag, ...) printf("\033[38;5;1m\033[48;5;15m [%d] (^(OO)^) /V/\033[0m\t" tag, __VA_ARGS__)

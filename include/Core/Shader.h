@@ -13,6 +13,8 @@ public:
 
     void CheckShaderCompileErrors(GLuint shader, const std::string& type);
 
+    void Use();
+
 private:
     GLuint shaderProgram = UINT_MAX;
 

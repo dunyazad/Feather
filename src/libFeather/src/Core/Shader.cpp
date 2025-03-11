@@ -60,3 +60,8 @@ void Shader::CheckShaderCompileErrors(GLuint shader, const std::string& type)
         }
     }
 }
+
+void Shader::Use()
+{
+    glUseProgram(shaderProgram);
+}
