@@ -61,6 +61,10 @@ typedef unsigned long ui64;
 typedef float f32;
 typedef double f64;
 
+typedef ui32 EntityID;
+
+#include <Core/MiniMath.h>
+
 namespace Time
 {
     chrono::steady_clock::time_point Now();
@@ -74,3 +78,31 @@ namespace Time
 
 #define alog(...) printf("\033[38;5;1m\033[48;5;15m(^(OO)^) /V/\033[0m\t" __VA_ARGS__)
 #define alogt(tag, ...) printf("\033[38;5;1m\033[48;5;15m [%d] (^(OO)^) /V/\033[0m\t" tag, __VA_ARGS__)
+
+class libFeather;
+class FeatherWindow;
+
+class Entity;
+
+class SystemBase;
+class RenderSystem;
+class GUISystem;
+
+class Feather
+{
+public:
+    static Entity* CreateEntity();
+    static Entity* GetEntity(EntityID id);
+
+    static SystemBase* GetSystem(const string& systemName);
+    static RenderSystem* GetRenderSystem();
+    static GUISystem* GetGUISystem();
+
+private:
+    Feather();
+    ~Feather();
+    static libFeather* s_instance;
+
+public:
+    friend class libFeather;
+};

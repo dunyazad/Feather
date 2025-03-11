@@ -51,22 +51,23 @@ FetchContent_MakeAvailable(implot)
 set(source_list
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
     ${CMAKE_SOURCE_DIR}/include/libFeatherCommon.h
+    ${CMAKE_SOURCE_DIR}/include/Core/Entity.h
     ${CMAKE_SOURCE_DIR}/include/Core/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/Core/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/Core/Shader.h
-
-    ${CMAKE_SOURCE_DIR}/include/System/SystemBase.h
-    ${CMAKE_SOURCE_DIR}/include/System/RenderSystem.h
-    ${CMAKE_SOURCE_DIR}/include/System/GUISystem.h
+    ${CMAKE_SOURCE_DIR}/include/Core/System/SystemBase.h
+    ${CMAKE_SOURCE_DIR}/include/Core/System/RenderSystem.h
+    ${CMAKE_SOURCE_DIR}/include/Core/System/GUISystem.h
 
     src/libFeather.cpp
+    src/libFeatherCommon.cpp
+    src/Core/Entity.cpp
     src/Core/MiniMath.cpp
     src/Core/FeatherWindow.cpp
     src/Core/Shader.cpp
-
-    src/System/SystemBase.cpp
-    src/System/RenderSystem.cpp
-    src/System/GUISystem.cpp
+    src/Core/System/SystemBase.cpp
+    src/Core/System/RenderSystem.cpp
+    src/Core/System/GUISystem.cpp
 )
 
 # Define the library

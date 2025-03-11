@@ -1,4 +1,4 @@
-#include <System/GUISystem.h>
+#include <Core/System/GUISystem.h>
 #include <Core/FeatherWindow.h>
 
 float amplitude = 1.0f;

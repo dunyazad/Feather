@@ -1,12 +1,7 @@
 #pragma once
 
 #include <libFeatherCommon.h>
-#include <Core/MiniMath.h>
 #include <Core/FeatherWindow.h>
-#include <Core/Shader.h>
-#include <System/SystemBase.h>
-#include <System/GUISystem.h>
-#include <System/RenderSystem.h>
 
 #ifdef _WINDOWS
 struct MonitorInfo {
@@ -31,6 +26,9 @@ public:
 
 	void Terminate();
 
+	Entity* CreateEntity();
+	Entity* GetEntity(EntityID id);
+
 	inline FeatherWindow* GetFeatherWindow() const { return featherWindow; }
 
 	inline void AddOnInitializeCallback(function<void()> callback) { onInitializeCallbacks.push_back(callback); }
@@ -40,10 +38,17 @@ public:
 
 private:
 	FeatherWindow* featherWindow = nullptr;
+
+	unordered_map<EntityID, Entity*> entities;
+	ui32 numberOfEntities = 0;
+
 	map<string, SystemBase*> systems;
 
 	vector<function<void()>> onInitializeCallbacks;
 	vector<function<void(f32)>> onUpdateCallbacks;
 	vector<function<void(f32)>> onRenderCallbacks;
 	vector<function<void()>> onTerminateCallbacks;
+
+public:
+	friend class Feather;
 };

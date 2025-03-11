@@ -1,41 +1,14 @@
 #include <libFeather.h>
 
-namespace Time
-{
-    chrono::steady_clock::time_point Now()
-    {
-        return chrono::high_resolution_clock::now();
-    }
+#include <Core/Entity.h>
+#include <Core/MiniMath.h>
+#include <Core/FeatherWindow.h>
+#include <Core/Shader.h>
+#include <Core/System/SystemBase.h>
+#include <Core/System/GUISystem.h>
+#include <Core/System/RenderSystem.h>
 
-    uint64_t Microseconds(chrono::steady_clock::time_point& from, chrono::steady_clock::time_point& now)
-    {
-        return std::chrono::duration_cast<std::chrono::microseconds>(now - from).count();
-    }
-
-    chrono::steady_clock::time_point End(chrono::steady_clock::time_point& from, const string& message, int number)
-    {
-        auto now = chrono::high_resolution_clock::now();
-        if (-1 == number)
-        {
-            printf("[%s] %.4f ms from start\n", message.c_str(), (float)(Microseconds(from, now)) / 1000.0f);
-        }
-        else
-        {
-            printf("[%6d - %s] %.4f ms from start\n", number, message.c_str(), (float)(Microseconds(from, now)) / 1000.0f);
-        }
-        return now;
-    }
-
-    string DateTime()
-    {
-        auto t = std::time(nullptr);
-        auto tm = *std::localtime(&t);
-
-        std::ostringstream oss;
-        oss << std::put_time(&tm, "%Y%m%d_%H%M%S"); // Format: YYYYMMDD_HHMMSS
-        return oss.str();
-    }
-}
+libFeather* Feather::s_instance = nullptr;
 
 #ifdef _WINDOWS
 BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
@@ -89,6 +62,7 @@ void MaximizeWindowOnMonitor(HWND hwnd, int monitorIndex) {
 
 libFeather::libFeather()
 {
+    Feather::s_instance = this;
 }
 
 libFeather::~libFeather()
@@ -126,6 +100,25 @@ void libFeather::Terminate()
     if (nullptr != featherWindow)
     {
         delete featherWindow;
+    }
+}
+
+Entity* libFeather::CreateEntity()
+{
+    auto entity = new Entity(numberOfEntities++);
+    entities[entity->GetID()] = entity;
+    return entity;
+}
+
+Entity* libFeather::GetEntity(EntityID id)
+{
+    if (0 == entities.count(id))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return entities[id];
     }
 }
 
