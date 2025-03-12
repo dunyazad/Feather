@@ -1,6 +1,6 @@
 #pragma once
 
-#include <libFeatherCommon.h>
+#include <FeatherCommon.h>
 
 class ComponentBase
 {

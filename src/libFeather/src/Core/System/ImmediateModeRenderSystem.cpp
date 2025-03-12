@@ -1,4 +1,5 @@
 #include <Core/System/ImmediateModeRenderSystem.h>
+#include <Feather.h>
 #include <Core/Component/Components.h>
 
 ImmediateModeRenderSystem::ImmediateModeRenderSystem(FeatherWindow* window)
@@ -33,10 +34,10 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	// Enable depth test if needed
 	glEnable(GL_DEPTH_TEST);
 
-	auto indices = Feather::GetComponentIDsByTypeIndex(typeid(PerspectiveCamera));
+	auto indices = Feather::GetInstance().GetComponentIDsByTypeIndex(typeid(PerspectiveCamera));
 	for (auto& index : indices)
 	{
-		auto component = dynamic_cast<PerspectiveCamera*>(Feather::GetComponents()[index]);
+		auto component = dynamic_cast<PerspectiveCamera*>(Feather::GetInstance().GetComponents()[index]);
 		if (nullptr != component)
 		{
 			auto projection = component->GetProjectionMatrix();

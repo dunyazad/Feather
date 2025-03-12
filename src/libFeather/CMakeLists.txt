@@ -50,7 +50,8 @@ FetchContent_MakeAvailable(implot)
 
 set(source_list
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
-    ${CMAKE_SOURCE_DIR}/include/libFeatherCommon.h
+    ${CMAKE_SOURCE_DIR}/include/FeatherCommon.h
+    ${CMAKE_SOURCE_DIR}/include/Feather.h
     ${CMAKE_SOURCE_DIR}/include/Core/Entity.h
     ${CMAKE_SOURCE_DIR}/include/Core/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/Core/FeatherWindow.h
@@ -69,7 +70,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Core/System/SystemBase.h
 
     src/libFeather.cpp
-    src/libFeatherCommon.cpp
+    src/FeatherCommon.cpp
     src/Core/Entity.cpp
     src/Core/MiniMath.cpp
     src/Core/FeatherWindow.cpp

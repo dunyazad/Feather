@@ -1,6 +1,8 @@
 #pragma once
 
-#include <libFeatherCommon.h>
+#include <FeatherCommon.h>
+
+class ComponentBase;
 
 class Entity
 {
@@ -19,7 +21,7 @@ public:
 	template<typename T>
 	T* GetComponent(int index)
 	{
-		return dynamic_cast<T*>(Feather::GetComponent(componentIDs[index]));
+		return dynamic_cast<T*>(Feather::GetInstance().GetComponent(componentIDs[index]));
 	}
 
 private:

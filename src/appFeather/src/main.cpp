@@ -7,37 +7,36 @@ int main(int argc, char** argv)
 {
 	cout << "AppFeather" << endl;
 
-	libFeather libFeather;
-	libFeather.Initialize(1920, 1080);
+	Feather::GetInstance().Initialize(1920, 1080);
 
     GLuint VAO, VBO;
 
-    auto w = libFeather.GetFeatherWindow();
+    auto w = Feather::GetInstance().GetFeatherWindow();
 
-    Feather::GetInputSystem()->AddKeyReleaseEventHandler(
+    Feather::GetInstance().GetSystem<InputSystem>()->AddKeyReleaseEventHandler(
     GLFW_KEY_ESCAPE,
     [](GLFWwindow* glfwWindow, KeyEvent keyEvent) {
-        glfwSetWindowShouldClose(Feather::GetGLFWWindow(), true);
+        glfwSetWindowShouldClose(Feather::GetInstance().GetFeatherWindow()->GetGLFWwindow(), true);
     });
 
-    Feather::GetInputSystem()->AddKeyPressEventHandler(
+    Feather::GetInstance().GetSystem<InputSystem>()->AddKeyPressEventHandler(
     GLFW_KEY_LEFT,
     [](GLFWwindow* glfwWindow, KeyEvent keyEvent) {
-            auto entity = Feather::GetEntity(0);
+            auto entity = Feather::GetInstance().GetEntity(0);
             auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
             perspectiveCamera->GetEye().x -= 1.0f;
     });
-    Feather::GetInputSystem()->AddKeyPressEventHandler(
+    Feather::GetInstance().GetSystem<InputSystem>()->AddKeyPressEventHandler(
         GLFW_KEY_RIGHT,
         [](GLFWwindow* glfwWindow, KeyEvent keyEvent) {
-            auto entity = Feather::GetEntity(0);
+            auto entity = Feather::GetInstance().GetEntity(0);
             auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
             perspectiveCamera->GetEye().x += 1.0f;
         });
 
-    libFeather.AddOnInitializeCallback([&]() {
-        auto camera = Feather::CreateEntity("Camera");
-        auto perspectiveCamera = Feather::CreatePerspectiveCamera();
+    Feather::GetInstance().AddOnInitializeCallback([&]() {
+        auto camera = Feather::GetInstance().CreateEntity("Camera");
+        auto perspectiveCamera = Feather::GetInstance().CreatePerspectiveCamera();
 
         camera->AddComponentID(perspectiveCamera);
 
@@ -66,9 +65,9 @@ int main(int argc, char** argv)
         */
 	});
 
-	libFeather.Run();
+    Feather::GetInstance().Run();
 
-	libFeather.Terminate();
+    Feather::GetInstance().Terminate();
 
 	return 0;
 }

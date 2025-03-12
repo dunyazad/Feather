@@ -1,4 +1,4 @@
-#include <libFeather.h>
+#include <Feather.h>
 
 #include <Core/Entity.h>
 #include <Core/MiniMath.h>
@@ -6,8 +6,6 @@
 #include <Core/Shader.h>
 #include <Core/Component/Components.h>
 #include <Core/System/Systems.h>
-
-libFeather* Feather::s_instance = nullptr;
 
 #ifdef _WINDOWS
 BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
@@ -59,24 +57,18 @@ void MaximizeWindowOnMonitor(HWND hwnd, int monitorIndex) {
 }
 #endif
 
-libFeather::libFeather()
-{
-    Feather::s_instance = this;
-}
+Feather::Feather() {}
+Feather::~Feather() {}
 
-libFeather::~libFeather()
-{
-}
-
-void libFeather::Initialize(ui32 width, ui32 height)
+void Feather::Initialize(ui32 width, ui32 height)
 {
     featherWindow = new FeatherWindow();
     featherWindow->Initialize(width, height);
     
-    systems["GUISystem"] = new GUISystem(featherWindow);
-    systems["InputSystem"] = new InputSystem(featherWindow);
-    systems["ImmediateModeRenderSystem"] = new ImmediateModeRenderSystem(featherWindow);
-    systems["RenderSystem"] = new RenderSystem(featherWindow);
+    systems[typeid(GUISystem)] = new GUISystem(featherWindow);
+    systems[typeid(InputSystem)] = new InputSystem(featherWindow);
+    systems[typeid(ImmediateModeRenderSystem)] = new ImmediateModeRenderSystem(featherWindow);
+    systems[typeid(RenderSystem)] = new RenderSystem(featherWindow);
 
     for (auto& kvp : systems)
     {
@@ -86,7 +78,7 @@ void libFeather::Initialize(ui32 width, ui32 height)
     /////////glfwSwapInterval(0);  // Disable V-Sync
 }
 
-void libFeather::Terminate()
+void Feather::Terminate()
 {
     for (auto& kvp : systems)
     {
@@ -104,14 +96,14 @@ void libFeather::Terminate()
     }
 }
 
-Entity* libFeather::CreateEntity(const string& name)
+Entity* Feather::CreateEntity(const string& name)
 {
     auto entity = new Entity(nextEntityID++, name);
     entities[entity->GetID()] = entity;
     return entity;
 }
 
-Entity* libFeather::GetEntity(EntityID id)
+Entity* Feather::GetEntity(EntityID id)
 {
     if (0 == entities.count(id))
     {
@@ -123,7 +115,7 @@ Entity* libFeather::GetEntity(EntityID id)
     }
 }
 
-PerspectiveCamera* libFeather::CreatePerspectiveCamera()
+PerspectiveCamera* Feather::CreatePerspectiveCamera()
 {
     auto component = new PerspectiveCamera(nextComponentID++);
     auto index = components.size();
@@ -133,7 +125,7 @@ PerspectiveCamera* libFeather::CreatePerspectiveCamera()
     return component;
 }
 
-ComponentBase* libFeather::GetComponent(ComponentID id)
+ComponentBase* Feather::GetComponent(ComponentID id)
 {
     if (0 == idComponentMapping.count(id))
     {
@@ -145,7 +137,7 @@ ComponentBase* libFeather::GetComponent(ComponentID id)
     }
 }
 
-const vector<ui32>& libFeather::GetComponentIDsByTypeIndex(const type_index& typeIndex)
+const vector<ui32>& Feather::GetComponentIDsByTypeIndex(const type_index& typeIndex)
 {
     if (0 == typeComponentMapping.count(typeIndex))
     {
@@ -157,7 +149,7 @@ const vector<ui32>& libFeather::GetComponentIDsByTypeIndex(const type_index& typ
     }
 }
 
-void libFeather::Run()
+void Feather::Run()
 {
 #ifdef _WINDOWS
     MaximizeConsoleWindowOnMonitor(1);
