@@ -55,9 +55,18 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Core/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/Core/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/Core/Shader.h
-    ${CMAKE_SOURCE_DIR}/include/Core/System/SystemBase.h
-    ${CMAKE_SOURCE_DIR}/include/Core/System/RenderSystem.h
+
+    ${CMAKE_SOURCE_DIR}/include/Core/Component/Components.h
+    ${CMAKE_SOURCE_DIR}/include/Core/Component/ComponentBase.h
+    ${CMAKE_SOURCE_DIR}/include/Core/Component/Camera.h
+    ${CMAKE_SOURCE_DIR}/include/Core/Component/Transform.h
+
+    ${CMAKE_SOURCE_DIR}/include/Core/System/Systems.h
     ${CMAKE_SOURCE_DIR}/include/Core/System/GUISystem.h
+    ${CMAKE_SOURCE_DIR}/include/Core/System/InputSystem.h
+    ${CMAKE_SOURCE_DIR}/include/Core/System/ImmediateModeRenderSystem.h
+    ${CMAKE_SOURCE_DIR}/include/Core/System/RenderSystem.h
+    ${CMAKE_SOURCE_DIR}/include/Core/System/SystemBase.h
 
     src/libFeather.cpp
     src/libFeatherCommon.cpp
@@ -65,9 +74,16 @@ set(source_list
     src/Core/MiniMath.cpp
     src/Core/FeatherWindow.cpp
     src/Core/Shader.cpp
-    src/Core/System/SystemBase.cpp
-    src/Core/System/RenderSystem.cpp
+    
+    src/Core/Component/ComponentBase.cpp
+    src/Core/Component/Camera.cpp
+    src/Core/Component/Transform.cpp
+
     src/Core/System/GUISystem.cpp
+    src/Core/System/InputSystem.cpp
+    src/Core/System/ImmediateModeRenderSystem.cpp
+    src/Core/System/RenderSystem.cpp
+    src/Core/System/SystemBase.cpp
 )
 
 # Define the library

@@ -62,6 +62,7 @@ typedef float f32;
 typedef double f64;
 
 typedef ui32 EntityID;
+typedef ui32 ComponentID;
 
 #include <Core/MiniMath.h>
 
@@ -84,19 +85,26 @@ class FeatherWindow;
 
 class Entity;
 
-class SystemBase;
-class RenderSystem;
 class GUISystem;
+class InputSystem;
+class RenderSystem;
+class ImmediateModeRenderSystem;
+class SystemBase;
 
 class Feather
 {
 public:
+    static FeatherWindow* GetFeatherWindow();
+    static GLFWwindow* GetGLFWWindow();
+
     static Entity* CreateEntity();
     static Entity* GetEntity(EntityID id);
 
-    static SystemBase* GetSystem(const string& systemName);
-    static RenderSystem* GetRenderSystem();
     static GUISystem* GetGUISystem();
+    static InputSystem* GetInputSystem();
+    static RenderSystem* GetRenderSystem();
+    static ImmediateModeRenderSystem* GetImmediateModeRenderSystem();
+    static SystemBase* GetSystem(const string& systemName);
 
 private:
     Feather();

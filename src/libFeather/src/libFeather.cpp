@@ -4,9 +4,8 @@
 #include <Core/MiniMath.h>
 #include <Core/FeatherWindow.h>
 #include <Core/Shader.h>
-#include <Core/System/SystemBase.h>
-#include <Core/System/GUISystem.h>
-#include <Core/System/RenderSystem.h>
+#include <Core/System/Systems.h>
+#include <Core/Component/Components.h>
 
 libFeather* Feather::s_instance = nullptr;
 
@@ -74,8 +73,10 @@ void libFeather::Initialize(ui32 width, ui32 height)
     featherWindow = new FeatherWindow();
     featherWindow->Initialize(width, height);
     
-    systems["RenderSystem"] = new RenderSystem(featherWindow);
     systems["GUISystem"] = new GUISystem(featherWindow);
+    systems["InputSystem"] = new InputSystem(featherWindow);
+    systems["ImmediateModeRenderSystem"] = new ImmediateModeRenderSystem(featherWindow);
+    systems["RenderSystem"] = new RenderSystem(featherWindow);
 
     for (auto& kvp : systems)
     {
@@ -105,7 +106,7 @@ void libFeather::Terminate()
 
 Entity* libFeather::CreateEntity()
 {
-    auto entity = new Entity(numberOfEntities++);
+    auto entity = new Entity(nextEntityID++);
     entities[entity->GetID()] = entity;
     return entity;
 }
@@ -120,6 +121,13 @@ Entity* libFeather::GetEntity(EntityID id)
     {
         return entities[id];
     }
+}
+
+PerspectiveCamera* libFeather::CreatePerspectiveCamera()
+{
+    auto component = new PerspectiveCamera(nextComponentID++);
+    components[component->GetID()] = component;
+    return component;
 }
 
 void libFeather::Run()

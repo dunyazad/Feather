@@ -1,10 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <limits>
 #include <string>
 #include <vector>
-
-using namespace std;
 
 namespace MiniMath
 {
@@ -62,7 +61,7 @@ namespace MiniMath
 		float operator[](int);
 	};
 
-	inline ostream& operator<<(ostream& os, const V3& v) { return os << "(" << v.x << ", " << v.y << ", " << v.z << ")"; }
+	inline std::ostream& operator<<(std::ostream& os, const V3& v) { return os << "(" << v.x << ", " << v.y << ", " << v.z << ")"; }
 
 	V3 operator - (const V3&);
 	V3 operator + (const V3&, float);
@@ -88,6 +87,47 @@ namespace MiniMath
 	void centerData(std::vector<V3>& vectors, const V3& mean);
 	void calculateCovarianceMatrix(const std::vector<V3>& vectors, V3& eigenvalues, V3& eigenvector1, V3& eigenvector2, V3& eigenvector3);
 
+	struct V4
+	{
+		float x = 0.0f;
+		float y = 0.0f;
+		float z = 0.0f;
+		float w = 1.0f; // Homogeneous coordinate (default to 1 for positions)
+
+		V4();
+		V4(float scalar);
+		V4(float x, float y, float z, float w = 1.0f);
+		V4(float* array);
+		V4(const char* str);
+
+		const V4& operator+=(const V4& other);
+		const V4& operator-=(const V4& other);
+		const V4& operator*=(float scalar);
+		const V4& operator/=(float scalar);
+
+		float operator[](int index) const;
+		float& operator[](int index);
+
+		float magnitude() const;
+		V4 normalize() const;
+		float dot(const V4& other) const;
+
+		static V4 zero();
+		static V4 one();
+		static V4 unitX();
+		static V4 unitY();
+		static V4 unitZ();
+		static V4 unitW();
+	};
+
+	// Overloaded Operators
+	V4 operator+(const V4& a, const V4& b);
+	V4 operator-(const V4& a, const V4& b);
+	V4 operator*(const V4& v, float scalar);
+	V4 operator*(float scalar, const V4& v);
+	V4 operator/(const V4& v, float scalar);
+	std::ostream& operator<<(std::ostream& os, const V4& v);
+
 	struct Quaternion
 	{
 		float w = 1.0f;
@@ -106,6 +146,57 @@ namespace MiniMath
 
 	Quaternion rotation(const V3& v0, const V3& v1);
 
+	struct M3
+	{
+		float m[3][3];
+
+		M3();
+		M3(float diagonal);
+		M3(float m00, float m01, float m02,
+			float m10, float m11, float m12,
+			float m20, float m21, float m22);
+
+		M3 operator+(const M3& other) const;
+		M3 operator-(const M3& other) const;
+		M3 operator*(float scalar) const;
+		M3 operator*(const M3& other) const;
+		V3 operator*(const V3& vec) const;
+
+		M3 transpose() const;
+		float determinant() const;
+		M3 inverse() const;
+
+		static M3 identity();
+		static M3 zero();
+	};
+
+	struct M4
+	{
+		float m[4][4];
+
+		M4();
+		M4(float diagonal);
+		M4(float m00, float m01, float m02, float m03,
+			float m10, float m11, float m12, float m13,
+			float m20, float m21, float m22, float m23,
+			float m30, float m31, float m32, float m33);
+
+		M4 operator+(const M4& other) const;
+		M4 operator-(const M4& other) const;
+		M4 operator*(float scalar) const;
+		M4 operator*(const M4& other) const;
+		V4 operator*(const V4& vec) const;
+		V3 transformPoint(const V3& point) const;
+		V3 transformVector(const V3& vector) const;
+
+		M4 transpose() const;
+		float determinant() const;
+		M4 inverse() const;
+
+		static M4 identity();
+		static M4 zero();
+	};
+
 	struct AABB
 	{
 		V3 center = { 0.0,  0.0,  0.0 };
@@ -121,7 +212,7 @@ namespace MiniMath
 
 		AABB() {}
 		AABB(const V3& min, const V3& max) { SetMixMax(min, max); }
-		AABB(const vector<V3>& points)
+		AABB(const std::vector<V3>& points)
 		{
 			for (auto& p : points)
 			{
@@ -193,7 +284,7 @@ namespace MiniMath
 			update();
 		}
 
-		inline void Expand(const vector<V3>& points)
+		inline void Expand(const std::vector<V3>& points)
 		{
 			for (auto& p : points)
 			{

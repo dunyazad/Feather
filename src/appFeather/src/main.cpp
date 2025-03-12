@@ -14,6 +14,12 @@ int main(int argc, char** argv)
 
     auto w = libFeather.GetFeatherWindow();
 
+    Feather::GetInputSystem()->AddKeyReleaseEventHandler(
+    GLFW_KEY_ESCAPE,
+    [](GLFWwindow* glfwWindow, KeyEvent keyEvent) {
+        glfwSetWindowShouldClose(Feather::GetGLFWWindow(), true);
+    });
+
     libFeather.AddOnInitializeCallback([&]() {
         glEnable(GL_DEPTH_TEST);
         glViewport(0, 0, w->GetWidth(), w->GetHeight());

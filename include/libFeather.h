@@ -3,6 +3,10 @@
 #include <libFeatherCommon.h>
 #include <Core/FeatherWindow.h>
 
+#include <Core/System/GUISystem.h>
+#include <Core/System/InputSystem.h>
+#include <Core/System/RenderSystem.h>
+
 #ifdef _WINDOWS
 struct MonitorInfo {
 	HMONITOR hMonitor;
@@ -13,6 +17,12 @@ BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
 void MaximizeConsoleWindowOnMonitor(int monitorIndex);
 void MaximizeWindowOnMonitor(HWND hwnd, int monitorIndex);
 #endif
+
+class ComponentBase;
+class CameraBase;
+class Transform;
+class PerspectiveCamera;
+class OrthogonalCamera;
 
 class libFeather
 {
@@ -29,6 +39,8 @@ public:
 	Entity* CreateEntity();
 	Entity* GetEntity(EntityID id);
 
+	PerspectiveCamera* CreatePerspectiveCamera();
+
 	inline FeatherWindow* GetFeatherWindow() const { return featherWindow; }
 
 	inline void AddOnInitializeCallback(function<void()> callback) { onInitializeCallbacks.push_back(callback); }
@@ -40,7 +52,10 @@ private:
 	FeatherWindow* featherWindow = nullptr;
 
 	unordered_map<EntityID, Entity*> entities;
-	ui32 numberOfEntities = 0;
+	ui32 nextEntityID = 0;
+
+	unordered_map<ComponentID, ComponentBase*> components;
+	ui32 nextComponentID = 0;
 
 	map<string, SystemBase*> systems;
 

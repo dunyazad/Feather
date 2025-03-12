@@ -21,9 +21,11 @@ GLFWwindow* FeatherWindow::Initialize(ui32 width, ui32 height)
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE); // Allows glBegin/glEnd
 
-    window = glfwCreateWindow(width, height, "GLFW + ImGui + OpenGL", nullptr, nullptr);
+
+    window = glfwCreateWindow(width, height, "Feather", nullptr, nullptr);
 
     if (!window)
     {

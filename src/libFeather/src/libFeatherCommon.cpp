@@ -1,7 +1,9 @@
 #include <libFeather.h>
 
-#include <Core/System/RenderSystem.h>
 #include <Core/System/GUISystem.h>
+#include <Core/System/InputSystem.h>
+#include <Core/System/ImmediateModeRenderSystem.h>
+#include <Core/System/RenderSystem.h>
 
 namespace Time
 {
@@ -43,6 +45,16 @@ namespace Time
 Feather::Feather() {}
 Feather::~Feather() {}
 
+FeatherWindow* Feather::GetFeatherWindow()
+{
+    return s_instance->featherWindow;
+}
+
+GLFWwindow* Feather::GetGLFWWindow()
+{
+    return s_instance->featherWindow->GetGLFWwindow();
+}
+
 Entity* Feather::CreateEntity()
 {
     return s_instance->CreateEntity();
@@ -65,12 +77,22 @@ SystemBase* Feather::GetSystem(const string& systemName)
     }
 }
 
+GUISystem* Feather::GetGUISystem()
+{
+    return dynamic_cast<GUISystem*>(GetSystem("GUISystem"));
+}
+
+InputSystem* Feather::GetInputSystem()
+{
+    return dynamic_cast<InputSystem*>(GetSystem("InputSystem"));
+}
+
 RenderSystem* Feather::GetRenderSystem()
 {
     return dynamic_cast<RenderSystem*>(GetSystem("RenderSystem"));
 }
 
-GUISystem* Feather::GetGUISystem()
+ImmediateModeRenderSystem* Feather::GetImmediateModeRenderSystem()
 {
-    return dynamic_cast<GUISystem*>(GetSystem("GUISystem"));
+    return dynamic_cast<ImmediateModeRenderSystem*>(GetSystem("ImmediateModeRenderSystem"));
 }
