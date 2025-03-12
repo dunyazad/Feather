@@ -10,12 +10,12 @@ Entity::~Entity()
 {
 }
 
-void Entity::AddComponentID(ComponentBase* component)
+void Entity::AddComponent(ComponentBase* component)
 {
 	componentIDs.push_back(component->GetID());
 }
 
-void Entity::AddComponentID(ComponentID id)
+void Entity::AddComponent(ComponentID id)
 {
 	componentIDs.push_back(id);
 }

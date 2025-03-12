@@ -81,3 +81,49 @@ namespace Time
 
 #define alog(...) printf("\033[38;5;1m\033[48;5;15m(^(OO)^) /V/\033[0m\t" __VA_ARGS__)
 #define alogt(tag, ...) printf("\033[38;5;1m\033[48;5;15m [%d] (^(OO)^) /V/\033[0m\t" tag, __VA_ARGS__)
+
+
+
+
+
+
+enum class EventType
+{
+	None,
+	KeyPress,
+	KeyRelease,
+	MousePosition,
+	MouseButtonPress,
+	MouseButtonRelease,
+	NumberOfEventTypes
+};
+
+struct KeyEventParameters
+{
+	i32 keyCode;
+	i32 scanCode;
+	i32 mods;
+};
+
+struct MousePositionEventParameters
+{
+	f64 xpos;
+	f64 ypos;
+};
+
+struct MouseButtonEventParameters
+{
+	i32 button;
+	i32 mods;
+};
+
+struct Event
+{
+	EventType type;
+	union Parameters
+	{
+		KeyEventParameters key;
+		MousePositionEventParameters mousePosition;
+		MouseButtonEventParameters mouseButton;
+	} parameters;
+};

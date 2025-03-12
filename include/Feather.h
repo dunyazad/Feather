@@ -40,7 +40,16 @@ public:
 	Entity* CreateEntity(const string& name = "");
 	Entity* GetEntity(EntityID id);
 
-	PerspectiveCamera* CreatePerspectiveCamera();
+	template <typename T>
+	T* CreateComponent()
+	{
+		auto component = new T(nextComponentID++);
+		auto index = components.size();
+		components.push_back(component);
+		typeComponentMapping[typeid(ComponentBase)].push_back(index);
+		idComponentMapping[component->GetID()] = index;
+		return component;
+	}
 
 	ComponentBase* GetComponent(ComponentID id);
 

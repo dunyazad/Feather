@@ -15,8 +15,8 @@ public:
 
 	inline const vector<ComponentID>& GetComponentIDs() { return componentIDs; }
 
-	void AddComponentID(ComponentBase* component);
-	void AddComponentID(ComponentID id);
+	void AddComponent(ComponentBase* component);
+	void AddComponent(ComponentID id);
 
 	template<typename T>
 	T* GetComponent(int index)

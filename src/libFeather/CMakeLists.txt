@@ -60,9 +60,11 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Core/Component/Components.h
     ${CMAKE_SOURCE_DIR}/include/Core/Component/ComponentBase.h
     ${CMAKE_SOURCE_DIR}/include/Core/Component/Camera.h
+    ${CMAKE_SOURCE_DIR}/include/Core/Component/EventReceiver.h
     ${CMAKE_SOURCE_DIR}/include/Core/Component/Transform.h
 
     ${CMAKE_SOURCE_DIR}/include/Core/System/Systems.h
+    ${CMAKE_SOURCE_DIR}/include/Core/System/EventSystem.h
     ${CMAKE_SOURCE_DIR}/include/Core/System/GUISystem.h
     ${CMAKE_SOURCE_DIR}/include/Core/System/InputSystem.h
     ${CMAKE_SOURCE_DIR}/include/Core/System/ImmediateModeRenderSystem.h
@@ -78,8 +80,10 @@ set(source_list
     
     src/Core/Component/ComponentBase.cpp
     src/Core/Component/Camera.cpp
+    src/Core/Component/EventReceiver.cpp
     src/Core/Component/Transform.cpp
 
+    src/Core/System/EventSystem.cpp
     src/Core/System/GUISystem.cpp
     src/Core/System/InputSystem.cpp
     src/Core/System/ImmediateModeRenderSystem.cpp

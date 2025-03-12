@@ -66,6 +66,7 @@ void Feather::Initialize(ui32 width, ui32 height)
     featherWindow->Initialize(width, height);
     
     systems[typeid(GUISystem)] = new GUISystem(featherWindow);
+    systems[typeid(EventSystem)] = new EventSystem(featherWindow);
     systems[typeid(InputSystem)] = new InputSystem(featherWindow);
     systems[typeid(ImmediateModeRenderSystem)] = new ImmediateModeRenderSystem(featherWindow);
     systems[typeid(RenderSystem)] = new RenderSystem(featherWindow);
@@ -113,16 +114,6 @@ Entity* Feather::GetEntity(EntityID id)
     {
         return entities[id];
     }
-}
-
-PerspectiveCamera* Feather::CreatePerspectiveCamera()
-{
-    auto component = new PerspectiveCamera(nextComponentID++);
-    auto index = components.size();
-    components.push_back(component);
-    typeComponentMapping[typeid(ComponentBase)].push_back(index);
-    idComponentMapping[component->GetID()] = index;
-    return component;
 }
 
 ComponentBase* Feather::GetComponent(ComponentID id)
