@@ -1,4 +1,5 @@
 #include <Core/System/ImmediateModeRenderSystem.h>
+#include <Core/Component/Components.h>
 
 ImmediateModeRenderSystem::ImmediateModeRenderSystem(FeatherWindow* window)
 	: SystemBase(window)
@@ -19,35 +20,8 @@ void ImmediateModeRenderSystem::Terminate()
 
 void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 {
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glViewport(0, 0, 3840, 2160);
 
-
-	//glBegin(GL_LINES);
-	//glColor3f(1.0f, 0.0f, 0.0f);
-	//glVertex3f(-0.5f, 0.0f, 0.0f);
-	//glVertex3f(0.5f, 0.0f, 0.0f);
-
-	//glColor3f(0.0f, 1.0f, 0.0f);
-	//glVertex3f(0.0f, -0.5f, 0.0f);
-	//glVertex3f(0.0f, 0.5f, 0.0f);
-
-	//glColor3f(0.0f, 0.0f, 1.0f);
-	//glVertex3f(0.0f, 0.0f, -0.5f);
-	//glVertex3f(0.0f, 0.0f, 0.5f);
-	//glEnd();
-
-
-
-
-   // Set up coordinate system
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-150.0, 150.0, -150.0, 150.0, -150.0, 150.0); // Adjusted for better visibility
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	// Set line width
 	glLineWidth(2.0f);
 
 	// Enable anti-aliasing for smoother lines
@@ -58,6 +32,27 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 
 	// Enable depth test if needed
 	glEnable(GL_DEPTH_TEST);
+
+	auto indices = Feather::GetComponentIDsByTypeIndex(typeid(PerspectiveCamera));
+	for (auto& index : indices)
+	{
+		auto component = dynamic_cast<PerspectiveCamera*>(Feather::GetComponents()[index]);
+		if (nullptr != component)
+		{
+			auto projection = component->GetProjectionMatrix();
+			glMatrixMode(GL_PROJECTION);
+			glLoadMatrixf((float*)projection.m);
+
+			auto view = component->GetViewMatrix();
+			glMatrixMode(GL_MODELVIEW); // ¸ðµ¨ºä Çà·Ä ¸ðµå·Î º¯°æ
+			glLoadMatrixf((float*)view.m);
+			
+			//alog("%f, %f, %f, %f\n", m.at(0, 0), m.at(0, 1), m.at(0, 2), m.at(0, 3));
+			//alog("%f, %f, %f, %f\n", m.at(1, 0), m.at(1, 1), m.at(1, 2), m.at(1, 3));
+			//alog("%f, %f, %f, %f\n", m.at(2, 0), m.at(2, 1), m.at(2, 2), m.at(2, 3));
+			//alog("%f, %f, %f, %f\n", m.at(3, 0), m.at(3, 1), m.at(3, 2), m.at(3, 3));
+		}
+	}
 
 	// Draw X-axis (Red)
 	glBegin(GL_LINES);

@@ -26,6 +26,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <typeinfo>
+#include <typeindex>
 #include <vector>
 using namespace std;
 
@@ -91,20 +93,33 @@ class RenderSystem;
 class ImmediateModeRenderSystem;
 class SystemBase;
 
+class ComponentBase;
+class OrthogonalCamera;
+class PerspectiveCamera;
+class Transform;
+
 class Feather
 {
 public:
     static FeatherWindow* GetFeatherWindow();
     static GLFWwindow* GetGLFWWindow();
 
-    static Entity* CreateEntity();
+    static Entity* CreateEntity(const string& name = "");
     static Entity* GetEntity(EntityID id);
 
+    static PerspectiveCamera* CreatePerspectiveCamera();
+
+    static ComponentBase* GetComponent(ComponentID id);
+
+    static const vector<ComponentBase*>& GetComponents();
+    static const vector<ComponentID>& GetComponentsByEntityID(EntityID entityID);
+    static const vector<ui32>& GetComponentIDsByTypeIndex(const type_index& typeIndex);
+
+    static SystemBase* GetSystem(const string& systemName);
     static GUISystem* GetGUISystem();
     static InputSystem* GetInputSystem();
     static RenderSystem* GetRenderSystem();
     static ImmediateModeRenderSystem* GetImmediateModeRenderSystem();
-    static SystemBase* GetSystem(const string& systemName);
 
 private:
     Feather();

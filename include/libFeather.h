@@ -3,9 +3,9 @@
 #include <libFeatherCommon.h>
 #include <Core/FeatherWindow.h>
 
-#include <Core/System/GUISystem.h>
-#include <Core/System/InputSystem.h>
-#include <Core/System/RenderSystem.h>
+#include <Core/Entity.h>
+#include <Core/System/Systems.h>
+#include <Core/Component/Components.h>
 
 #ifdef _WINDOWS
 struct MonitorInfo {
@@ -36,10 +36,16 @@ public:
 
 	void Terminate();
 
-	Entity* CreateEntity();
+	Entity* CreateEntity(const string& name = "");
 	Entity* GetEntity(EntityID id);
 
 	PerspectiveCamera* CreatePerspectiveCamera();
+
+	ComponentBase* GetComponent(ComponentID id);
+
+	inline const vector<ComponentBase*>& GetComponents() { return components; }
+	const vector<ComponentID>& GetComponentsByEntityID(EntityID entityID) { return entityComponentMapping[entityID]; }
+	const vector<ui32>& GetComponentIDsByTypeIndex(const type_index& typeIndex);
 
 	inline FeatherWindow* GetFeatherWindow() const { return featherWindow; }
 
@@ -54,8 +60,12 @@ private:
 	unordered_map<EntityID, Entity*> entities;
 	ui32 nextEntityID = 0;
 
-	unordered_map<ComponentID, ComponentBase*> components;
+	vector<ComponentBase*> components;
+	unordered_map<std::type_index, vector<ui32>> typeComponentMapping;
+	unordered_map<ComponentID, ui32> idComponentMapping;
 	ui32 nextComponentID = 0;
+
+	unordered_map<EntityID, vector<ComponentID>> entityComponentMapping;
 
 	map<string, SystemBase*> systems;
 

@@ -55,14 +55,39 @@ GLFWwindow* Feather::GetGLFWWindow()
     return s_instance->featherWindow->GetGLFWwindow();
 }
 
-Entity* Feather::CreateEntity()
+Entity* Feather::CreateEntity(const string& name)
 {
-    return s_instance->CreateEntity();
+    return s_instance->CreateEntity(name);
 }
 
 Entity* Feather::GetEntity(EntityID id)
 {
     return s_instance->GetEntity(id);
+}
+
+PerspectiveCamera* Feather::CreatePerspectiveCamera()
+{
+    return s_instance->CreatePerspectiveCamera();
+}
+
+ComponentBase* Feather::GetComponent(ComponentID id)
+{
+    return s_instance->GetComponent(id);
+}
+
+const vector<ComponentBase*>& Feather::GetComponents()
+{
+    return s_instance->GetComponents();
+}
+
+const vector<ComponentID>& Feather::GetComponentsByEntityID(EntityID entityID)
+{
+    return s_instance->GetComponentsByEntityID(entityID);
+}
+
+const vector<ui32>& Feather::GetComponentIDsByTypeIndex(const type_index& typeIndex)
+{
+    return s_instance->GetComponentIDsByTypeIndex(typeIndex);
 }
 
 SystemBase* Feather::GetSystem(const string& systemName)

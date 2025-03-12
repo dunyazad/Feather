@@ -4,8 +4,8 @@
 #include <Core/MiniMath.h>
 #include <Core/FeatherWindow.h>
 #include <Core/Shader.h>
-#include <Core/System/Systems.h>
 #include <Core/Component/Components.h>
+#include <Core/System/Systems.h>
 
 libFeather* Feather::s_instance = nullptr;
 
@@ -104,9 +104,9 @@ void libFeather::Terminate()
     }
 }
 
-Entity* libFeather::CreateEntity()
+Entity* libFeather::CreateEntity(const string& name)
 {
-    auto entity = new Entity(nextEntityID++);
+    auto entity = new Entity(nextEntityID++, name);
     entities[entity->GetID()] = entity;
     return entity;
 }
@@ -126,8 +126,35 @@ Entity* libFeather::GetEntity(EntityID id)
 PerspectiveCamera* libFeather::CreatePerspectiveCamera()
 {
     auto component = new PerspectiveCamera(nextComponentID++);
-    components[component->GetID()] = component;
+    auto index = components.size();
+    components.push_back(component);
+    typeComponentMapping[typeid(ComponentBase)].push_back(index);
+    idComponentMapping[component->GetID()] = index;
     return component;
+}
+
+ComponentBase* libFeather::GetComponent(ComponentID id)
+{
+    if (0 == idComponentMapping.count(id))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return components[idComponentMapping[id]];
+    }
+}
+
+const vector<ui32>& libFeather::GetComponentIDsByTypeIndex(const type_index& typeIndex)
+{
+    if (0 == typeComponentMapping.count(typeIndex))
+    {
+        return typeComponentMapping[typeid(ComponentBase)];
+    }
+    else
+    {
+        return typeComponentMapping[typeIndex];
+    }
 }
 
 void libFeather::Run()
@@ -137,6 +164,11 @@ void libFeather::Run()
     
     MaximizeWindowOnMonitor(glfwGetWin32Window(featherWindow->GetGLFWwindow()), 3);
 #endif
+
+    for (auto& callback : onInitializeCallbacks)
+    {
+        callback();
+    }
 
     ui32 frameNo = 0;
     auto lastTime = Time::Now();

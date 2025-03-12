@@ -521,6 +521,11 @@ namespace MiniMath
 		return inv;
 	}
 
+	float M3::at(int row, int column)
+	{
+		return m[row][column];
+	}
+
 	M3 M3::identity()
 	{
 		return M3(1.0f, 0.0f, 0.0f,
@@ -673,6 +678,11 @@ namespace MiniMath
 		// Repeat similar calculations for `inv.m[1][0]`, `inv.m[1][1]`, ..., `inv.m[3][3]`
 
 		return inv;
+	}
+
+	float M4::at(int row, int column)
+	{
+		return m[row][column];
 	}
 
 	M4 M4::identity()

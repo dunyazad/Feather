@@ -20,7 +20,28 @@ int main(int argc, char** argv)
         glfwSetWindowShouldClose(Feather::GetGLFWWindow(), true);
     });
 
+    Feather::GetInputSystem()->AddKeyPressEventHandler(
+    GLFW_KEY_LEFT,
+    [](GLFWwindow* glfwWindow, KeyEvent keyEvent) {
+            auto entity = Feather::GetEntity(0);
+            auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
+            perspectiveCamera->GetEye().x -= 1.0f;
+    });
+    Feather::GetInputSystem()->AddKeyPressEventHandler(
+        GLFW_KEY_RIGHT,
+        [](GLFWwindow* glfwWindow, KeyEvent keyEvent) {
+            auto entity = Feather::GetEntity(0);
+            auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
+            perspectiveCamera->GetEye().x += 1.0f;
+        });
+
     libFeather.AddOnInitializeCallback([&]() {
+        auto camera = Feather::CreateEntity("Camera");
+        auto perspectiveCamera = Feather::CreatePerspectiveCamera();
+
+        camera->AddComponentID(perspectiveCamera);
+
+        /*
         glEnable(GL_DEPTH_TEST);
         glViewport(0, 0, w->GetWidth(), w->GetHeight());
 
@@ -42,6 +63,7 @@ int main(int argc, char** argv)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+        */
 	});
 
 	libFeather.Run();

@@ -6,7 +6,7 @@ class ComponentBase
 {
 public:
 	ComponentBase(ComponentID id);
-	~ComponentBase();
+	virtual ~ComponentBase();
 
 	inline ComponentID GetID() const { return id; }
 

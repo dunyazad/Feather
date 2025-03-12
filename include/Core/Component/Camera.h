@@ -19,10 +19,19 @@ public:
 
 public:
 	CameraBase(ComponentID id);
-	virtual ~CameraBase() = 0;
+	virtual ~CameraBase();
 
-	MiniMath::V3 position;
-	MiniMath::V3 target;
+	virtual MiniMath::M4 GetProjectionMatrix() const = 0;
+	virtual MiniMath::M4 LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const;
+	virtual MiniMath::M4 GetViewMatrix() const;
+
+	MiniMath::V3 eye = MiniMath::V3(5.0f, 2.5f, -5.0f);
+	MiniMath::V3 target = MiniMath::V3(0.0f, 0.0f, 0.0f);
+	MiniMath::V3 up = MiniMath::V3(0.0f, 0.0f, 1.0f);
+
+	inline MiniMath::V3& GetEye() { return eye; }
+	inline MiniMath::V3& GetTarget() { return target; }
+	inline MiniMath::V3& GetUp() { return up; }
 
 	ProjectionMode projectionMode = Perspective;
 protected:
@@ -33,6 +42,8 @@ class PerspectiveCamera : public CameraBase
 public:
 	PerspectiveCamera(ComponentID id);
 	virtual ~PerspectiveCamera();
+
+	virtual MiniMath::M4 GetProjectionMatrix() const;
 
 protected:
 	f32 fovy = 45 * DEG2RAD;
@@ -46,6 +57,8 @@ class OrthogonalCamera : public CameraBase
 public:
 	OrthogonalCamera(ComponentID id);
 	virtual ~OrthogonalCamera();
+
+	virtual MiniMath::M4 GetProjectionMatrix() const;
 
 protected:
 	f32 left = -1.0f;

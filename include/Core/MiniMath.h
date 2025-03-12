@@ -166,6 +166,8 @@ namespace MiniMath
 		float determinant() const;
 		M3 inverse() const;
 
+		float at(int row, int column);
+
 		static M3 identity();
 		static M3 zero();
 	};
@@ -186,12 +188,15 @@ namespace MiniMath
 		M4 operator*(float scalar) const;
 		M4 operator*(const M4& other) const;
 		V4 operator*(const V4& vec) const;
+		
 		V3 transformPoint(const V3& point) const;
 		V3 transformVector(const V3& vector) const;
 
 		M4 transpose() const;
 		float determinant() const;
 		M4 inverse() const;
+
+		float at(int row, int column);
 
 		static M4 identity();
 		static M4 zero();
