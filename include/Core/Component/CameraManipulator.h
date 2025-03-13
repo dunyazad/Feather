@@ -22,19 +22,20 @@ class CameraManipulatorOrbit : public CameraManipulatorBase
 public:
 	CameraManipulatorOrbit(ComponentID id);
 	~CameraManipulatorOrbit();
-
-	void UpdateCamera();
-
+	
 protected:
 	f64 lastMousePositionX = UINT32_MAX;
 	f64 lastMousePositionY = UINT32_MAX;
 	
 	f64 lastLButtonPositionX = UINT32_MAX;
 	f64 lastLButtonPositionY = UINT32_MAX;
+	f64 lastMButtonPositionX = UINT32_MAX;
+	f64 lastMButtonPositionY = UINT32_MAX;
 	f64 lastRButtonPositionX = UINT32_MAX;
 	f64 lastRButtonPositionY = UINT32_MAX;
 
 	bool isLButtonPressed = false;
+	bool isMButtonPressed = false;
 	bool isRButtonPressed = false;
 
 	f32 azimuth = 0.0f;

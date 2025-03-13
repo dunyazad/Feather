@@ -22,12 +22,48 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 
 			auto vDelta = event.parameters.mousePosition.ypos - lastMousePositionY;
 			elevation += vDelta * mouseSensitivity;
-			if (elevation <= -90.0f) elevation = -90.0f + FLT_EPSILON;
-			else if (elevation >= 90.0f) elevation = 90.0f - FLT_EPSILON;
+			if (elevation <= -90.0f) elevation = -89.9f;
+			else if (elevation >= 90.0f) elevation = 89.9f;
 
-			alog("xDelta : %f, yDelta : %f\n", hDelta, vDelta);
+			auto target = camera->GetTarget();
 
-			UpdateCamera();
+			MiniMath::V3 eye(
+				target.x + radius * cos(elevation * DEG2RAD) * sin(azimuth * DEG2RAD),
+				target.y + radius * sin(elevation * DEG2RAD),
+				target.z + radius * cos(elevation * DEG2RAD) * cos(azimuth * DEG2RAD));
+
+			camera->SetEye(eye);
+		}
+
+		if (isMButtonPressed)
+		{
+			auto hDelta = event.parameters.mousePosition.xpos - lastMousePositionX;
+			auto hPanning = hDelta * mouseSensitivity;
+
+			auto vDelta = event.parameters.mousePosition.ypos - lastMousePositionY;
+			auto vPanning = vDelta * mouseSensitivity;
+
+			auto viewMatrix = camera->GetViewMatrix();
+			MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0),viewMatrix.at(2, 0));
+			MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
+
+			auto target = camera->GetTarget();
+			auto eye = camera->GetEye();
+
+			if (hDelta != 0)
+			{
+				target -= right * (hPanning * radius * 0.01f);
+				eye -= right * (hPanning * radius * 0.01f);
+			}
+
+			if (vDelta != 0)
+			{
+				target += up * (vPanning * radius * 0.01f);
+				eye += up * (vPanning * radius * 0.01f);
+			}
+
+			camera->SetTarget(target);
+			camera->SetEye(eye);
 		}
 
 		lastMousePositionX = event.parameters.mousePosition.xpos;
@@ -46,6 +82,12 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 			isRButtonPressed = true;
 			lastRButtonPositionX = event.parameters.mouseButton.xpos;
 			lastRButtonPositionY = event.parameters.mouseButton.xpos;
+		}
+		else if (2 == event.parameters.mouseButton.button)
+		{
+			isMButtonPressed = true;
+			lastMButtonPositionX = event.parameters.mouseButton.xpos;
+			lastMButtonPositionY = event.parameters.mouseButton.xpos;
 		}
 		alog("Button Press : %d - x : %.2f, y : %.2f\n",
 			event.parameters.mouseButton.button,
@@ -66,6 +108,12 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 			lastRButtonPositionX = UINT32_MAX;
 			lastRButtonPositionY = UINT32_MAX;
 		}
+		else if (2 == event.parameters.mouseButton.button)
+		{
+			isMButtonPressed = false;
+			lastMButtonPositionX = UINT32_MAX;
+			lastMButtonPositionY = UINT32_MAX;
+		}
 		alog("Button Release : %d - x : %.2f, y : %.2f\n",
 			event.parameters.mouseButton.button,
 			event.parameters.mouseButton.xpos,
@@ -84,7 +132,14 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 			radius *= 0.9f;
 		}
 
-		UpdateCamera();
+		auto target = camera->GetTarget();
+
+		MiniMath::V3 eye(
+			target.x + radius * cos(elevation * DEG2RAD) * sin(azimuth * DEG2RAD),
+			target.y + radius * sin(elevation * DEG2RAD),
+			target.z + radius * cos(elevation * DEG2RAD) * cos(azimuth * DEG2RAD));
+
+		camera->SetEye(eye);
 		});
 
 	AddEventHandler(EventType::KeyPress, [&](const Event& event) {
@@ -105,16 +160,4 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 
 CameraManipulatorOrbit::~CameraManipulatorOrbit()
 {
-}
-
-void CameraManipulatorOrbit::UpdateCamera()
-{
-	auto target = camera->GetTarget();
-
-	MiniMath::V3 eye(
-		target.x + radius * cos(elevation * DEG2RAD) * sin(azimuth * DEG2RAD),
-		target.y + radius * sin(elevation * DEG2RAD),
-		target.z + radius * cos(elevation * DEG2RAD) * cos(azimuth * DEG2RAD));
-
-	camera->SetEye(eye);
 }
