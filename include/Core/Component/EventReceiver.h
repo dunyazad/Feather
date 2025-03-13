@@ -1,3 +1,5 @@
+#pragma once
+
 #include <FeatherCommon.h>
 
 #include <Core/Component/ComponentBase.h>
@@ -13,5 +15,5 @@ public:
 	void AddEventHandler(EventType eventType, function<void(const Event&)> handler);
 
 private:
-	vector<function<void(const Event&)>> eventHandlers;
+	map<EventType, vector<function<void(const Event&)>>> eventHandlers;
 };

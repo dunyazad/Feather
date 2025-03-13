@@ -13,15 +13,18 @@ EventReceiver::~EventReceiver()
 
 void EventReceiver::OnEvent(const Event& event)
 {
-	for (auto& handler : eventHandlers)
+	if (0 != eventHandlers.count(event.type))
 	{
-		handler(event);
+		for (auto& handler : eventHandlers[event.type])
+		{
+			handler(event);
+		}
 	}
 }
 
 void EventReceiver::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
 {
-	eventHandlers.push_back(handler);
+	eventHandlers[eventType].push_back(handler);
 	auto eventSystem = Feather::GetInstance().GetSystem<EventSystem>();
 	if (nullptr != eventSystem)
 	{

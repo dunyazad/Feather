@@ -13,36 +13,6 @@ int main(int argc, char** argv)
 
 	auto w = Feather::GetInstance().GetFeatherWindow();
 
-	Feather::GetInstance().GetSystem<InputSystem>()->AddKeyPressEventHandler(
-		GLFW_KEY_LEFT,
-		[](GLFWwindow* glfwWindow, KeyInputEventParameters keyEvent) {
-			auto entity = Feather::GetInstance().GetEntity(0);
-			auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
-			perspectiveCamera->GetEye().x -= 1.0f;
-		});
-	Feather::GetInstance().GetSystem<InputSystem>()->AddKeyPressEventHandler(
-		GLFW_KEY_RIGHT,
-		[](GLFWwindow* glfwWindow, KeyInputEventParameters keyEvent) {
-			auto entity = Feather::GetInstance().GetEntity(0);
-			auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
-			perspectiveCamera->GetEye().x += 1.0f;
-		});
-
-	Feather::GetInstance().GetSystem<InputSystem>()->AddMouseMoveEventHandler(
-		[](GLFWwindow* glfwWindow, MouseMoveInputEventParameters mouseMoveEvent) {
-			//alog("%f, %f\n", mouseMoveEvent.xpos, mouseMoveEvent.ypos);
-		});
-
-	Feather::GetInstance().GetSystem<InputSystem>()->AddMouseButtonPressEventHandler(
-		[](GLFWwindow* glfwWindow, MouseButtonInputEventParameters mouseButtonEvent) {
-			alog("pressed %d\n", mouseButtonEvent.button);
-		});
-
-	Feather::GetInstance().GetSystem<InputSystem>()->AddMouseButtonReleaseEventHandler(
-		[](GLFWwindow* glfwWindow, MouseButtonInputEventParameters mouseButtonEvent) {
-			alog("released %d\n", mouseButtonEvent.button);
-		});
-
 	Feather::GetInstance().AddOnInitializeCallback([&]() {
 		auto appMain = Feather::GetInstance().CreateEntity("AppMain");
 		auto appMainEventReceiver = Feather::GetInstance().CreateComponent<EventReceiver>();
@@ -51,15 +21,30 @@ int main(int argc, char** argv)
 			{
 				glfwSetWindowShouldClose(Feather::GetInstance().GetFeatherWindow()->GetGLFWwindow(), true);
 			}
+			else if (GLFW_KEY_LEFT == event.parameters.key.keyCode)
+			{
+				auto entity = Feather::GetInstance().GetEntity(0);
+				auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
+				perspectiveCamera->GetEye().x -= 1.0f;
+			}
+			else if (GLFW_KEY_RIGHT == event.parameters.key.keyCode)
+			{
+				auto entity = Feather::GetInstance().GetEntity(0);
+				auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
+				perspectiveCamera->GetEye().x += 1.0f;
+			}
 			});
 
 		auto camera = Feather::GetInstance().CreateEntity("Camera");
 		auto perspectiveCamera = Feather::GetInstance().CreateComponent<PerspectiveCamera>();
 		camera->AddComponent(perspectiveCamera);
 
-		auto cameraEventReceiver = Feather::GetInstance().CreateComponent<EventReceiver>();
-		camera->AddComponent(cameraEventReceiver);
-		cameraEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {});
+		auto cameraManipulator = Feather::GetInstance().CreateComponent<CameraManipulator>();
+		camera->AddComponent(cameraManipulator);
+
+		//auto cameraEventReceiver = Feather::GetInstance().CreateComponent<EventReceiver>();
+		//camera->AddComponent(cameraEventReceiver);
+		//cameraEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {});
 
 
 		/*

@@ -145,7 +145,7 @@ void Feather::Run()
 #ifdef _WINDOWS
     MaximizeConsoleWindowOnMonitor(1);
     
-    MaximizeWindowOnMonitor(glfwGetWin32Window(featherWindow->GetGLFWwindow()), 3);
+    MaximizeWindowOnMonitor(glfwGetWin32Window(featherWindow->GetGLFWwindow()), 2);
 #endif
 
     for (auto& callback : onInitializeCallbacks)

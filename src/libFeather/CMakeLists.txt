@@ -60,6 +60,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Core/Component/Components.h
     ${CMAKE_SOURCE_DIR}/include/Core/Component/ComponentBase.h
     ${CMAKE_SOURCE_DIR}/include/Core/Component/Camera.h
+    ${CMAKE_SOURCE_DIR}/include/Core/Component/CameraManipulator.h
     ${CMAKE_SOURCE_DIR}/include/Core/Component/EventReceiver.h
     ${CMAKE_SOURCE_DIR}/include/Core/Component/Transform.h
 
@@ -71,7 +72,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Core/System/RenderSystem.h
     ${CMAKE_SOURCE_DIR}/include/Core/System/SystemBase.h
 
-    src/libFeather.cpp
+    src/Feather.cpp
     src/FeatherCommon.cpp
     src/Core/Entity.cpp
     src/Core/MiniMath.cpp
@@ -80,6 +81,7 @@ set(source_list
     
     src/Core/Component/ComponentBase.cpp
     src/Core/Component/Camera.cpp
+    src/Core/Component/CameraManipulator.cpp
     src/Core/Component/EventReceiver.cpp
     src/Core/Component/Transform.cpp
 
