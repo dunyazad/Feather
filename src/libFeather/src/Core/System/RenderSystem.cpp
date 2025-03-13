@@ -13,7 +13,6 @@ RenderSystem::~RenderSystem()
 
 void RenderSystem::Initialize()
 {
-    CreateShader();
 }
 
 void RenderSystem::Terminate()
@@ -35,12 +34,4 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
     {
         camera->Update(frameNo, timeDelta);
     }
-}
-
-Shader* RenderSystem::CreateShader()
-{
-    auto s = new Shader();
-    s->Initialize();
-    shaders.push_back(s);
-    return s;
 }

@@ -3,8 +3,8 @@
 #include <Core/Entity.h>
 #include <Core/MiniMath.h>
 #include <Core/FeatherWindow.h>
-#include <Core/Shader.h>
 #include <Core/Component/Components.h>
+#include <Core/Component/Shader.h>
 #include <Core/System/Systems.h>
 
 #ifdef _WINDOWS

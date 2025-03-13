@@ -1,7 +1,8 @@
 #pragma once
 
 #include <Core/System/SystemBase.h>
-#include <Core/Shader.h>
+
+class Shader;
 
 class RenderSystem : public SystemBase
 {

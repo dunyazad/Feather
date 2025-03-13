@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Core/System/SystemBase.h>
-#include <Core/Shader.h>
 
 class ImmediateModeRenderSystem : public SystemBase
 {

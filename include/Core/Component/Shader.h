@@ -1,12 +1,13 @@
 #pragma once
 
 #include <FeatherCommon.h>
+#include <Core/Component/ComponentBase.h>
 
-class Shader
+class Shader : public ComponentBase
 {
 public:
-	Shader();
-	~Shader();
+	Shader(ComponentID id);
+	virtual ~Shader();
 
     void Initialize();
     void Terminate();

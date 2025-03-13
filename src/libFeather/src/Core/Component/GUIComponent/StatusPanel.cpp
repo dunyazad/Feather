@@ -13,6 +13,37 @@ StatusPanel::~StatusPanel()
 {
 }
 
+void ToggleButton(const char* str_id, bool* v)
+{
+    ImVec2 p = ImGui::GetCursorScreenPos();
+    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+    float height = ImGui::GetFrameHeight();
+    float width = height * 1.55f;
+    float radius = height * 0.50f;
+
+    if (ImGui::InvisibleButton(str_id, ImVec2(width, height)))
+    {
+        *v = !*v;
+        if (true == *v)
+        {
+            glfwSwapInterval(1);
+        }
+        else if (false == *v)
+        {
+            glfwSwapInterval(0);
+        }
+    }
+    ImU32 col_bg;
+    if (ImGui::IsItemHovered())
+        col_bg = *v ? IM_COL32(145 + 20, 211, 68 + 20, 255) : IM_COL32(218 - 20, 218 - 20, 218 - 20, 255);
+    else
+        col_bg = *v ? IM_COL32(145, 211, 68, 255) : IM_COL32(218, 218, 218, 255);
+
+    draw_list->AddRectFilled(p, ImVec2(p.x + width, p.y + height - 5), col_bg, (height - 5) * 0.5f);
+    draw_list->AddCircleFilled(ImVec2(*v ? (p.x + width - radius) : (p.x + radius), p.y + radius - 2.5f), (radius - 2.5f) - 1.5f, IM_COL32(255, 255, 255, 255));
+}
+
 void StatusPanel::Render()
 {
     float fps = ImGui::GetIO().Framerate;
@@ -42,6 +73,13 @@ void StatusPanel::Render()
 
         // FPS Display with White Text
         ImGui::Text("FPS: %.1f", fps);
+        ImGui::SameLine(); 
+        ImGui::Text("V-Sync");
+        ImGui::SameLine();
+        ToggleButton("V-Sync", &vSync);
+        {
+            //glfwSwapInterval(0);  // Disable V-Sync
+        }
 
         // Graph (Mini FPS history)
         ImGui::PlotLines("##FPSGraph", fpsHistory.data(), historySize, historyOffset, nullptr, 0.0f, 120.0f, ImVec2(200, 80));

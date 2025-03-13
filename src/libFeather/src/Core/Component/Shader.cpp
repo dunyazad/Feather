@@ -1,6 +1,7 @@
-#include <Core/Shader.h>
+#include <Core/Component/Shader.h>
 
-Shader::Shader()
+Shader::Shader(ComponentID id)
+    : ComponentBase(id)
 {
 }
 

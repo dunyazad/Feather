@@ -17,6 +17,7 @@ private:
     f32 accumulatedFPS = 0.0f;
     ui32 frameCount = 0;
     const ui32 updateRate = 10;
+    bool vSync = true;
 
     ui32 mouseX = 0;
     ui32 mouseY = 0;
