@@ -1,7 +1,6 @@
 #include <Core/System/EventSystem.h>
 
 #include <Core/FeatherWindow.h>
-#include <Core/Component/EventReceiver.h>
 
 vector<EventSystem*> EventSystem::s_instances;
 
@@ -30,12 +29,12 @@ void EventSystem::Update(ui32 frameNo, f32 timeDelta)
 {
 }
 
-void EventSystem::SubscribeEvent(EventType eventType, EventReceiver* eventReceiver)
+void EventSystem::SubscribeEvent(EventType eventType, IEventReceiver* eventReceiver)
 {
 	eventReceivers[eventType].insert(eventReceiver);
 }
 
-void EventSystem::UnsubscribeEvent(EventType eventType, EventReceiver* eventReceiver)
+void EventSystem::UnsubscribeEvent(EventType eventType, IEventReceiver* eventReceiver)
 {
 	eventReceivers[eventType].erase(eventReceiver);
 }
@@ -90,6 +89,9 @@ void EventSystem::MousePositionCallback(GLFWwindow* window, f64 xpos, f64 ypos)
 
 	for (auto& instance : s_instances)
 	{
+		instance->lastMousePositionX = xpos;
+		instance->lastMousePositionY = ypos;
+
 		instance->DispatchEvent(event);
 	}
 }
@@ -105,6 +107,9 @@ void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action
 
 		for (auto& instance : s_instances)
 		{
+			event.parameters.mouseButton.xpos = instance->lastMousePositionX;
+			event.parameters.mouseButton.ypos = instance->lastMousePositionY;
+
 			instance->DispatchEvent(event);
 		}
 	}
@@ -117,6 +122,9 @@ void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action
 
 		for (auto& instance : s_instances)
 		{
+			event.parameters.mouseButton.xpos = instance->lastMousePositionX;
+			event.parameters.mouseButton.ypos = instance->lastMousePositionY;
+
 			instance->DispatchEvent(event);
 		}
 	}

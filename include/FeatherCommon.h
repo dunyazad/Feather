@@ -115,6 +115,8 @@ struct MouseButtonEventParameters
 {
 	i32 button;
 	i32 mods;
+	f64 xpos;
+	f64 ypos;
 };
 
 struct Event
@@ -126,4 +128,17 @@ struct Event
 		MousePositionEventParameters mousePosition;
 		MouseButtonEventParameters mouseButton;
 	} parameters;
+};
+
+class IEventReceiver
+{
+public:
+	IEventReceiver();
+	virtual ~IEventReceiver() = 0;
+
+	virtual void OnEvent(const Event& event);
+	virtual void AddEventHandler(EventType eventType, function<void(const Event&)> handler);
+
+protected:
+	map<EventType, vector<function<void(const Event&)>>> eventHandlers;
 };

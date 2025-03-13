@@ -1,11 +1,11 @@
 #pragma once
 
 #include <FeatherCommon.h>
-#include <Core/Component/EventReceiver.h>
+#include <Core/Component/ComponentBase.h>
 
 class CameraBase;
 
-class CameraManipulator : public EventReceiver
+class CameraManipulator : public ComponentBase
 {
 public:
 	CameraManipulator(ComponentID id);

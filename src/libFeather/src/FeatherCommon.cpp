@@ -41,3 +41,32 @@ namespace Time
         return oss.str();
     }
 }
+
+IEventReceiver::IEventReceiver()
+{
+}
+
+IEventReceiver::~IEventReceiver()
+{
+}
+
+void IEventReceiver::OnEvent(const Event& event)
+{
+    if (0 != eventHandlers.count(event.type))
+    {
+        for (auto& handler : eventHandlers[event.type])
+        {
+            handler(event);
+        }
+    }
+}
+
+void IEventReceiver::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
+{
+    eventHandlers[eventType].push_back(handler);
+    auto eventSystem = Feather::GetInstance().GetSystem<EventSystem>();
+    if (nullptr != eventSystem)
+    {
+        eventSystem->SubscribeEvent(eventType, this);
+    }
+}

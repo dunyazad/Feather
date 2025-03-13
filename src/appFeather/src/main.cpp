@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 
 	Feather::GetInstance().AddOnInitializeCallback([&]() {
 		auto appMain = Feather::GetInstance().CreateEntity("AppMain");
-		auto appMainEventReceiver = Feather::GetInstance().CreateComponent<EventReceiver>();
+		auto appMainEventReceiver = Feather::GetInstance().CreateComponent<ComponentBase>();
 		appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {
 			if (GLFW_KEY_ESCAPE == event.parameters.key.keyCode)
 			{

@@ -2,7 +2,7 @@
 
 #include <FeatherCommon.h>
 
-class ComponentBase
+class ComponentBase : public IEventReceiver
 {
 public:
 	ComponentBase(ComponentID id);
