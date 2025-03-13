@@ -16,22 +16,11 @@ int main(int argc, char** argv)
 	Feather::GetInstance().AddOnInitializeCallback([&]() {
 		auto appMain = Feather::GetInstance().CreateEntity("AppMain");
 		auto appMainEventReceiver = Feather::GetInstance().CreateComponent<ComponentBase>();
+		appMain->AddComponent(appMainEventReceiver);
 		appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {
 			if (GLFW_KEY_ESCAPE == event.parameters.key.keyCode)
 			{
 				glfwSetWindowShouldClose(Feather::GetInstance().GetFeatherWindow()->GetGLFWwindow(), true);
-			}
-			else if (GLFW_KEY_LEFT == event.parameters.key.keyCode)
-			{
-				auto entity = Feather::GetInstance().GetEntity(0);
-				auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
-				perspectiveCamera->GetEye().x -= 1.0f;
-			}
-			else if (GLFW_KEY_RIGHT == event.parameters.key.keyCode)
-			{
-				auto entity = Feather::GetInstance().GetEntity(0);
-				auto perspectiveCamera = entity->GetComponent<PerspectiveCamera>(0);
-				perspectiveCamera->GetEye().x += 1.0f;
 			}
 			});
 
@@ -41,6 +30,9 @@ int main(int argc, char** argv)
 
 		auto cameraManipulator = Feather::GetInstance().CreateComponent<CameraManipulator>();
 		camera->AddComponent(cameraManipulator);
+
+		auto statusPanel = Feather::GetInstance().CreateComponent<StatusPanel>();
+		appMain->AddComponent(statusPanel);
 
 		//auto cameraEventReceiver = Feather::GetInstance().CreateComponent<EventReceiver>();
 		//camera->AddComponent(cameraEventReceiver);

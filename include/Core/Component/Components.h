@@ -4,3 +4,5 @@
 #include<Core/Component/Camera.h>
 #include<Core/Component/CameraManipulator.h>
 #include<Core/Component/Transform.h>
+
+#include<Core/Component/GUIComponent/GUIComponents.h>

@@ -1,5 +1,7 @@
 #include <Core/System/GUISystem.h>
 #include <Core/FeatherWindow.h>
+#include <Feather.h>
+#include <Core/Component/GUIComponent/GUIComponents.h>
 
 float amplitude = 1.0f;
 float frequency = 1.0f;
@@ -45,9 +47,15 @@ void GUISystem::Update(ui32 frameNo, f32 timeDelta)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    auto components = Feather::GetInstance().GetComponents<StatusPanel>();
+    for (auto& component : components)
+    {
+        component->Render();
+    }
+
     ShowUIPanel();
     ShowGraphPanel();
-    ShowFPS();
+    //ShowFPS();
     //ShowTeapotPanel();
 
     ImGui::Render();

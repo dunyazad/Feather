@@ -46,12 +46,34 @@ public:
 		auto component = new T(nextComponentID++);
 		auto index = components.size();
 		components.push_back(component);
-		typeComponentMapping[typeid(ComponentBase)].push_back(index);
+		typeComponentMapping[typeid(T)].push_back(index);
 		idComponentMapping[component->GetID()] = index;
 		return component;
 	}
 
 	ComponentBase* GetComponent(ComponentID id);
+	template <typename T>
+	vector<T*> GetComponents()
+	{
+		vector<T*> result;
+
+		type_index typeIndex = typeid(T);
+
+		if (0 != typeComponentMapping.count(typeIndex))
+		{
+			auto ids = typeComponentMapping[typeIndex];
+			for (auto& id : ids)
+			{
+				auto component = dynamic_cast<T*>(components[id]);
+				if (nullptr != component)
+				{
+					result.push_back(component);
+				}
+			}
+		}
+
+		return result;
+	}
 
 	inline const vector<ComponentBase*>& GetComponents() { return components; }
 	const vector<ComponentID>& GetComponentsByEntityID(EntityID entityID) { return entityComponentMapping[entityID]; }
