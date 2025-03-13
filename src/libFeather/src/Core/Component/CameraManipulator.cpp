@@ -147,12 +147,12 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 
 		if (GLFW_KEY_LEFT == event.parameters.key.keyCode)
 		{
-			auto entity = Feather::GetInstance().GetEntity(0);
+			auto entity = Feather.GetEntity(0);
 			camera->GetEye().x -= 1.0f;
 		}
 		else if (GLFW_KEY_RIGHT == event.parameters.key.keyCode)
 		{
-			auto entity = Feather::GetInstance().GetEntity(0);
+			auto entity = Feather.GetEntity(0);
 			camera->GetEye().x += 1.0f;
 		}
 		});

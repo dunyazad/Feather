@@ -23,8 +23,8 @@ void ImmediateModeRenderSystem::Terminate()
 void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 {
 	glViewport(0, 0,
-		Feather::GetInstance().GetFeatherWindow()->GetWidth(),
-		Feather::GetInstance().GetFeatherWindow()->GetHeight());
+		Feather.GetFeatherWindow()->GetWidth(),
+		Feather.GetFeatherWindow()->GetHeight());
 
 	glPointSize(5.0f);
 	glLineWidth(2.0f);
@@ -38,7 +38,7 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	// Enable depth test if needed
 	glEnable(GL_DEPTH_TEST);
 
-	auto cameras = Feather::GetInstance().GetComponents<PerspectiveCamera>();
+	auto cameras = Feather.GetComponents<PerspectiveCamera>();
 	for (auto& camera : cameras)
 	{
 		if (nullptr != camera)

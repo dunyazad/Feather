@@ -13,6 +13,7 @@
 
 #include <bitset>
 #include <cstddef>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <limits>
@@ -49,6 +50,8 @@ using namespace std;
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "implot.h"
+
+#define Feather libFeather::GetInstance()
 
 typedef char i8;
 typedef short i16;

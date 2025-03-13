@@ -64,7 +64,7 @@ void IEventReceiver::OnEvent(const Event& event)
 void IEventReceiver::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
 {
     eventHandlers[eventType].push_back(handler);
-    auto eventSystem = Feather::GetInstance().GetSystem<EventSystem>();
+    auto eventSystem = Feather.GetSystem<EventSystem>();
     if (nullptr != eventSystem)
     {
         eventSystem->SubscribeEvent(eventType, this);

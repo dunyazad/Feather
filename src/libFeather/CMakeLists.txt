@@ -55,6 +55,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Core/Entity.h
     ${CMAKE_SOURCE_DIR}/include/Core/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/Core/FeatherWindow.h
+    ${CMAKE_SOURCE_DIR}/include/Core/File.h
 
     ${CMAKE_SOURCE_DIR}/include/Core/Component/Components.h
     ${CMAKE_SOURCE_DIR}/include/Core/Component/ComponentBase.h
@@ -81,6 +82,7 @@ set(source_list
     src/Core/Entity.cpp
     src/Core/MiniMath.cpp
     src/Core/FeatherWindow.cpp
+    src/Core/File.cpp
     
     src/Core/Component/ComponentBase.cpp
     src/Core/Component/Camera.cpp

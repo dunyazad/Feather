@@ -57,10 +57,10 @@ void MaximizeWindowOnMonitor(HWND hwnd, int monitorIndex) {
 }
 #endif
 
-Feather::Feather() {}
-Feather::~Feather() {}
+libFeather::libFeather() {}
+libFeather::~libFeather() {}
 
-void Feather::Initialize(ui32 width, ui32 height)
+void libFeather::Initialize(ui32 width, ui32 height)
 {
     featherWindow = new FeatherWindow();
     featherWindow->Initialize(width, height);
@@ -79,7 +79,7 @@ void Feather::Initialize(ui32 width, ui32 height)
     /////////glfwSwapInterval(0);  // Disable V-Sync
 }
 
-void Feather::Terminate()
+void libFeather::Terminate()
 {
     for (auto& kvp : entities)
     {
@@ -119,14 +119,14 @@ void Feather::Terminate()
     }
 }
 
-Entity* Feather::CreateEntity(const string& name)
+Entity* libFeather::CreateEntity(const string& name)
 {
     auto entity = new Entity(nextEntityID++, name);
     entities[entity->GetID()] = entity;
     return entity;
 }
 
-Entity* Feather::GetEntity(EntityID id)
+Entity* libFeather::GetEntity(EntityID id)
 {
     if (0 == entities.count(id))
     {
@@ -138,7 +138,7 @@ Entity* Feather::GetEntity(EntityID id)
     }
 }
 
-ComponentBase* Feather::GetComponent(ComponentID id)
+ComponentBase* libFeather::GetComponent(ComponentID id)
 {
     if (0 == idComponentMapping.count(id))
     {
@@ -150,7 +150,7 @@ ComponentBase* Feather::GetComponent(ComponentID id)
     }
 }
 
-const vector<ui32>& Feather::GetComponentIDsByTypeIndex(const type_index& typeIndex)
+const vector<ui32>& libFeather::GetComponentIDsByTypeIndex(const type_index& typeIndex)
 {
     if (0 == typeComponentMapping.count(typeIndex))
     {
@@ -162,7 +162,7 @@ const vector<ui32>& Feather::GetComponentIDsByTypeIndex(const type_index& typeIn
     }
 }
 
-void Feather::Run()
+void libFeather::Run()
 {
 #ifdef _WINDOWS
     MaximizeConsoleWindowOnMonitor(1);
@@ -194,11 +194,11 @@ void Feather::Run()
         //    kvp.second->Update(frameNo, timeDelta);
         //}
 
-        systems[typeid(GUISystem)]->Update(frameNo, timeDelta);
         systems[typeid(EventSystem)]->Update(frameNo, timeDelta);
         systems[typeid(InputSystem)]->Update(frameNo, timeDelta);
         systems[typeid(RenderSystem)]->Update(frameNo, timeDelta);
         systems[typeid(ImmediateModeRenderSystem)]->Update(frameNo, timeDelta);
+        systems[typeid(GUISystem)]->Update(frameNo, timeDelta);
 
         glfwSwapBuffers(glfwGetCurrentContext());
 

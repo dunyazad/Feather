@@ -29,7 +29,7 @@ void RenderSystem::Terminate()
 
 void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
 {
-    auto cameras = Feather::GetInstance().GetComponents<PerspectiveCamera>();
+    auto cameras = Feather.GetComponents<PerspectiveCamera>();
     for (auto& camera : cameras)
     {
         camera->Update(frameNo, timeDelta);

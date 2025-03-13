@@ -72,17 +72,16 @@ void StatusPanel::Render()
         //ImGui::Text("Mem: %.1fmb", memoryUsage);
 
         // FPS Display with White Text
-        ImGui::Text("FPS: %.1f", fps);
-        ImGui::SameLine(); 
         ImGui::Text("V-Sync");
         ImGui::SameLine();
         ToggleButton("V-Sync", &vSync);
         {
             //glfwSwapInterval(0);  // Disable V-Sync
         }
+        ImGui::Text("FPS: %.1f", fps);
 
         // Graph (Mini FPS history)
-        ImGui::PlotLines("##FPSGraph", fpsHistory.data(), historySize, historyOffset, nullptr, 0.0f, 120.0f, ImVec2(200, 80));
+        ImGui::PlotLines("##FPSGraph", fpsHistory.data(), historySize, historyOffset, nullptr, 0.0f, 120.0f, ImVec2(300, 80));
 
         ImGui::Text("mouse : %4d, %4d", mouseX, mouseY);
     }

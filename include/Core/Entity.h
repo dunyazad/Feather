@@ -21,7 +21,7 @@ public:
 	template<typename T>
 	T* GetComponent(int index)
 	{
-		return dynamic_cast<T*>(Feather::GetInstance().GetComponent(componentIDs[index]));
+		return dynamic_cast<T*>(Feather.GetComponent(componentIDs[index]));
 	}
 
 private:

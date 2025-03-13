@@ -9,16 +9,32 @@ Shader::~Shader()
 {
 }
 
-void Shader::Initialize()
+void Shader::Initialize(const File& vsFile, const File& fsFile)
 {
-    // Shader 초기화
+    if (0 == vsFile.GetFileLength() || 0 == fsFile.GetFileLength()) return;
+
+    string vs(vsFile.GetFileLength() + 1, 0);
+    vsFile.Read(vs.data(), vsFile.GetFileLength());
+
+    string fs(fsFile.GetFileLength() + 1, 0);
+    fsFile.Read(fs.data(), fsFile.GetFileLength());
+
+    Initialize(vs, fs);
+}
+
+void Shader::Initialize(const string& vs, const string& fs)
+{
+    if (vs.empty() || fs.empty()) return;
+
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+    const GLchar* vsSource = vs.c_str();
+    glShaderSource(vertexShader, 1, &vsSource, nullptr);
     glCompileShader(vertexShader);
     CheckShaderCompileErrors(vertexShader, "VERTEX");
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+    const GLchar* fsSource = fs.c_str();
+    glShaderSource(fragmentShader, 1, &fsSource, nullptr);
     glCompileShader(fragmentShader);
     CheckShaderCompileErrors(fragmentShader, "FRAGMENT");
 
@@ -31,6 +47,29 @@ void Shader::Initialize()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 }
+
+//void Shader::Initialize()
+//{
+//    // Shader 초기화
+//    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+//    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
+//    glCompileShader(vertexShader);
+//    CheckShaderCompileErrors(vertexShader, "VERTEX");
+//
+//    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+//    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+//    glCompileShader(fragmentShader);
+//    CheckShaderCompileErrors(fragmentShader, "FRAGMENT");
+//
+//    shaderProgram = glCreateProgram();
+//    glAttachShader(shaderProgram, vertexShader);
+//    glAttachShader(shaderProgram, fragmentShader);
+//    glLinkProgram(shaderProgram);
+//    CheckShaderCompileErrors(shaderProgram, "PROGRAM");
+//
+//    glDeleteShader(vertexShader);
+//    glDeleteShader(fragmentShader);
+//}
 
 void Shader::Terminate()
 {

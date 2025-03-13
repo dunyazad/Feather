@@ -46,14 +46,14 @@ MiniMath::M4 CameraBase::LookAt(const MiniMath::V3& eye, const MiniMath::V3& tar
 PerspectiveCamera::PerspectiveCamera(ComponentID id)
     : CameraBase(id)
 {
-    auto window = Feather::GetInstance().GetFeatherWindow();
+    auto window = Feather.GetFeatherWindow();
 
     aspectRatio = (f32)window->GetWidth() / (f32)window->GetHeight();
 
     AddEventHandler(EventType::FrameBufferResize, [&](const Event& event) {
         aspectRatio =
             (f32)event.parameters.frameBufferResize.width /
-            (f32)event.parameters.frameBufferResize.width;
+            (f32)event.parameters.frameBufferResize.height;
         });
 }
 

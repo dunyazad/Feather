@@ -22,12 +22,12 @@ class Transform;
 class PerspectiveCamera;
 class OrthogonalCamera;
 
-class Feather
+class libFeather
 {
 public:
-	static Feather& GetInstance()
+	static libFeather& GetInstance()
 	{
-		static Feather instance;
+		static libFeather instance;
 		return instance;
 	}
 
@@ -94,10 +94,10 @@ public:
 	inline void AddOnTerminateCallback(function<void()> callback) { onTerminateCallbacks.push_back(callback); }
 
 private:
-	static Feather* s_instance;
+	static libFeather* s_instance;
 
-	Feather();
-	~Feather();
+	libFeather();
+	~libFeather();
 
 	FeatherWindow* featherWindow = nullptr;
 

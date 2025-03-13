@@ -63,7 +63,7 @@ void FeatherWindow::FrameBufferSizeCallback(GLFWwindow* window, i32 width, i32 h
     s_instance->width = width;
     s_instance->height = height;
 
-    auto eventSystem = Feather::GetInstance().GetSystem<EventSystem>();
+    auto eventSystem = Feather.GetSystem<EventSystem>();
     Event event;
     event.type = EventType::FrameBufferResize;
     event.parameters.frameBufferResize.width = width;
