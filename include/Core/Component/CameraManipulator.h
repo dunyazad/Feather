@@ -5,14 +5,41 @@
 
 class CameraBase;
 
-class CameraManipulator : public ComponentBase
+class CameraManipulatorBase : public ComponentBase
 {
 public:
-	CameraManipulator(ComponentID id);
-	~CameraManipulator();
+	CameraManipulatorBase(ComponentID id);
+	virtual ~CameraManipulatorBase() = default;
 
 	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
 
-private:
+protected:
 	CameraBase* camera = nullptr;
+};
+
+class CameraManipulatorOrbit : public CameraManipulatorBase
+{
+public:
+	CameraManipulatorOrbit(ComponentID id);
+	~CameraManipulatorOrbit();
+
+	void UpdateCamera();
+
+protected:
+	f64 lastMousePositionX = UINT32_MAX;
+	f64 lastMousePositionY = UINT32_MAX;
+	
+	f64 lastLButtonPositionX = UINT32_MAX;
+	f64 lastLButtonPositionY = UINT32_MAX;
+	f64 lastRButtonPositionX = UINT32_MAX;
+	f64 lastRButtonPositionY = UINT32_MAX;
+
+	bool isLButtonPressed = false;
+	bool isRButtonPressed = false;
+
+	f32 azimuth = 0.0f;
+	f32 elevation = 0.0f;
+	f32 radius = 5.0f;
+	f32 mouseSensitivity = 0.2f;
+	f32 mouseWheelSensitivity = 0.5f;
 };

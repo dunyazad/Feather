@@ -90,12 +90,20 @@ namespace Time
 enum class EventType
 {
 	None,
+	FrameBufferResize,
 	KeyPress,
 	KeyRelease,
 	MousePosition,
 	MouseButtonPress,
 	MouseButtonRelease,
+	MouseWheel,
 	NumberOfEventTypes
+};
+
+struct FrameBufferResizeParameters
+{
+	i32 width;
+	i32 height;
 };
 
 struct KeyEventParameters
@@ -119,6 +127,12 @@ struct MouseButtonEventParameters
 	f64 ypos;
 };
 
+struct MouseWheelEventParameters
+{
+	f64 xoffset;
+	f64 yoffset;
+};
+
 struct Event
 {
 	EventType type;
@@ -127,6 +141,8 @@ struct Event
 		KeyEventParameters key;
 		MousePositionEventParameters mousePosition;
 		MouseButtonEventParameters mouseButton;
+		FrameBufferResizeParameters frameBufferResize;
+		MouseWheelEventParameters mouseWheel;
 	} parameters;
 };
 

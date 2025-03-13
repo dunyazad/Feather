@@ -23,20 +23,30 @@ public:
 	CameraBase(ComponentID id);
 	virtual ~CameraBase();
 
-	virtual MiniMath::M4 GetProjectionMatrix() const = 0;
-	virtual MiniMath::M4 LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const;
-	virtual MiniMath::M4 GetViewMatrix() const;
-
-	MiniMath::V3 eye = MiniMath::V3(5.0f, 2.5f, -5.0f);
-	MiniMath::V3 target = MiniMath::V3(0.0f, 0.0f, 0.0f);
-	MiniMath::V3 up = MiniMath::V3(0.0f, 0.0f, 1.0f);
+	MiniMath::M4 LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const;
 
 	inline MiniMath::V3& GetEye() { return eye; }
 	inline MiniMath::V3& GetTarget() { return target; }
 	inline MiniMath::V3& GetUp() { return up; }
 
+	inline void SetEye(const MiniMath::V3& eye) { this->eye = eye; needToUpdate = true; }
+	inline void SetTarget(const MiniMath::V3& target) { this->target = target; needToUpdate = true; }
+	inline void SetUp(const MiniMath::V3& up) { this->up = up; needToUpdate = true; }
+
+	inline const MiniMath::M4& GetProjectionMatrix() { return projectionMatrix; }
+	inline const MiniMath::M4& GetViewMatrix() { return viewMatrix; }
+
 	ProjectionMode projectionMode = Perspective;
+
 protected:
+	bool needToUpdate = true;
+
+	MiniMath::M4 projectionMatrix = MiniMath::M4::identity();
+	MiniMath::M4 viewMatrix = MiniMath::M4::identity();
+
+	MiniMath::V3 eye = MiniMath::V3(0.0f, 0.0f, -5.0f);
+	MiniMath::V3 target = MiniMath::V3(0.0f, 0.0f, 0.0f);
+	MiniMath::V3 up = MiniMath::V3(0.0f, 1.0f, 0.0f);
 };
 
 class PerspectiveCamera : public CameraBase
@@ -45,7 +55,7 @@ public:
 	PerspectiveCamera(ComponentID id);
 	virtual ~PerspectiveCamera();
 
-	virtual MiniMath::M4 GetProjectionMatrix() const;
+	virtual void Update(ui32 frameNo, f32 timeDelta) override;
 
 protected:
 	f32 fovy = 45 * DEG2RAD;
@@ -60,7 +70,7 @@ public:
 	OrthogonalCamera(ComponentID id);
 	virtual ~OrthogonalCamera();
 
-	virtual MiniMath::M4 GetProjectionMatrix() const;
+	virtual void Update(ui32 frameNo, f32 timeDelta) override;
 
 protected:
 	f32 left = -1.0f;

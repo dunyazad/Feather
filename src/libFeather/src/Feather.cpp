@@ -81,6 +81,28 @@ void Feather::Initialize(ui32 width, ui32 height)
 
 void Feather::Terminate()
 {
+    for (auto& kvp : entities)
+    {
+        if (nullptr != kvp.second)
+        {
+            delete kvp.second;
+        }
+    }
+    entities.clear();
+
+    for (auto& component : components)
+    {
+        if (nullptr != component)
+        {
+            delete component;
+        }
+    }
+    components.clear();
+
+    typeComponentMapping.clear();
+    idComponentMapping.clear();
+    entityComponentMapping.clear();
+
     for (auto& kvp : systems)
     {
         if (nullptr != kvp.second)
@@ -167,10 +189,16 @@ void Feather::Run()
 
         glfwPollEvents();
 
-        for (auto& kvp : systems)
-        {
-            kvp.second->Update(frameNo, timeDelta);
-        }
+        //for (auto& kvp : systems)
+        //{
+        //    kvp.second->Update(frameNo, timeDelta);
+        //}
+
+        systems[typeid(GUISystem)]->Update(frameNo, timeDelta);
+        systems[typeid(EventSystem)]->Update(frameNo, timeDelta);
+        systems[typeid(InputSystem)]->Update(frameNo, timeDelta);
+        systems[typeid(RenderSystem)]->Update(frameNo, timeDelta);
+        systems[typeid(ImmediateModeRenderSystem)]->Update(frameNo, timeDelta);
 
         glfwSwapBuffers(glfwGetCurrentContext());
 

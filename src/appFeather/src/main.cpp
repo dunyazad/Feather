@@ -28,8 +28,9 @@ int main(int argc, char** argv)
 		auto perspectiveCamera = Feather::GetInstance().CreateComponent<PerspectiveCamera>();
 		camera->AddComponent(perspectiveCamera);
 
-		auto cameraManipulator = Feather::GetInstance().CreateComponent<CameraManipulator>();
+		auto cameraManipulator = Feather::GetInstance().CreateComponent<CameraManipulatorOrbit>();
 		camera->AddComponent(cameraManipulator);
+		cameraManipulator->SetCamera(perspectiveCamera);
 
 		auto statusPanel = Feather::GetInstance().CreateComponent<StatusPanel>();
 		appMain->AddComponent(statusPanel);

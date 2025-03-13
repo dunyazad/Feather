@@ -26,6 +26,7 @@ private:
 	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	static void MousePositionCallback(GLFWwindow* window, f64 xpos, f64 ypos);
 	static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+	static void MouseWheelCallback(GLFWwindow* window, f64 xoffset, f64 yoffset);
 
 	f64 lastMousePositionX = 0;
 	f64 lastMousePositionY = 0;

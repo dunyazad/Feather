@@ -1,7 +1,12 @@
 #include <Core/FeatherWindow.h>
+#include <Feather.h>
+#include <Core/System/Systems.h>
+
+FeatherWindow* FeatherWindow::s_instance = nullptr;
 
 FeatherWindow::FeatherWindow()
 {
+    s_instance = this;
 }
 
 FeatherWindow::~FeatherWindow()
@@ -35,6 +40,8 @@ GLFWwindow* FeatherWindow::Initialize(ui32 width, ui32 height)
     }
 
     glfwMakeContextCurrent(window);
+
+    glfwSetFramebufferSizeCallback(window, FrameBufferSizeCallback);
     
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -51,7 +58,16 @@ void FeatherWindow::Terminate()
     glfwTerminate();
 }
 
-void FeatherWindow::Frame()
+void FeatherWindow::FrameBufferSizeCallback(GLFWwindow* window, i32 width, i32 height)
 {
+    s_instance->width = width;
+    s_instance->height = height;
 
+    auto eventSystem = Feather::GetInstance().GetSystem<EventSystem>();
+    Event event;
+    event.type = EventType::FrameBufferResize;
+    event.parameters.frameBufferResize.width = width;
+    event.parameters.frameBufferResize.height = height;
+
+    eventSystem->DispatchEvent(event);
 }

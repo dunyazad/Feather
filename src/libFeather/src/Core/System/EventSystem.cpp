@@ -19,6 +19,7 @@ void EventSystem::Initialize()
 	glfwSetKeyCallback(window->GetGLFWwindow(), KeyCallback);
 	glfwSetCursorPosCallback(window->GetGLFWwindow(), MousePositionCallback);
 	glfwSetMouseButtonCallback(window->GetGLFWwindow(), MouseButtonCallback);
+	glfwSetScrollCallback(window->GetGLFWwindow(), MouseWheelCallback);
 }
 
 void EventSystem::Terminate()
@@ -127,5 +128,18 @@ void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action
 
 			instance->DispatchEvent(event);
 		}
+	}
+}
+
+void EventSystem::MouseWheelCallback(GLFWwindow* window, f64 xoffset, f64 yoffset)
+{
+	Event event;
+	event.type = EventType::MouseWheel;
+	event.parameters.mouseWheel.xoffset = xoffset;
+	event.parameters.mouseWheel.yoffset = yoffset;
+
+	for (auto& instance : s_instances)
+	{
+		instance->DispatchEvent(event);
 	}
 }

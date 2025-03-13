@@ -8,3 +8,8 @@ ComponentBase::ComponentBase(ComponentID id)
 ComponentBase::~ComponentBase()
 {
 }
+
+void ComponentBase::Update(ui32 frameNo, f32 timeDelta)
+{
+
+}
