@@ -22,6 +22,8 @@ void ImmediateModeRenderSystem::Terminate()
 
 void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 {
+	glUseProgram(0);
+
 	glViewport(0, 0,
 		Feather.GetFeatherWindow()->GetWidth(),
 		Feather.GetFeatherWindow()->GetHeight());
@@ -62,21 +64,21 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	// Draw X-axis (Red)
 	glBegin(GL_LINES);
 	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(-1.0f, 0.0f, 0.0f);
+	glVertex3f(-0.5f, 0.0f, 0.0f);
 	glVertex3f(1.0f, 0.0f, 0.0f);
 	glEnd();
 
 	// Draw Y-axis (Green)
 	glBegin(GL_LINES);
 	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, -1.0f, 0.0f);
+	glVertex3f(0.0f, -0.5f, 0.0f);
 	glVertex3f(0.0f, 1.0f, 0.0f);
 	glEnd();
 
 	// Draw Z-axis (Blue)
 	glBegin(GL_LINES);
 	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(0.0f, 0.0f, -1.0f);
+	glVertex3f(0.0f, 0.0f, -0.5f);
 	glVertex3f(0.0f, 0.0f, 1.0f);
 	glEnd();
 }

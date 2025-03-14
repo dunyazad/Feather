@@ -89,10 +89,10 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 			lastMButtonPositionX = event.parameters.mouseButton.xpos;
 			lastMButtonPositionY = event.parameters.mouseButton.xpos;
 		}
-		alog("Button Press : %d - x : %.2f, y : %.2f\n",
-			event.parameters.mouseButton.button,
-			event.parameters.mouseButton.xpos,
-			event.parameters.mouseButton.ypos);
+		//alog("Button Press : %d - x : %.2f, y : %.2f\n",
+		//	event.parameters.mouseButton.button,
+		//	event.parameters.mouseButton.xpos,
+		//	event.parameters.mouseButton.ypos);
 		});
 
 	AddEventHandler(EventType::MouseButtonRelease, [&](const Event& event) {
@@ -114,10 +114,10 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 			lastMButtonPositionX = UINT32_MAX;
 			lastMButtonPositionY = UINT32_MAX;
 		}
-		alog("Button Release : %d - x : %.2f, y : %.2f\n",
-			event.parameters.mouseButton.button,
-			event.parameters.mouseButton.xpos,
-			event.parameters.mouseButton.ypos);
+		//alog("Button Release : %d - x : %.2f, y : %.2f\n",
+		//	event.parameters.mouseButton.button,
+		//	event.parameters.mouseButton.xpos,
+		//	event.parameters.mouseButton.ypos);
 		});
 
 	AddEventHandler(EventType::MouseWheel, [&](const Event& event) {

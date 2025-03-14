@@ -18,32 +18,9 @@ public:
 
     void Use();
 
+    inline GLint GetUniformLocation(const string& name) { return glGetUniformLocation(shaderProgram, name.c_str()); }
+    inline void UniformM4(GLint location, const MiniMath::M4& m) { glUniformMatrix4fv(location, 1, GL_FALSE, (float*)m.m); }
+
 private:
     GLuint shaderProgram = UINT_MAX;
-
-//    // Vertex Shader (변환 행렬 적용)
-//    const char* vertexShaderSource = R"(
-//    #version 330 core
-//
-//    layout (location = 0) in vec3 aPos;
-//
-//    uniform mat4 transform;
-//    uniform mat4 projection;
-//    uniform mat4 view;
-//
-//    void main() {
-//        gl_Position = projection * view * transform * vec4(aPos, 1.0);
-//    }
-//)";
-//
-//    // Fragment Shader
-//    const char* fragmentShaderSource = R"(
-//    #version 330 core
-//
-//    out vec4 FragColor;
-//
-//    void main() {
-//        FragColor = vec4(0.8, 0.3, 0.2, 1.0);
-//    }
-//)";
 };
