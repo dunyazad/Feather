@@ -8,7 +8,7 @@ public:
 	StatusPanel();
 	~StatusPanel();
 
-	void Render();
+	virtual void Render() override;
 private:
     const ui32 historySize = 50;
 
