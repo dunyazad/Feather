@@ -92,7 +92,7 @@ public:
 	};
 
 public:
-	Renderable(ComponentID id);
+	Renderable();
 	~Renderable();
 
 	void Initialize(GeometryMode geometryMode);

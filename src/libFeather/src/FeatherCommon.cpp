@@ -42,35 +42,6 @@ namespace Time
     }
 }
 
-IEventReceiver::IEventReceiver()
-{
-}
-
-IEventReceiver::~IEventReceiver()
-{
-}
-
-void IEventReceiver::OnEvent(const Event& event)
-{
-    if (0 != eventHandlers.count(event.type))
-    {
-        for (auto& handler : eventHandlers[event.type])
-        {
-            handler(event);
-        }
-    }
-}
-
-void IEventReceiver::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
-{
-	eventHandlers[eventType].push_back(handler);
-	auto eventSystem = Feather.GetSystem<EventSystem>();
-	if (nullptr != eventSystem)
-	{
-		eventSystem->SubscribeEvent(eventType, this);
-	}
-}
-
 unordered_map<type_index, unordered_set<type_index>> FeatherObject::subclass_map;
 
 unordered_map<type_index, unordered_set<type_index>>& FeatherObject::GetSubclassMap()
@@ -90,12 +61,35 @@ unordered_set<type_index> FeatherObject::GetAllSubclasses(type_index baseType)
 	{
 		for (const auto& subType : GetSubclassMap()[baseType])
 		{
-			if (subclasses.insert(subType).second) // Áßº¹ ¹æÁö
+			if (subclasses.insert(subType).second)
 			{
-				auto childSubclasses = GetAllSubclasses(subType); // Àç±Í Å½»ö
+				auto childSubclasses = GetAllSubclasses(subType);
 				subclasses.insert(childSubclasses.begin(), childSubclasses.end());
 			}
 		}
 	}
 	return subclasses;
+}
+
+void FeatherObject::OnEvent(const Event& event)
+{
+    if (0 != eventHandlers.count(event.type))
+    {
+        for (auto& handler : eventHandlers[event.type])
+        {
+            handler(event);
+        }
+    }
+}
+
+void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
+{
+    eventHandlers[eventType].push_back(handler);
+    auto eventSystems = Feather.GetInstances<EventSystem>();
+    if (eventSystems.empty()) return;
+
+    if (nullptr != *eventSystems.begin())
+    {
+        (*eventSystems.begin())->SubscribeEvent(eventType, this);
+    }
 }

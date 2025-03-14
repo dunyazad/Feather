@@ -5,7 +5,7 @@
 class StatusPanel : public RegisterDerivation<StatusPanel, GUIComponentBase>
 {
 public:
-	StatusPanel(ComponentID id);
+	StatusPanel();
 	~StatusPanel();
 
 	void Render();

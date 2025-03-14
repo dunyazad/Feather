@@ -1,8 +1,10 @@
 #include <Entity.h>
 #include <Component/Components.h>
 
-Entity::Entity(EntityID id, const string& name)
-	: id(id), name(name)
+EntityID Entity::s_id = 0;
+
+Entity::Entity()
+	: id(s_id++)
 {
 }
 

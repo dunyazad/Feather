@@ -40,7 +40,7 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	// Enable depth test if needed
 	glEnable(GL_DEPTH_TEST);
 
-	auto cameras = Feather.GetComponents<PerspectiveCamera>();
+	auto cameras = Feather.GetInstances<PerspectiveCamera>();
 	for (auto& camera : cameras)
 	{
 		if (nullptr != camera)

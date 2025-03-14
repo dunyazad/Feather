@@ -1,8 +1,12 @@
 #pragma once
 
 #include <FeatherCommon.h>
+
 #include <Feather.h>
 #include <FeatherWindow.h>
+#include <File.h>
+#include <MiniMath.h>
+#include <Monitor.h>
 
 #include <Entity.h>
 #include <System/Systems.h>

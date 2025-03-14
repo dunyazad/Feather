@@ -53,7 +53,7 @@ using namespace std;
 #include "backends/imgui_impl_opengl3.h"
 #include "implot.h"
 
-#define Feather libFeather::GetInstance()
+#define Feather libFeather::GetStaticInstance()
 
 typedef char i8;
 typedef short i16;
@@ -151,19 +151,6 @@ struct Event
 	} parameters;
 };
 
-class IEventReceiver
-{
-public:
-	IEventReceiver();
-	virtual ~IEventReceiver() = 0;
-
-	virtual void OnEvent(const Event& event);
-	virtual void AddEventHandler(EventType eventType, function<void(const Event&)> handler);
-
-protected:
-	map<EventType, vector<function<void(const Event&)>>> eventHandlers;
-};
-
 class FeatherObject
 {
 public:
@@ -173,28 +160,19 @@ public:
 	static void RegisterClass(type_index baseType, type_index derivedType);
 	static unordered_set<type_index> GetAllSubclasses(type_index baseType);
 
+	virtual void OnEvent(const Event& event);
+	virtual void AddEventHandler(EventType eventType, function<void(const Event&)> handler);
+
+	inline const string& GetName() const { return name; }
+	inline void SetName(const string& name) { this->name = name; }
+
+protected:
+	string name = "";
+	map<EventType, vector<function<void(const Event&)>>> eventHandlers;
+
 private:
 	static unordered_map<type_index, unordered_set<type_index>> subclass_map;
 };
-
-//template <typename Derived, typename Base>
-//class RegisterDerivation : public Base
-//{
-//public:
-//	RegisterDerivation()
-//	{
-//		static bool registered = []() {
-//			FeatherObject::RegisterClass(typeid(Base), typeid(Derived));
-//			return true;
-//		}();
-//		//Feather::RegisterInstance(this, typeid(Derived)); // Feather를 통해 인스턴스 자동 등록
-//	}
-//
-//	~RegisterDerivation()
-//	{
-//		//Feather::RemoveInstance(this); // Feather를 통해 인스턴스 자동 제거
-//	}
-//};
 
 template <typename Derived, typename Base>
 class RegisterDerivation : public Base

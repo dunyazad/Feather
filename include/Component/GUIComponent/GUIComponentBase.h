@@ -6,7 +6,7 @@
 class GUIComponentBase : public RegisterDerivation<GUIComponentBase, ComponentBase>
 {
 public:
-	GUIComponentBase(ComponentID id);
+	GUIComponentBase();
 	virtual ~GUIComponentBase();
 
 private:

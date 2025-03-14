@@ -2,60 +2,13 @@
 
 #include <Entity.h>
 #include <MiniMath.h>
+#include <Monitor.h>
 #include <FeatherWindow.h>
 #include <Component/Components.h>
 #include <Component/Shader.h>
 #include <System/Systems.h>
 
-#ifdef _WINDOWS
-BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
-    std::vector<MonitorInfo>* monitors = reinterpret_cast<std::vector<MonitorInfo>*>(dwData);
-    MONITORINFO monitorInfo;
-    monitorInfo.cbSize = sizeof(MONITORINFO);
-    if (GetMonitorInfo(hMonitor, &monitorInfo)) {
-        monitors->push_back({ hMonitor, monitorInfo });
-    }
-    return TRUE;
-}
-
-void MaximizeConsoleWindowOnMonitor(int monitorIndex) {
-    HWND consoleWindow = GetConsoleWindow();
-    if (!consoleWindow) return;
-
-    std::vector<MonitorInfo> monitors;
-    EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, reinterpret_cast<LPARAM>(&monitors));
-
-    if (monitorIndex >= 0 && monitorIndex < monitors.size()) {
-        const MonitorInfo& monitor = monitors[monitorIndex];
-        RECT workArea = monitor.monitorInfo.rcWork;
-
-        MoveWindow(consoleWindow, workArea.left, workArea.top,
-            workArea.right - workArea.left,
-            workArea.bottom - workArea.top, TRUE);
-        ShowWindow(consoleWindow, SW_MAXIMIZE);
-    }
-}
-
-void MaximizeWindowOnMonitor(HWND hwnd, int monitorIndex) {
-    std::vector<MonitorInfo> monitors;
-    EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, reinterpret_cast<LPARAM>(&monitors));
-
-    if (monitorIndex >= 0 && monitorIndex < monitors.size()) {
-        const MonitorInfo& monitor = monitors[monitorIndex];
-        RECT workArea = monitor.monitorInfo.rcWork;
-
-        // Set the position and size of the VTK window to match the monitor's work area
-        //renderWindow->SetPosition(workArea.left, workArea.top);
-        //renderWindow->SetSize(workArea.right - workArea.left, workArea.bottom - workArea.top);
-
-        MoveWindow(hwnd, workArea.left, workArea.top,
-            workArea.right - workArea.left,
-            workArea.bottom - workArea.top, TRUE);
-
-        ShowWindow(hwnd, SW_MAXIMIZE);
-    }
-}
-#endif
+unordered_map<type_index, vector<FeatherObject*>> libFeather::s_instanceMap;
 
 libFeather::libFeather() {}
 libFeather::~libFeather() {}
@@ -65,100 +18,29 @@ void libFeather::Initialize(ui32 width, ui32 height)
     featherWindow = new FeatherWindow();
     featherWindow->Initialize(width, height);
     
-    systems[typeid(GUISystem)] = new GUISystem(featherWindow);
-    systems[typeid(EventSystem)] = new EventSystem(featherWindow);
-    systems[typeid(InputSystem)] = new InputSystem(featherWindow);
-    systems[typeid(ImmediateModeRenderSystem)] = new ImmediateModeRenderSystem(featherWindow);
-    systems[typeid(RenderSystem)] = new RenderSystem(featherWindow);
-
-    for (auto& kvp : systems)
-    {
-        kvp.second->Initialize();
-    }
+    CreateInstance<EventSystem>("EventSystem", featherWindow)->Initialize();
+    CreateInstance<GUISystem>("GUISystem", featherWindow)->Initialize();
+    CreateInstance<InputSystem>("InputSystem", featherWindow)->Initialize();
+    CreateInstance<ImmediateModeRenderSystem>("ImmediateModeRenderSystem", featherWindow)->Initialize();
+    CreateInstance<RenderSystem>("RenderSystem", featherWindow)->Initialize();
 
     /////////glfwSwapInterval(0);  // Disable V-Sync
 }
 
 void libFeather::Terminate()
 {
-    for (auto& kvp : entities)
+    for (auto& instance : objectInstances)
     {
-        if (nullptr != kvp.second)
+        if (nullptr != instance)
         {
-            delete kvp.second;
+            delete instance;
         }
+        objectInstances.clear();
     }
-    entities.clear();
-
-    for (auto& component : components)
-    {
-        if (nullptr != component)
-        {
-            delete component;
-        }
-    }
-    components.clear();
-
-    typeComponentMapping.clear();
-    idComponentMapping.clear();
-    entityComponentMapping.clear();
-
-    for (auto& kvp : systems)
-    {
-        if (nullptr != kvp.second)
-        {
-            kvp.second->Terminate();
-            delete kvp.second;
-        }
-    }
-    systems.clear();
 
     if (nullptr != featherWindow)
     {
         delete featherWindow;
-    }
-}
-
-Entity* libFeather::CreateEntity(const string& name)
-{
-    auto entity = new Entity(nextEntityID++, name);
-    entities[entity->GetID()] = entity;
-    return entity;
-}
-
-Entity* libFeather::GetEntity(EntityID id)
-{
-    if (0 == entities.count(id))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return entities[id];
-    }
-}
-
-ComponentBase* libFeather::GetComponent(ComponentID id)
-{
-    if (0 == idComponentMapping.count(id))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return components[idComponentMapping[id]];
-    }
-}
-
-const vector<ui32>& libFeather::GetComponentIDsByTypeIndex(const type_index& typeIndex)
-{
-    if (0 == typeComponentMapping.count(typeIndex))
-    {
-        return typeComponentMapping[typeid(ComponentBase)];
-    }
-    else
-    {
-        return typeComponentMapping[typeIndex];
     }
 }
 
@@ -189,20 +71,29 @@ void libFeather::Run()
 
         glfwPollEvents();
 
-        //for (auto& kvp : systems)
-        //{
-        //    kvp.second->Update(frameNo, timeDelta);
-        //}
-
-        systems[typeid(EventSystem)]->Update(frameNo, timeDelta);
-        systems[typeid(InputSystem)]->Update(frameNo, timeDelta);
-        systems[typeid(RenderSystem)]->Update(frameNo, timeDelta);
-        systems[typeid(ImmediateModeRenderSystem)]->Update(frameNo, timeDelta);
-        systems[typeid(GUISystem)]->Update(frameNo, timeDelta);
+        for (auto& system : GetInstances<SystemBase>())
+        {
+            system->Update(frameNo, timeDelta);
+        }
 
         glfwSwapBuffers(glfwGetCurrentContext());
 
         frameNo++;
         lastTime = now;
     }
+}
+
+unordered_map<type_index, vector<FeatherObject*>>& libFeather::GetInstanceMap()
+{
+    return s_instanceMap;
+}
+
+set<FeatherObject*> libFeather::GetAllInstances()
+{
+    set<FeatherObject*> allInstances;
+    for (const auto& [type, instances] : s_instanceMap)
+    {
+        allInstances.insert(instances.begin(), instances.end());
+    }
+    return allInstances;
 }

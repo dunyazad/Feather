@@ -2,8 +2,8 @@
 #include <Feather.h>
 #include <FeatherWindow.h>
 
-CameraBase::CameraBase(ComponentID id)
-	: RegisterDerivation<CameraBase, ComponentBase>(id)
+CameraBase::CameraBase()
+	: RegisterDerivation<CameraBase, ComponentBase>()
 {
 }
 
@@ -43,8 +43,8 @@ MiniMath::M4 CameraBase::LookAt(const MiniMath::V3& eye, const MiniMath::V3& tar
     return result;
 }
 
-PerspectiveCamera::PerspectiveCamera(ComponentID id)
-    : CameraBase(id)
+PerspectiveCamera::PerspectiveCamera()
+    : RegisterDerivation<PerspectiveCamera, CameraBase>()
 {
     auto window = Feather.GetFeatherWindow();
 
@@ -102,8 +102,8 @@ void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
     }
 }
 
-OrthogonalCamera::OrthogonalCamera(ComponentID id)
-	: CameraBase(id)
+OrthogonalCamera::OrthogonalCamera()
+	: RegisterDerivation<OrthogonalCamera, CameraBase>()
 {
 }
 

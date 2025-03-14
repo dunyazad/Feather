@@ -1,7 +1,9 @@
 #include <Component/ComponentBase.h>
 
-ComponentBase::ComponentBase(ComponentID id)
-	: RegisterDerivation<ComponentBase, FeatherObject>(), id(id)
+ComponentID ComponentBase::s_id = 0;
+
+ComponentBase::ComponentBase()
+	: RegisterDerivation<ComponentBase, FeatherObject>(), id(s_id++)
 {
 }
 

@@ -15,8 +15,8 @@ int main(int argc, char** argv)
 
 	Feather.AddOnInitializeCallback([&]() {
 		{
-			auto appMain = Feather.CreateEntity("AppMain");
-			auto appMainEventReceiver = Feather.CreateComponent<ComponentBase>();
+			auto appMain = Feather.CreateInstance<Entity>("AppMain");
+			auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
 			//appMain->AddComponent(appMainEventReceiver);
 			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {
 				if (GLFW_KEY_ESCAPE == event.parameters.key.keyCode)
@@ -26,26 +26,26 @@ int main(int argc, char** argv)
 				});
 		}
 		{
-			auto camera = Feather.CreateEntity("Camera");
-			auto perspectiveCamera = Feather.CreateComponent<PerspectiveCamera>();
+			auto camera = Feather.CreateInstance<Entity>("Camera");
+			auto perspectiveCamera = Feather.CreateInstance<PerspectiveCamera>();
 			//camera->AddComponent(perspectiveCamera);
 
-			auto cameraManipulator = Feather.CreateComponent<CameraManipulatorOrbit>();
+			auto cameraManipulator = Feather.CreateInstance<CameraManipulatorOrbit>();
 			//camera->AddComponent(cameraManipulator);
 			cameraManipulator->SetCamera(perspectiveCamera);
 		}
 
 		{
-			auto gui = Feather.CreateEntity("GUI");
-			auto statusPanel = Feather.CreateComponent<StatusPanel>();
+			auto gui = Feather.CreateInstance<Entity>("GUI");
+			auto statusPanel = Feather.CreateInstance<StatusPanel>();
 			//gui->AddComponent(statusPanel);
 		}
 
 		{
-			auto entity = Feather.CreateEntity("Mesh");
-			auto shader = Feather.CreateComponent<Shader>();
+			auto entity = Feather.CreateInstance<Entity>("Mesh");
+			auto shader = Feather.CreateInstance<Shader>();
 			shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
-			auto renderable = Feather.CreateComponent<Renderable>();
+			auto renderable = Feather.CreateInstance<Renderable>();
 			renderable->Initialize(Renderable::GeometryMode::Triangles);
 			renderable->SetShader(shader);
 			//entity->AddComponent(shader);
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 			renderable->AddIndex(2);
 		}
 		
-		//auto cameraEventReceiver = Feather.CreateComponent<EventReceiver>();
+		//auto cameraEventReceiver = Feather.CreateInstance<EventReceiver>();
 		//camera->AddComponent(cameraEventReceiver);
 		//cameraEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {});
 

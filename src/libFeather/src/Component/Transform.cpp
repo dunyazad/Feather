@@ -1,7 +1,7 @@
 #include <Component/Transform.h>
 
-Transform::Transform(ComponentID id)
-	: RegisterDerivation<Transform, ComponentBase>(id)
+Transform::Transform()
+	: RegisterDerivation<Transform, ComponentBase>()
 {
 }
 

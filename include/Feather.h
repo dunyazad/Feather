@@ -2,17 +2,6 @@
 
 #include <FeatherCommon.h>
 
-#ifdef _WINDOWS
-struct MonitorInfo {
-	HMONITOR hMonitor;
-	MONITORINFO monitorInfo;
-};
-
-BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData);
-void MaximizeConsoleWindowOnMonitor(int monitorIndex);
-void MaximizeWindowOnMonitor(HWND hwnd, int monitorIndex);
-#endif
-
 class Entity;
 class FeatherWindow;
 class SystemBase;
@@ -25,65 +14,67 @@ class OrthogonalCamera;
 class libFeather
 {
 public:
-	static libFeather& GetInstance()
+	static libFeather& GetStaticInstance()
 	{
 		static libFeather instance;
 		return instance;
 	}
 
 	void Initialize(ui32 width, ui32 height);
+	void Terminate();
 
 	void Run();
 
-	void Terminate();
-
-	Entity* CreateEntity(const string& name = "");
-	Entity* GetEntity(EntityID id);
-
-	template <typename T>
-	T* CreateComponent()
+	template<typename T>
+	set<T*> GetInstances()
 	{
-		auto component = new T(nextComponentID++);
-		auto index = components.size();
-		components.push_back(component);
-		typeComponentMapping[typeid(T)].push_back(index);
-		idComponentMapping[component->GetID()] = index;
-		return component;
+		return GetInstancesOfType<T>(typeid(T));
 	}
 
-	ComponentBase* GetComponent(ComponentID id);
-	template <typename T>
-	vector<T*> GetComponents()
+	template <typename T, typename... Args>
+	T* CreateInstance(const string& name = "", Args&&... args)
 	{
-		vector<T*> result;
+		auto instance = new T(forward<Args>(args)...);
+		instance->SetName(name);
+		objectInstances.push_back(instance);
+		s_instanceMap[typeid(T)].push_back(instance);
+		return instance;
+	}
 
-		type_index typeIndex = typeid(T);
+	static unordered_map<type_index, vector<FeatherObject*>>& GetInstanceMap();
+	static set<FeatherObject*> GetAllInstances();
 
-		if (0 != typeComponentMapping.count(typeIndex))
+	template<typename T>
+	static set<T*> GetInstancesOfType(type_index baseType)
+	{
+		set<T*> instances;
+
+		if (s_instanceMap.find(baseType) != s_instanceMap.end())
 		{
-			auto ids = typeComponentMapping[typeIndex];
-			for (auto& id : ids)
+			for (auto obj : s_instanceMap[baseType])
 			{
-				auto component = dynamic_cast<T*>(components[id]);
-				if (nullptr != component)
+				if (auto castedObj = dynamic_cast<T*>(obj))
 				{
-					result.push_back(component);
+					instances.insert(castedObj);
 				}
 			}
 		}
 
-		return result;
-	}
+		for (const auto& subclass : FeatherObject::GetAllSubclasses(baseType))
+		{
+			if (s_instanceMap.find(subclass) != s_instanceMap.end())
+			{
+				for (auto obj : s_instanceMap[subclass])
+				{
+					if (auto castedObj = dynamic_cast<T*>(obj))
+					{
+						instances.insert(castedObj);
+					}
+				}
+			}
+		}
 
-	inline const vector<ComponentBase*>& GetComponents() { return components; }
-	const vector<ComponentID>& GetComponentsByEntityID(EntityID entityID) { return entityComponentMapping[entityID]; }
-	const vector<ui32>& GetComponentIDsByTypeIndex(const type_index& typeIndex);
-
-	template <typename T>
-	T* GetSystem()
-	{
-		if (0 == systems.count(typeid(T))) return nullptr;
-		else return dynamic_cast<T*>(systems[typeid(T)]);
+		return instances;
 	}
 
 	inline FeatherWindow* GetFeatherWindow() const { return featherWindow; }
@@ -101,17 +92,9 @@ private:
 
 	FeatherWindow* featherWindow = nullptr;
 
-	unordered_map<EntityID, Entity*> entities;
-	ui32 nextEntityID = 0;
+	static unordered_map<type_index, vector<FeatherObject*>> s_instanceMap;
 
-	vector<ComponentBase*> components;
-	unordered_map<std::type_index, vector<ui32>> typeComponentMapping;
-	unordered_map<ComponentID, ui32> idComponentMapping;
-	ui32 nextComponentID = 0;
-
-	unordered_map<EntityID, vector<ComponentID>> entityComponentMapping;
-
-	map<type_index, SystemBase*> systems;
+	vector<FeatherObject*> objectInstances;
 
 	vector<function<void()>> onInitializeCallbacks;
 	vector<function<void(f32)>> onUpdateCallbacks;

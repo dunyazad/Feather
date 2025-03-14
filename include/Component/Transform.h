@@ -7,7 +7,7 @@
 class Transform : public RegisterDerivation<Transform , ComponentBase>
 {
 public:
-	Transform(ComponentID id);
+	Transform();
 	~Transform();
 
 	Transform* GetParent() const;

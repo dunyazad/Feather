@@ -8,7 +8,7 @@ class CameraBase;
 class CameraManipulatorBase : public RegisterDerivation<CameraManipulatorBase, ComponentBase>
 {
 public:
-	CameraManipulatorBase(ComponentID id);
+	CameraManipulatorBase();
 	virtual ~CameraManipulatorBase() = default;
 
 	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
@@ -17,10 +17,10 @@ protected:
 	CameraBase* camera = nullptr;
 };
 
-class CameraManipulatorOrbit : public CameraManipulatorBase
+class CameraManipulatorOrbit : public RegisterDerivation<CameraManipulatorOrbit, CameraManipulatorBase>
 {
 public:
-	CameraManipulatorOrbit(ComponentID id);
+	CameraManipulatorOrbit();
 	~CameraManipulatorOrbit();
 	
 protected:

@@ -2,13 +2,13 @@
 #include <Component/Camera.h>
 #include <Feather.h>
 
-CameraManipulatorBase::CameraManipulatorBase(ComponentID id)
-	: RegisterDerivation<CameraManipulatorBase, ComponentBase>(id)
+CameraManipulatorBase::CameraManipulatorBase()
+	: RegisterDerivation<CameraManipulatorBase, ComponentBase>()
 {
 }
 
-CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
-	: CameraManipulatorBase(id)
+CameraManipulatorOrbit::CameraManipulatorOrbit()
+	: RegisterDerivation<CameraManipulatorOrbit, CameraManipulatorBase>()
 {
 	AddEventHandler(EventType::MousePosition, [&](const Event& event) {
 		if (nullptr == camera) return;
@@ -176,12 +176,10 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 
 		if (GLFW_KEY_LEFT == event.parameters.key.keyCode)
 		{
-			auto entity = Feather.GetEntity(0);
 			camera->GetEye().x -= 1.0f;
 		}
 		else if (GLFW_KEY_RIGHT == event.parameters.key.keyCode)
 		{
-			auto entity = Feather.GetEntity(0);
 			camera->GetEye().x += 1.0f;
 		}
 		});

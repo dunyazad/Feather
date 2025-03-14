@@ -7,13 +7,12 @@ class ComponentBase;
 class Entity : public RegisterDerivation<Entity, FeatherObject>
 {
 public:
-	Entity(EntityID id, const string& name = "");
+	Entity();
 	~Entity();
 
 	inline EntityID GetID() const { return id; }
-	inline const string& GetName() const { return name; }
 
 private:
-	string name = "";
+	static EntityID s_id;
 	EntityID id;
 };

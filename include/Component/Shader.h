@@ -7,7 +7,7 @@
 class Shader : public RegisterDerivation<Shader, ComponentBase>
 {
 public:
-	Shader(ComponentID id);
+	Shader();
 	virtual ~Shader();
 
     void Initialize(const File& vsFile, const File& fsFile);

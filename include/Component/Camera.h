@@ -20,7 +20,7 @@ public:
 	enum ProjectionMode { Perspective, Orghogonal };
 
 public:
-	CameraBase(ComponentID id);
+	CameraBase();
 	virtual ~CameraBase();
 
 	MiniMath::M4 LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const;
@@ -49,10 +49,10 @@ protected:
 	MiniMath::V3 up = MiniMath::V3(0.0f, 1.0f, 0.0f);
 };
 
-class PerspectiveCamera : public CameraBase
+class PerspectiveCamera : public RegisterDerivation<PerspectiveCamera, CameraBase>
 {
 public:
-	PerspectiveCamera(ComponentID id);
+	PerspectiveCamera();
 	virtual ~PerspectiveCamera();
 
 	virtual void Update(ui32 frameNo, f32 timeDelta) override;
@@ -74,10 +74,10 @@ protected:
 	f32 zFar = 1000.0f;
 };
 
-class OrthogonalCamera : public CameraBase
+class OrthogonalCamera : public RegisterDerivation<OrthogonalCamera, CameraBase>
 {
 public:
-	OrthogonalCamera(ComponentID id);
+	OrthogonalCamera();
 	virtual ~OrthogonalCamera();
 
 	virtual void Update(ui32 frameNo, f32 timeDelta) override;

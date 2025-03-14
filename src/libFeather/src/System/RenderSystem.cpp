@@ -29,7 +29,7 @@ void RenderSystem::Terminate()
 
 void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
 {
-    auto cameras = Feather.GetComponents<PerspectiveCamera>();
+    auto cameras = Feather.GetInstances<PerspectiveCamera>();
     if (cameras.empty())
     {
         alog("No camera !!!\n");
@@ -42,7 +42,7 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
     }
 
     map<Shader*, vector<Renderable*>> shaderMapping;
-    auto renderables = Feather.GetComponents<Renderable>();
+    auto renderables = Feather.GetInstances<Renderable>();
     for (auto& renderable : renderables)
     {
         auto shader = renderable->GetShader();
@@ -54,8 +54,8 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         if (nullptr == kvp.first) continue;
 
         kvp.first->Use();
-        kvp.first->UniformM4(0, cameras.front()->GetProjectionMatrix());
-        kvp.first->UniformM4(1, cameras.front()->GetViewMatrix());
+        kvp.first->UniformM4(0, (*cameras.begin())->GetProjectionMatrix());
+        kvp.first->UniformM4(1, (*cameras.begin())->GetViewMatrix());
 
         for (auto& renderable : kvp.second)
         {
