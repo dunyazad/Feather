@@ -55,9 +55,9 @@ int main(int argc, char** argv)
 			renderable->AddVertex({ 1.0f, -1.0f, 0.0f });
 			renderable->AddVertex({ 0.0f, 1.0f, 0.0f });
 
-			renderable->AddNormal({ -1.0f, -1.0f, 0.0f });
-			renderable->AddNormal({ 1.0f, -1.0f, 0.0f });
-			renderable->AddNormal({ 1.0f, 1.0f, 0.0f });
+			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
 
 			renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
 			renderable->AddColor({ 0.0f, 1.0f, 0.0f, 1.0f });

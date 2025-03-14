@@ -59,7 +59,19 @@ public:
 
 			glBufferData(bufferTarget, sizeof(T) * datas.size(), datas.data(), bufferUsage);
 
-			glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+			//glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+			if constexpr (is_same_v<T, ui32>) {
+				glVertexAttribIPointer(attributeIndex, 1, GL_UNSIGNED_INT, sizeof(T), (void*)0);
+			}
+			else if constexpr (is_same_v<T, MiniMath::V3>) {
+				glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+			}
+			else if constexpr (is_same_v<T, MiniMath::V4>) {
+				glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+			}
+			else {
+				glVertexAttribPointer(attributeIndex, sizeof(T) / sizeof(float), GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+			}
 			glEnableVertexAttribArray(attributeIndex);
 
 			needToUpdate = false;
