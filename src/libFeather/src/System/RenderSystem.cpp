@@ -3,7 +3,7 @@
 #include <Component/Components.h>
 
 RenderSystem::RenderSystem(FeatherWindow* window)
-	: SystemBase(window)
+    : RegisterDerivation<RenderSystem, SystemBase>(window)
 {
 }
 

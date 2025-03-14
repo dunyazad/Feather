@@ -45,7 +45,7 @@ struct InputEvent
 	InputEventParameters parameters;
 };
 
-class InputSystem : public SystemBase
+class InputSystem : public RegisterDerivation<InputSystem, SystemBase>
 {
 public:
 	InputSystem(FeatherWindow* window);

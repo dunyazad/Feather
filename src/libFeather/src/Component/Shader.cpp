@@ -1,7 +1,7 @@
 #include <Component/Shader.h>
 
 Shader::Shader(ComponentID id)
-    : ComponentBase(id)
+    : RegisterDerivation<Shader, ComponentBase>(id)
 {
 }
 

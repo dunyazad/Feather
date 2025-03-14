@@ -7,7 +7,7 @@ float amplitude = 1.0f;
 float frequency = 1.0f;
 
 GUISystem::GUISystem(FeatherWindow* window)
-	: SystemBase(window)
+	: RegisterDerivation<GUISystem, SystemBase>(window)
 {
 }
 

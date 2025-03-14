@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 		{
 			auto appMain = Feather.CreateEntity("AppMain");
 			auto appMainEventReceiver = Feather.CreateComponent<ComponentBase>();
-			appMain->AddComponent(appMainEventReceiver);
+			//appMain->AddComponent(appMainEventReceiver);
 			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {
 				if (GLFW_KEY_ESCAPE == event.parameters.key.keyCode)
 				{
@@ -28,17 +28,17 @@ int main(int argc, char** argv)
 		{
 			auto camera = Feather.CreateEntity("Camera");
 			auto perspectiveCamera = Feather.CreateComponent<PerspectiveCamera>();
-			camera->AddComponent(perspectiveCamera);
+			//camera->AddComponent(perspectiveCamera);
 
 			auto cameraManipulator = Feather.CreateComponent<CameraManipulatorOrbit>();
-			camera->AddComponent(cameraManipulator);
+			//camera->AddComponent(cameraManipulator);
 			cameraManipulator->SetCamera(perspectiveCamera);
 		}
 
 		{
 			auto gui = Feather.CreateEntity("GUI");
 			auto statusPanel = Feather.CreateComponent<StatusPanel>();
-			gui->AddComponent(statusPanel);
+			//gui->AddComponent(statusPanel);
 		}
 
 		{
@@ -48,8 +48,8 @@ int main(int argc, char** argv)
 			auto renderable = Feather.CreateComponent<Renderable>();
 			renderable->Initialize(Renderable::GeometryMode::Triangles);
 			renderable->SetShader(shader);
-			entity->AddComponent(shader);
-			entity->AddComponent(renderable);
+			//entity->AddComponent(shader);
+			//entity->AddComponent(renderable);
 
 			renderable->AddVertex({ -1.0f, -1.0f, 0.0f });
 			renderable->AddVertex({ 1.0f, -1.0f, 0.0f });

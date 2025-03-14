@@ -3,7 +3,7 @@
 #include <Feather.h>
 
 CameraManipulatorBase::CameraManipulatorBase(ComponentID id)
-	: ComponentBase(id)
+	: RegisterDerivation<CameraManipulatorBase, ComponentBase>(id)
 {
 }
 

@@ -4,7 +4,7 @@
 
 class FeatherWindow;
 
-class SystemBase
+class SystemBase : public RegisterDerivation<SystemBase, FeatherObject>
 {
 public:
 	SystemBase(FeatherWindow* window);

@@ -4,7 +4,7 @@
 #include <File.h>
 #include <Component/ComponentBase.h>
 
-class Shader : public ComponentBase
+class Shader : public RegisterDerivation<Shader, ComponentBase>
 {
 public:
 	Shader(ComponentID id);

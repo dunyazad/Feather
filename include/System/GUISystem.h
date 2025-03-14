@@ -2,7 +2,7 @@
 
 #include <System/SystemBase.h>
 
-class GUISystem : public SystemBase
+class GUISystem : public RegisterDerivation<GUISystem, SystemBase>
 {
 public:
 	GUISystem(FeatherWindow* window);

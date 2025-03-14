@@ -9,13 +9,3 @@ Entity::Entity(EntityID id, const string& name)
 Entity::~Entity()
 {
 }
-
-void Entity::AddComponent(ComponentBase* component)
-{
-	componentIDs.push_back(component->GetID());
-}
-
-void Entity::AddComponent(ComponentID id)
-{
-	componentIDs.push_back(id);
-}

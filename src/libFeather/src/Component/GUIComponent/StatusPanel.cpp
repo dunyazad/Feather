@@ -1,7 +1,7 @@
 #include<Component/GUIComponent/StatusPanel.h>
 
 StatusPanel::StatusPanel(ComponentID id)
-	: GUIComponentBase(id), fpsHistory(historySize, 60.0f)
+	: RegisterDerivation<StatusPanel, GUIComponentBase>(id), fpsHistory(historySize, 60.0f)
 {
 	AddEventHandler(EventType::MousePosition, [&](const Event& event) {
         mouseX = (ui32)event.parameters.mousePosition.xpos;

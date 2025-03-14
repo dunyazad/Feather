@@ -5,7 +5,7 @@
 vector<EventSystem*> EventSystem::s_instances;
 
 EventSystem::EventSystem(FeatherWindow* window)
-	: SystemBase(window)
+	: RegisterDerivation<EventSystem, SystemBase>(window)
 {
 	s_instances.push_back(this);
 }

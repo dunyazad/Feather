@@ -5,7 +5,7 @@
 
 class CameraBase;
 
-class CameraManipulatorBase : public ComponentBase
+class CameraManipulatorBase : public RegisterDerivation<CameraManipulatorBase, ComponentBase>
 {
 public:
 	CameraManipulatorBase(ComponentID id);

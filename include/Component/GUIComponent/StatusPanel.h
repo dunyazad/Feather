@@ -2,7 +2,7 @@
 
 #include<Component/GUIComponent/GUIComponentBase.h>
 
-class StatusPanel : public GUIComponentBase
+class StatusPanel : public RegisterDerivation<StatusPanel, GUIComponentBase>
 {
 public:
 	StatusPanel(ComponentID id);

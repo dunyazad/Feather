@@ -4,7 +4,7 @@
 
 class Shader;
 
-class RenderSystem : public SystemBase
+class RenderSystem : public RegisterDerivation<RenderSystem, SystemBase>
 {
 public:
 	RenderSystem(FeatherWindow* window);

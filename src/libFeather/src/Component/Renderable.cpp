@@ -1,7 +1,7 @@
 #include <Component/Renderable.h>
 
 Renderable::Renderable(ComponentID id)
-	: ComponentBase(id)
+	: RegisterDerivation<Renderable, ComponentBase>(id)
 {
 }
 

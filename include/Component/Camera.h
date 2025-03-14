@@ -14,7 +14,7 @@ struct ProjectionInfoPerspective
 	f32 fovy, aspectRatio, zNear, zFar;
 };
 
-class CameraBase : public ComponentBase
+class CameraBase : public RegisterDerivation<CameraBase, ComponentBase>
 {
 public:
 	enum ProjectionMode { Perspective, Orghogonal };

@@ -4,7 +4,7 @@
 
 class EventReceiver;
 
-class EventSystem : public SystemBase
+class EventSystem : public RegisterDerivation<EventSystem, SystemBase>
 {
 public:
 	EventSystem(FeatherWindow* window);

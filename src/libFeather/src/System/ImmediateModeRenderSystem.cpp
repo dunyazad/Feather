@@ -4,7 +4,7 @@
 #include <Component/Components.h>
 
 ImmediateModeRenderSystem::ImmediateModeRenderSystem(FeatherWindow* window)
-	: SystemBase(window)
+	: RegisterDerivation<ImmediateModeRenderSystem, SystemBase>(window)
 {
 }
 

@@ -63,10 +63,39 @@ void IEventReceiver::OnEvent(const Event& event)
 
 void IEventReceiver::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
 {
-    eventHandlers[eventType].push_back(handler);
-    auto eventSystem = Feather.GetSystem<EventSystem>();
-    if (nullptr != eventSystem)
-    {
-        eventSystem->SubscribeEvent(eventType, this);
-    }
+	eventHandlers[eventType].push_back(handler);
+	auto eventSystem = Feather.GetSystem<EventSystem>();
+	if (nullptr != eventSystem)
+	{
+		eventSystem->SubscribeEvent(eventType, this);
+	}
+}
+
+unordered_map<type_index, unordered_set<type_index>> FeatherObject::subclass_map;
+
+unordered_map<type_index, unordered_set<type_index>>& FeatherObject::GetSubclassMap()
+{
+	return subclass_map;
+}
+
+void FeatherObject::RegisterClass(type_index baseType, type_index derivedType)
+{
+	GetSubclassMap()[baseType].insert(derivedType);
+}
+
+unordered_set<type_index> FeatherObject::GetAllSubclasses(type_index baseType)
+{
+	unordered_set<type_index> subclasses;
+	if (GetSubclassMap().find(baseType) != GetSubclassMap().end())
+	{
+		for (const auto& subType : GetSubclassMap()[baseType])
+		{
+			if (subclasses.insert(subType).second) // Áßº¹ ¹æÁö
+			{
+				auto childSubclasses = GetAllSubclasses(subType); // Àç±Í Å½»ö
+				subclasses.insert(childSubclasses.begin(), childSubclasses.end());
+			}
+		}
+	}
+	return subclasses;
 }

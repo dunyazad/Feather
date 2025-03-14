@@ -29,6 +29,8 @@
 #include <thread>
 #include <typeinfo>
 #include <typeindex>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 using namespace std;
 
@@ -160,4 +162,50 @@ public:
 
 protected:
 	map<EventType, vector<function<void(const Event&)>>> eventHandlers;
+};
+
+class FeatherObject
+{
+public:
+	virtual ~FeatherObject() = default;
+
+	static unordered_map<type_index, unordered_set<type_index>>& GetSubclassMap();
+	static void RegisterClass(type_index baseType, type_index derivedType);
+	static unordered_set<type_index> GetAllSubclasses(type_index baseType);
+
+private:
+	static unordered_map<type_index, unordered_set<type_index>> subclass_map;
+};
+
+//template <typename Derived, typename Base>
+//class RegisterDerivation : public Base
+//{
+//public:
+//	RegisterDerivation()
+//	{
+//		static bool registered = []() {
+//			FeatherObject::RegisterClass(typeid(Base), typeid(Derived));
+//			return true;
+//		}();
+//		//Feather::RegisterInstance(this, typeid(Derived)); // Feather를 통해 인스턴스 자동 등록
+//	}
+//
+//	~RegisterDerivation()
+//	{
+//		//Feather::RemoveInstance(this); // Feather를 통해 인스턴스 자동 제거
+//	}
+//};
+
+template <typename Derived, typename Base>
+class RegisterDerivation : public Base
+{
+public:
+	template <typename... Args>
+	RegisterDerivation(Args&&... args) : Base(std::forward<Args>(args)...)
+	{
+		static bool registered = []() {
+			FeatherObject::RegisterClass(typeid(Base), typeid(Derived));
+			return true;
+		}();
+	}
 };

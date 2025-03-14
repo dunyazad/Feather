@@ -2,7 +2,7 @@
 
 #include <System/SystemBase.h>
 
-class ImmediateModeRenderSystem : public SystemBase
+class ImmediateModeRenderSystem : public RegisterDerivation<ImmediateModeRenderSystem, SystemBase>
 {
 public:
 	ImmediateModeRenderSystem(FeatherWindow* window);

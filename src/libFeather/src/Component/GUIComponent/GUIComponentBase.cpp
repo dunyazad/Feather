@@ -1,7 +1,7 @@
 #include <Component/GUIComponent/GUIComponentBase.h>
 
 GUIComponentBase::GUIComponentBase(ComponentID id)
-	: ComponentBase(id)
+	: RegisterDerivation<GUIComponentBase, ComponentBase>(id)
 {
 }
 

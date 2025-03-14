@@ -3,7 +3,7 @@
 #include <FeatherWindow.h>
 
 CameraBase::CameraBase(ComponentID id)
-	: ComponentBase(id)
+	: RegisterDerivation<CameraBase, ComponentBase>(id)
 {
 }
 
