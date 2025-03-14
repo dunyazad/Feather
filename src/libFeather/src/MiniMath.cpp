@@ -701,6 +701,15 @@ namespace MiniMath
 			0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
+	M4 translate(const M4& matrix, const V3& translation) {
+		M4 translationMatrix = M4::identity(); // Create a translation matrix
+		translationMatrix.m[3][0] = translation.x;
+		translationMatrix.m[3][1] = translation.y;
+		translationMatrix.m[3][2] = translation.z;
+
+		return matrix * translationMatrix; // Apply translation by multiplying
+	}
+
 	bool AABB::IntersectsTriangle(const V3& tp0, const V3& tp1, const V3& tp2)
 	{
 		V3 v0 = { tp0.x - center.x, tp0.y - center.y, tp0.z - center.z };

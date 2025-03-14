@@ -41,61 +41,58 @@ int main(int argc, char** argv)
 			//gui->AddComponent(statusPanel);
 		}
 
+		//{
+		//	auto entity = Feather.CreateInstance<Entity>("Triangle");
+		//	auto shader = Feather.CreateInstance<Shader>();
+		//	shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
+		//	auto renderable = Feather.CreateInstance<Renderable>();
+		//	renderable->Initialize(Renderable::GeometryMode::Triangles);
+		//	renderable->SetShader(shader);
+		//	//entity->AddComponent(shader);
+		//	//entity->AddComponent(renderable);
+
+		//	renderable->AddVertex({ -1.0f, -1.0f, 0.0f });
+		//	renderable->AddVertex({ 1.0f, -1.0f, 0.0f });
+		//	renderable->AddVertex({ 0.0f, 1.0f, 0.0f });
+
+		//	renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+		//	renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+		//	renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+
+		//	renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+		//	renderable->AddColor({ 0.0f, 1.0f, 0.0f, 1.0f });
+		//	renderable->AddColor({ 0.0f, 0.0f, 1.0f, 1.0f });
+
+		//	renderable->AddIndex(0);
+		//	renderable->AddIndex(1);
+		//	renderable->AddIndex(2);
+		//}
+
 		{
-			auto entity = Feather.CreateInstance<Entity>("Mesh");
+			auto entity = Feather.CreateInstance<Entity>("Box");
 			auto shader = Feather.CreateInstance<Shader>();
-			shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
+			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
 			auto renderable = Feather.CreateInstance<Renderable>();
 			renderable->Initialize(Renderable::GeometryMode::Triangles);
 			renderable->SetShader(shader);
-			//entity->AddComponent(shader);
-			//entity->AddComponent(renderable);
 
-			renderable->AddVertex({ -1.0f, -1.0f, 0.0f });
-			renderable->AddVertex({ 1.0f, -1.0f, 0.0f });
-			renderable->AddVertex({ 0.0f, 1.0f, 0.0f });
+			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "one");
+			renderable->AddIndices(indices);
+			renderable->AddVertices(vertices);
+			renderable->AddNormals(normals);
+			renderable->AddColors(colors);
+			renderable->AddUVs(uvs);
 
-			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
-			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
-			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+			for (int i = 0; i < 10; i++)
+			{
+				MiniMath::M4 model = MiniMath::M4::identity();
+				model = MiniMath::translate(model, MiniMath::V3(i * 2.0f, 0.0f, 0.0f));
+				renderable->AddInstanceTransform(model);
+			}
 
-			renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-			renderable->AddColor({ 0.0f, 1.0f, 0.0f, 1.0f });
-			renderable->AddColor({ 0.0f, 0.0f, 1.0f, 1.0f });
-
-			renderable->AddIndex(0);
-			renderable->AddIndex(1);
-			renderable->AddIndex(2);
+			renderable->EnableInstancing(10);
 		}
-		
-		//auto cameraEventReceiver = Feather.CreateInstance<EventReceiver>();
-		//camera->AddComponent(cameraEventReceiver);
-		//cameraEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {});
 
-
-		/*
-		glEnable(GL_DEPTH_TEST);
-		glViewport(0, 0, w->GetWidth(), w->GetHeight());
-
-		glGenVertexArrays(1, &VAO);
-		glGenBuffers(1, &VBO);
-		glBindVertexArray(VAO);
-
-		float vertices[] = {
-			-0.5f, -0.5f,  0.0f,
-			 0.5f, -0.5f,  0.0f,
-			 0.0f,  0.5f,  0.0f
-		};
-
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-		*/
 		});
 
 	Feather.Run();

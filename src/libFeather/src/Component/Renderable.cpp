@@ -15,45 +15,26 @@ void Renderable::Initialize(GeometryMode geometryMode)
 
 	glGenVertexArrays(1, &vao);
 
+	glBindVertexArray(vao);
+
+	indices.Initialize(UINT32_MAX, GraphicsBuffer<ui32>::BufferTarget::Element);
 	vertices.Initialize(0, GraphicsBuffer<MiniMath::V3>::BufferTarget::Array);
 	normals.Initialize(1, GraphicsBuffer<MiniMath::V3>::BufferTarget::Array);
 	colors.Initialize(2, GraphicsBuffer<MiniMath::V4>::BufferTarget::Array);
-	indices.Initialize(3, GraphicsBuffer<ui32>::BufferTarget::Element);
+	uvs.Initialize(3, GraphicsBuffer<MiniMath::V2>::BufferTarget::Array);
 
-	//unsigned int VAO, VBO, EBO, instanceVBO;
-	//glGenVertexArrays(1, &VAO);
-	//glGenBuffers(1, &VBO);
-	//glGenBuffers(1, &EBO);
-	//glGenBuffers(1, &instanceVBO);
+	glBindVertexArray(0);
+}
 
-	//glBindVertexArray(VAO);
+void Renderable::EnableInstancing(ui32 numberOfInstances)
+{
+	this->numberOfInstances = numberOfInstances;
 
-	//// Setup vertex attributes
-	//glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBindVertexArray(vao);
 
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	instanceTransforms.Initialize(4, GraphicsBuffer<MiniMath::M4>::BufferTarget::Array);
 
-	//// Position attribute
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	//glEnableVertexAttribArray(0);
-
-	//// Texture coordinates attribute
-	//glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	//glEnableVertexAttribArray(1);
-
-	//// Setup instance buffer
-	//glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(instancePositions), instancePositions, GL_STATIC_DRAW);
-
-	//// Instance attribute
-	//glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	//glEnableVertexAttribArray(2);
-	//glVertexAttribDivisor(2, 1);  // Tell OpenGL this is an instanced attribute
-
-	//glBindVertexArray(0);
-
+	glBindVertexArray(0);
 }
 
 void Renderable::Update(ui32 frameNo, f32 timeDelta)
@@ -65,17 +46,51 @@ void Renderable::Update(ui32 frameNo, f32 timeDelta)
 
 	glBindVertexArray(vao);
 
+	indices.Update();
 	vertices.Update();
 	normals.Update();
 	colors.Update();
-	indices.Update();
+	uvs.Update();
+
+	if (numberOfInstances > 1)
+	{
+		instanceTransforms.Update();
+	}
+
+	glBindVertexArray(0);
 }
 
 void Renderable::Draw()
 {
 	glBindVertexArray(vao);
 
-	glDrawElements(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr);
+	if (0 < numberOfInstances)
+	{
+		if (0 < indices.size())
+		{
+			glDrawElementsInstanced(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr, numberOfInstances);
+		}
+		else
+		{
+			glDrawArraysInstanced(geometryMode, 0, vertices.size(), numberOfInstances);
+		}
+	}
+	else
+	{
+		if (0 != indices.size())
+		{
+			glDrawElements(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr);
+		}
+		else
+		{
+			glDrawArrays(geometryMode, 0, vertices.size());
+		}
+	}
+}
+
+void Renderable::AddIndex(ui32 index)
+{
+	indices.AddData(index);
 }
 
 void Renderable::AddVertex(const MiniMath::V3& vertex)
@@ -93,7 +108,42 @@ void Renderable::AddColor(const MiniMath::V4& color)
 	colors.AddData(color);
 }
 
-void Renderable::AddIndex(ui32 index)
+void Renderable::AddUV(const MiniMath::V2& uv)
 {
-	indices.AddData(index);
+	uvs.AddData(uv);
+}
+
+void Renderable::AddInstanceTransform(const MiniMath::M4& transform)
+{
+	instanceTransforms.AddData(transform);
+}
+
+void Renderable::AddIndices(const vector<ui32>& indices)
+{
+	this->indices.AddData(indices.data(), indices.size());
+}
+
+void Renderable::AddVertices(const vector<MiniMath::V3>& vertices)
+{
+	this->vertices.AddData(vertices.data(), vertices.size());
+}
+
+void Renderable::AddNormals(const vector<MiniMath::V3>& normals)
+{
+	this->normals.AddData(normals.data(), normals.size());
+}
+
+void Renderable::AddColors(const vector<MiniMath::V4>& colors)
+{
+	this->colors.AddData(colors.data(), colors.size());
+}
+
+void Renderable::AddUVs(const vector<MiniMath::V2>& uvs)
+{
+	this->uvs.AddData(uvs.data(), uvs.size());
+}
+
+void Renderable::AddInstanceTransforms(const vector<MiniMath::M4>& transforms)
+{
+	this->instanceTransforms.AddData(transforms.data(), transforms.size());
 }

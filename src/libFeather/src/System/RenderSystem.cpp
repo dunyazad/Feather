@@ -49,18 +49,44 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         shaderMapping[shader].push_back(renderable);
     }
 
-    for (auto& kvp : shaderMapping)
+    //glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDisable(GL_BLEND);
+
+    for (auto& [shader, renderables] : shaderMapping)
     {
-        if (nullptr == kvp.first) continue;
+        if (nullptr == shader) continue;
 
-        kvp.first->Use();
-        kvp.first->UniformM4(0, (*cameras.begin())->GetProjectionMatrix());
-        kvp.first->UniformM4(1, (*cameras.begin())->GetViewMatrix());
+        shader->Use();
+        {
+            auto index = shader->GetUniformLocation("model");
+            shader->UniformM4(index, MiniMath::M4::identity());
+        }
+        {
+            auto index = shader->GetUniformLocation("view");
+            shader->UniformM4(index, (*cameras.begin())->GetViewMatrix());
+        }
+        {
+            auto index = shader->GetUniformLocation("projection");
+            shader->UniformM4(index, (*cameras.begin())->GetProjectionMatrix());
+        }
+        {
+            auto index = shader->GetUniformLocation("cameraPos");
+            shader->UniformV3(index, (*cameras.begin())->GetEye());
+        }
 
-        for (auto& renderable : kvp.second)
+        for (auto& renderable : renderables)
         {
             renderable->Update(frameNo, timeDelta);
             renderable->Draw();
         }
+    }
+
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
+        std::cerr << "OpenGL Error: " << err << std::endl;
     }
 }

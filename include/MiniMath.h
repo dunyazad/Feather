@@ -202,6 +202,8 @@ namespace MiniMath
 		static M4 zero();
 	};
 
+	M4 translate(const M4&, const V3&);
+
 	struct AABB
 	{
 		V3 center = { 0.0,  0.0,  0.0 };

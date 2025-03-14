@@ -59,7 +59,6 @@ public:
 
 			glBufferData(bufferTarget, sizeof(T) * datas.size(), datas.data(), bufferUsage);
 
-			//glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 			if constexpr (is_same_v<T, ui32>) {
 				glVertexAttribIPointer(attributeIndex, 1, GL_UNSIGNED_INT, sizeof(T), (void*)0);
 			}
@@ -69,11 +68,18 @@ public:
 			else if constexpr (is_same_v<T, MiniMath::V4>) {
 				glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 			}
+			else if constexpr (is_same_v<T, MiniMath::M4>) {
+				for (int i = 0; i < 4; i++) {
+					glVertexAttribPointer(attributeIndex + i, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)(sizeof(float) * i * 4));
+					glEnableVertexAttribArray(attributeIndex + i);
+					glVertexAttribDivisor(attributeIndex + i, 1); // Set attribute to be per-instance
+				}
+			}
 			else {
 				glVertexAttribPointer(attributeIndex, sizeof(T) / sizeof(float), GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 			}
-			glEnableVertexAttribArray(attributeIndex);
 
+			glEnableVertexAttribArray(attributeIndex);
 			needToUpdate = false;
 		}
 	}
@@ -108,15 +114,27 @@ public:
 	~Renderable();
 
 	void Initialize(GeometryMode geometryMode);
+	void EnableInstancing(ui32 numberOfInstances);
 
 	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	virtual void Draw();
 
+	void AddIndex(ui32 index);
 	void AddVertex(const MiniMath::V3& vertex);
 	void AddNormal(const MiniMath::V3& normal);
 	void AddColor(const MiniMath::V4& color);
-	void AddIndex(ui32 index);
+	void AddUV(const MiniMath::V2& uv);
+
+	void AddInstanceTransform(const MiniMath::M4& transform);
+
+	void AddIndices(const vector<ui32>& indices);
+	void AddVertices(const vector<MiniMath::V3>& vertices);
+	void AddNormals(const vector<MiniMath::V3>& normals);
+	void AddColors(const vector<MiniMath::V4>& colors);
+	void AddUVs(const vector<MiniMath::V2>& uvs);
+
+	void AddInstanceTransforms(const vector<MiniMath::M4>& transforms);
 
 	inline Shader* GetShader() const { return shader; }
 	inline void SetShader(Shader* shader) { this->shader = shader; }
@@ -127,8 +145,13 @@ private:
 
 	GeometryMode geometryMode = Triangles;
 
+	GraphicsBuffer<ui32> indices;
 	GraphicsBuffer<MiniMath::V3> vertices;
 	GraphicsBuffer<MiniMath::V3> normals;
 	GraphicsBuffer<MiniMath::V4> colors;
-	GraphicsBuffer<ui32> indices;
+	GraphicsBuffer<MiniMath::V2> uvs;
+
+	GraphicsBuffer<MiniMath::M4> instanceTransforms;
+
+	ui32 numberOfInstances = 1;
 };

@@ -4,6 +4,7 @@ layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec4 aColor;
 layout (location = 3) in vec2 aUV;
+layout (location = 4) in mat4 instanceModel; // Instance transformation matrix
 
 uniform mat4 model;
 uniform mat4 view;
@@ -15,10 +16,11 @@ out vec2 vUV;
 out vec3 vFragPos; // New: world-space fragment position
 
 void main() {
-    mat4 modelView = view * model;
-    
-    vFragPos = vec3(model * vec4(aPos, 1.0)); // Transform to world space
-    vNormal = mat3(transpose(inverse(model))) * aNormal; // Transform normal correctly
+    //mat4 modelView = view * model * instanceModel; // Use instance model matrix
+    mat4 modelView = view * instanceModel; // Use instance model matrix
+
+    vFragPos = vec3(instanceModel * vec4(aPos, 1.0)); // Transform to world space
+    vNormal = mat3(transpose(inverse(instanceModel))) * aNormal; // Transform normal correctly
     vColor = aColor;
     vUV = aUV;
 
