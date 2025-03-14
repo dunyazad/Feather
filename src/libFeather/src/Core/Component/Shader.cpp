@@ -48,29 +48,6 @@ void Shader::Initialize(const string& vs, const string& fs)
     glDeleteShader(fragmentShader);
 }
 
-//void Shader::Initialize()
-//{
-//    // Shader 초기화
-//    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-//    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-//    glCompileShader(vertexShader);
-//    CheckShaderCompileErrors(vertexShader, "VERTEX");
-//
-//    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-//    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-//    glCompileShader(fragmentShader);
-//    CheckShaderCompileErrors(fragmentShader, "FRAGMENT");
-//
-//    shaderProgram = glCreateProgram();
-//    glAttachShader(shaderProgram, vertexShader);
-//    glAttachShader(shaderProgram, fragmentShader);
-//    glLinkProgram(shaderProgram);
-//    CheckShaderCompileErrors(shaderProgram, "PROGRAM");
-//
-//    glDeleteShader(vertexShader);
-//    glDeleteShader(fragmentShader);
-//}
-
 void Shader::Terminate()
 {
     if (UINT_MAX != shaderProgram)
@@ -80,7 +57,6 @@ void Shader::Terminate()
     }
 }
 
-// 셰이더 컴파일 및 링크 오류 체크 함수
 void Shader::CheckShaderCompileErrors(GLuint shader, const std::string& type)
 {
     GLint success;

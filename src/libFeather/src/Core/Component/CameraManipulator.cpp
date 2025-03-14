@@ -123,26 +123,55 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 	AddEventHandler(EventType::MouseWheel, [&](const Event& event) {
 		if (nullptr == camera) return;
 
-		if (0 > event.parameters.mouseWheel.yoffset)
+		if (0 != pressedKeys.count(GLFW_KEY_LEFT_SHIFT) || 0 != pressedKeys.count(GLFW_KEY_RIGHT_SHIFT))
 		{
-			radius *= 1.1f;
+			auto perspectiveCamera = dynamic_cast<PerspectiveCamera*>(camera);
+			if (nullptr != perspectiveCamera)
+			{
+				f32 fovy = perspectiveCamera->GetFOVY() * RAD2DEG;
+
+				if (0 > event.parameters.mouseWheel.yoffset)
+				{
+					fovy += 1.0f;
+				}
+				else if (0 < event.parameters.mouseWheel.yoffset)
+				{
+					fovy -= 1.0f;
+				}
+				
+				if (1 > fovy) fovy = 1.0f;
+				if (90 < fovy) fovy = 90.0f;
+
+				perspectiveCamera->SetFOVY(fovy * DEG2RAD);
+			}
 		}
-		else if (0 < event.parameters.mouseWheel.yoffset)
+		else
 		{
-			radius *= 0.9f;
+			if (0 > event.parameters.mouseWheel.yoffset)
+			{
+				radius *= 1.1f;
+			}
+			else if (0 < event.parameters.mouseWheel.yoffset)
+			{
+				radius *= 0.9f;
+			}
+
+			auto target = camera->GetTarget();
+
+			MiniMath::V3 eye(
+				target.x + radius * cos(elevation * DEG2RAD) * sin(azimuth * DEG2RAD),
+				target.y + radius * sin(elevation * DEG2RAD),
+				target.z + radius * cos(elevation * DEG2RAD) * cos(azimuth * DEG2RAD));
+
+			camera->SetEye(eye);
 		}
-
-		auto target = camera->GetTarget();
-
-		MiniMath::V3 eye(
-			target.x + radius * cos(elevation * DEG2RAD) * sin(azimuth * DEG2RAD),
-			target.y + radius * sin(elevation * DEG2RAD),
-			target.z + radius * cos(elevation * DEG2RAD) * cos(azimuth * DEG2RAD));
-
-		camera->SetEye(eye);
 		});
 
 	AddEventHandler(EventType::KeyPress, [&](const Event& event) {
+		pressedKeys.insert(event.parameters.key.keyCode);
+
+		//alog("%d\n", event.parameters.key.keyCode);
+
 		if (nullptr == camera) return;
 
 		if (GLFW_KEY_LEFT == event.parameters.key.keyCode)
@@ -155,6 +184,13 @@ CameraManipulatorOrbit::CameraManipulatorOrbit(ComponentID id)
 			auto entity = Feather.GetEntity(0);
 			camera->GetEye().x += 1.0f;
 		}
+		});
+
+	AddEventHandler(EventType::KeyRelease, [&](const Event& event) {
+		pressedKeys.erase(event.parameters.key.keyCode);
+		
+		if (nullptr == camera) return;
+		
 		});
 }
 

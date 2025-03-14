@@ -57,6 +57,16 @@ public:
 
 	virtual void Update(ui32 frameNo, f32 timeDelta) override;
 
+	inline f32 GetFOVY() { return fovy; }
+	inline f32 GetAspectRatio() { return aspectRatio; }
+	inline f32 GetNear() { return zNear; }
+	inline f32 GetFar() { return zFar; }
+
+	inline void SetFOVY(f32 fovy) { this->fovy = fovy; needToUpdate = true; }
+	inline void SetAspectRatio(f32 aspectRatio) { this->aspectRatio = aspectRatio; needToUpdate = true; }
+	inline void SetNear(f32 zNear) { this->zNear = zNear; needToUpdate = true; }
+	inline void SetFar(f32 zFar) { this->zFar = zFar; needToUpdate = true; }
+
 protected:
 	f32 fovy = 45 * DEG2RAD;
 	f32 aspectRatio = 1.0f;

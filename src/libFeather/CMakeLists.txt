@@ -100,6 +100,11 @@ set(source_list
     src/Core/System/ImmediateModeRenderSystem.cpp
     src/Core/System/RenderSystem.cpp
     src/Core/System/SystemBase.cpp
+
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Default.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Default.fs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Line.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Line.fs
 )
 
 # Define the library

@@ -24,6 +24,8 @@ public:
 	~CameraManipulatorOrbit();
 	
 protected:
+	set<i32> pressedKeys;
+
 	f64 lastMousePositionX = UINT32_MAX;
 	f64 lastMousePositionY = UINT32_MAX;
 	

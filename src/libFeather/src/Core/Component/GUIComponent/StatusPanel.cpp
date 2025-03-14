@@ -75,9 +75,6 @@ void StatusPanel::Render()
         ImGui::Text("V-Sync");
         ImGui::SameLine();
         ToggleButton("V-Sync", &vSync);
-        {
-            //glfwSwapInterval(0);  // Disable V-Sync
-        }
         ImGui::Text("FPS: %.1f", fps);
 
         // Graph (Mini FPS history)
