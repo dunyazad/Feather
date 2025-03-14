@@ -56,6 +56,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/File.h
+    ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
     ${CMAKE_SOURCE_DIR}/include/Monitor.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/Components.h
@@ -84,6 +85,7 @@ set(source_list
     src/MiniMath.cpp
     src/FeatherWindow.cpp
     src/File.cpp
+    src/GeometryBuilder.cpp
     src/Monitor.cpp
     
     src/Component/ComponentBase.cpp

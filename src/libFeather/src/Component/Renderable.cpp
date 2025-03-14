@@ -15,10 +15,10 @@ void Renderable::Initialize(GeometryMode geometryMode)
 
 	glGenVertexArrays(1, &vao);
 
-	vertices.Initialize(0, Buffer<MiniMath::V3>::BufferTarget::Array);
-	normals.Initialize(1, Buffer<MiniMath::V3>::BufferTarget::Array);
-	colors.Initialize(2, Buffer<MiniMath::V4>::BufferTarget::Array);
-	indices.Initialize(3, Buffer<ui32>::BufferTarget::Element);
+	vertices.Initialize(0, GraphicsBuffer<MiniMath::V3>::BufferTarget::Array);
+	normals.Initialize(1, GraphicsBuffer<MiniMath::V3>::BufferTarget::Array);
+	colors.Initialize(2, GraphicsBuffer<MiniMath::V4>::BufferTarget::Array);
+	indices.Initialize(3, GraphicsBuffer<ui32>::BufferTarget::Element);
 
 	//unsigned int VAO, VBO, EBO, instanceVBO;
 	//glGenVertexArrays(1, &VAO);

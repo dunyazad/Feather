@@ -7,7 +7,7 @@
 class Shader;
 
 template<typename T>
-class Buffer
+class GraphicsBuffer
 {
 public:
 	enum BufferTarget { Array = GL_ARRAY_BUFFER, Element = GL_ELEMENT_ARRAY_BUFFER };
@@ -127,8 +127,8 @@ private:
 
 	GeometryMode geometryMode = Triangles;
 
-	Buffer<MiniMath::V3> vertices;
-	Buffer<MiniMath::V3> normals;
-	Buffer<MiniMath::V4> colors;
-	Buffer<ui32> indices;
+	GraphicsBuffer<MiniMath::V3> vertices;
+	GraphicsBuffer<MiniMath::V3> normals;
+	GraphicsBuffer<MiniMath::V4> colors;
+	GraphicsBuffer<ui32> indices;
 };
