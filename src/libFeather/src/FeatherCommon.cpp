@@ -1,9 +1,9 @@
 #include <libFeather.h>
 
-#include <Core/System/GUISystem.h>
-#include <Core/System/InputSystem.h>
-#include <Core/System/ImmediateModeRenderSystem.h>
-#include <Core/System/RenderSystem.h>
+#include <System/GUISystem.h>
+#include <System/InputSystem.h>
+#include <System/ImmediateModeRenderSystem.h>
+#include <System/RenderSystem.h>
 
 namespace Time
 {

@@ -52,54 +52,54 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
     ${CMAKE_SOURCE_DIR}/include/FeatherCommon.h
     ${CMAKE_SOURCE_DIR}/include/Feather.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Entity.h
-    ${CMAKE_SOURCE_DIR}/include/Core/MiniMath.h
-    ${CMAKE_SOURCE_DIR}/include/Core/FeatherWindow.h
-    ${CMAKE_SOURCE_DIR}/include/Core/File.h
+    ${CMAKE_SOURCE_DIR}/include/Entity.h
+    ${CMAKE_SOURCE_DIR}/include/MiniMath.h
+    ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h
+    ${CMAKE_SOURCE_DIR}/include/File.h
 
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/Components.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/ComponentBase.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/Camera.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/CameraManipulator.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/Renderable.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/Shader.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/Transform.h
+    ${CMAKE_SOURCE_DIR}/include/Component/Components.h
+    ${CMAKE_SOURCE_DIR}/include/Component/ComponentBase.h
+    ${CMAKE_SOURCE_DIR}/include/Component/Camera.h
+    ${CMAKE_SOURCE_DIR}/include/Component/CameraManipulator.h
+    ${CMAKE_SOURCE_DIR}/include/Component/Renderable.h
+    ${CMAKE_SOURCE_DIR}/include/Component/Shader.h
+    ${CMAKE_SOURCE_DIR}/include/Component/Transform.h
 
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/GUIComponent/GUIComponents.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/GUIComponent/GUIComponentBase.h
-    ${CMAKE_SOURCE_DIR}/include/Core/Component/GUIComponent/StatusPanel.h
+    ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/GUIComponents.h
+    ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/GUIComponentBase.h
+    ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/StatusPanel.h
 
-    ${CMAKE_SOURCE_DIR}/include/Core/System/Systems.h
-    ${CMAKE_SOURCE_DIR}/include/Core/System/EventSystem.h
-    ${CMAKE_SOURCE_DIR}/include/Core/System/GUISystem.h
-    ${CMAKE_SOURCE_DIR}/include/Core/System/InputSystem.h
-    ${CMAKE_SOURCE_DIR}/include/Core/System/ImmediateModeRenderSystem.h
-    ${CMAKE_SOURCE_DIR}/include/Core/System/RenderSystem.h
-    ${CMAKE_SOURCE_DIR}/include/Core/System/SystemBase.h
+    ${CMAKE_SOURCE_DIR}/include/System/Systems.h
+    ${CMAKE_SOURCE_DIR}/include/System/EventSystem.h
+    ${CMAKE_SOURCE_DIR}/include/System/GUISystem.h
+    ${CMAKE_SOURCE_DIR}/include/System/InputSystem.h
+    ${CMAKE_SOURCE_DIR}/include/System/ImmediateModeRenderSystem.h
+    ${CMAKE_SOURCE_DIR}/include/System/RenderSystem.h
+    ${CMAKE_SOURCE_DIR}/include/System/SystemBase.h
 
     src/Feather.cpp
     src/FeatherCommon.cpp
-    src/Core/Entity.cpp
-    src/Core/MiniMath.cpp
-    src/Core/FeatherWindow.cpp
-    src/Core/File.cpp
+    src/Entity.cpp
+    src/MiniMath.cpp
+    src/FeatherWindow.cpp
+    src/File.cpp
     
-    src/Core/Component/ComponentBase.cpp
-    src/Core/Component/Camera.cpp
-    src/Core/Component/CameraManipulator.cpp
-    src/Core/Component/Renderable.cpp
-    src/Core/Component/Shader.cpp
-    src/Core/Component/Transform.cpp
+    src/Component/ComponentBase.cpp
+    src/Component/Camera.cpp
+    src/Component/CameraManipulator.cpp
+    src/Component/Renderable.cpp
+    src/Component/Shader.cpp
+    src/Component/Transform.cpp
 
-    src/Core/Component/GUIComponent/GUIComponentBase.cpp
-    src/Core/Component/GUIComponent/StatusPanel.cpp
+    src/Component/GUIComponent/GUIComponentBase.cpp
+    src/Component/GUIComponent/StatusPanel.cpp
 
-    src/Core/System/EventSystem.cpp
-    src/Core/System/GUISystem.cpp
-    src/Core/System/InputSystem.cpp
-    src/Core/System/ImmediateModeRenderSystem.cpp
-    src/Core/System/RenderSystem.cpp
-    src/Core/System/SystemBase.cpp
+    src/System/EventSystem.cpp
+    src/System/GUISystem.cpp
+    src/System/InputSystem.cpp
+    src/System/ImmediateModeRenderSystem.cpp
+    src/System/RenderSystem.cpp
+    src/System/SystemBase.cpp
 
     ${CMAKE_SOURCE_DIR}/res/Shaders/Default.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Default.fs

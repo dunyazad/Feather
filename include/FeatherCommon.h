@@ -69,7 +69,7 @@ typedef double f64;
 typedef ui32 EntityID;
 typedef ui32 ComponentID;
 
-#include <Core/MiniMath.h>
+#include <MiniMath.h>
 
 namespace Time
 {

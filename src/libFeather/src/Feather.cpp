@@ -1,11 +1,11 @@
 #include <Feather.h>
 
-#include <Core/Entity.h>
-#include <Core/MiniMath.h>
-#include <Core/FeatherWindow.h>
-#include <Core/Component/Components.h>
-#include <Core/Component/Shader.h>
-#include <Core/System/Systems.h>
+#include <Entity.h>
+#include <MiniMath.h>
+#include <FeatherWindow.h>
+#include <Component/Components.h>
+#include <Component/Shader.h>
+#include <System/Systems.h>
 
 #ifdef _WINDOWS
 BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) {
