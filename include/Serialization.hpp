@@ -1333,6 +1333,18 @@ public:
 				normals[i * 3 + 2] = temp;
 			}
 		}
+
+		{
+			f32 temp = aabbMinY;
+			aabbMinY = aabbMinZ;
+			aabbMinZ = temp;
+		}
+
+		{
+			f32 temp = aabbMaxY;
+			aabbMaxY = aabbMaxZ;
+			aabbMaxZ = temp;
+		}
 	}
 
 protected:

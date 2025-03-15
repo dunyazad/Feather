@@ -114,7 +114,7 @@ int main(int argc, char** argv)
 #define LOAD_PLY
 #ifdef LOAD_PLY
 		{
-			auto entity = Feather.CreateInstance<Entity>("Box");
+			auto entity = Feather.CreateInstance<Entity>("Teeth");
 			auto shader = Feather.CreateInstance<Shader>();
 			shader->Initialize(File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs"));
 
