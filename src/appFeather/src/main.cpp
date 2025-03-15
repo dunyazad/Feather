@@ -41,33 +41,38 @@ int main(int argc, char** argv)
 			//gui->AddComponent(statusPanel);
 		}
 
-		//{
-		//	auto entity = Feather.CreateInstance<Entity>("Triangle");
-		//	auto shader = Feather.CreateInstance<Shader>();
-		//	shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
-		//	auto renderable = Feather.CreateInstance<Renderable>();
-		//	renderable->Initialize(Renderable::GeometryMode::Triangles);
-		//	renderable->SetShader(shader);
-		//	//entity->AddComponent(shader);
-		//	//entity->AddComponent(renderable);
+//#define RENDER_TRIANGLE
+#ifdef RENDER_TRIANGLE
+		{
+			auto entity = Feather.CreateInstance<Entity>("Triangle");
+			auto shader = Feather.CreateInstance<Shader>();
+			shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
+			auto renderable = Feather.CreateInstance<Renderable>();
+			renderable->Initialize(Renderable::GeometryMode::Triangles);
+			renderable->SetShader(shader);
+			//entity->AddComponent(shader);
+			//entity->AddComponent(renderable);
 
-		//	renderable->AddVertex({ -1.0f, -1.0f, 0.0f });
-		//	renderable->AddVertex({ 1.0f, -1.0f, 0.0f });
-		//	renderable->AddVertex({ 0.0f, 1.0f, 0.0f });
+			renderable->AddVertex({ -1.0f, -1.0f, 0.0f });
+			renderable->AddVertex({ 1.0f, -1.0f, 0.0f });
+			renderable->AddVertex({ 0.0f, 1.0f, 0.0f });
 
-		//	renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
-		//	renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
-		//	renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
+			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
 
-		//	renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-		//	renderable->AddColor({ 0.0f, 1.0f, 0.0f, 1.0f });
-		//	renderable->AddColor({ 0.0f, 0.0f, 1.0f, 1.0f });
+			renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+			renderable->AddColor({ 0.0f, 1.0f, 0.0f, 1.0f });
+			renderable->AddColor({ 0.0f, 0.0f, 1.0f, 1.0f });
 
-		//	renderable->AddIndex(0);
-		//	renderable->AddIndex(1);
-		//	renderable->AddIndex(2);
-		//}
+			renderable->AddIndex(0);
+			renderable->AddIndex(1);
+			renderable->AddIndex(2);
+		}
+#endif
 
+#define RENDER_VOXELS
+#ifdef RENDER_VOXELS
 		{
 			auto entity = Feather.CreateInstance<Entity>("Box");
 			auto shader = Feather.CreateInstance<Shader>();
@@ -83,15 +88,28 @@ int main(int argc, char** argv)
 			renderable->AddColors(colors);
 			renderable->AddUVs(uvs);
 
-			for (int i = 0; i < 10; i++)
+			int xCount = 100;
+			int yCount = 100;
+			int zCount = 100;
+			int tCount = xCount * yCount * zCount;
+
+			for (int i = 0; i < tCount; i++)
 			{
+				int z = i / (xCount * yCount);
+				int y = (i % (xCount * yCount)) / xCount;
+				int x = (i % (xCount * yCount)) % xCount;
+
 				MiniMath::M4 model = MiniMath::M4::identity();
-				model = MiniMath::translate(model, MiniMath::V3(i * 2.0f, 0.0f, 0.0f));
+				model.m[0][0] = 0.5f;
+				model.m[1][1] = 0.5f;
+				model.m[2][2] = 0.5f;
+				model = MiniMath::translate(model, MiniMath::V3(x, y, z));
 				renderable->AddInstanceTransform(model);
 			}
 
-			renderable->EnableInstancing(10);
+			renderable->EnableInstancing(tCount);
 		}
+#endif
 
 		});
 

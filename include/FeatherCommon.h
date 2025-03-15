@@ -161,6 +161,7 @@ public:
 	static unordered_set<type_index> GetAllSubclasses(type_index baseType);
 
 	virtual void OnEvent(const Event& event);
+	virtual void SubscribeEvent(EventType eventType);
 	virtual void AddEventHandler(EventType eventType, function<void(const Event&)> handler);
 
 	inline const string& GetName() const { return name; }

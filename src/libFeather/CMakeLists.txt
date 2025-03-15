@@ -52,12 +52,14 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
     ${CMAKE_SOURCE_DIR}/include/FeatherCommon.h
     ${CMAKE_SOURCE_DIR}/include/Feather.h
+
     ${CMAKE_SOURCE_DIR}/include/Entity.h
-    ${CMAKE_SOURCE_DIR}/include/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/File.h
     ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
+    ${CMAKE_SOURCE_DIR}/include/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/Monitor.h
+    ${CMAKE_SOURCE_DIR}/include/Serialization.hpp
 
     ${CMAKE_SOURCE_DIR}/include/Component/Components.h
     ${CMAKE_SOURCE_DIR}/include/Component/ComponentBase.h

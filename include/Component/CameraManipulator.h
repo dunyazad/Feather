@@ -23,6 +23,15 @@ public:
 	CameraManipulatorOrbit();
 	~CameraManipulatorOrbit();
 	
+	virtual void OnEvent(const Event& event) override;
+
+	void OnMousePosition(const Event& event);
+	void OnMouseButtonPress(const Event& event);
+	void OnMouseButtonRelease(const Event& event);
+	void OnMouseWheel(const Event& event);
+	void OnKeyPress(const Event& event);
+	void OnKeyRelease(const Event& event);
+
 protected:
 	set<i32> pressedKeys;
 

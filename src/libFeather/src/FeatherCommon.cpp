@@ -82,9 +82,8 @@ void FeatherObject::OnEvent(const Event& event)
     }
 }
 
-void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
+void FeatherObject::SubscribeEvent(EventType eventType)
 {
-    eventHandlers[eventType].push_back(handler);
     auto eventSystems = Feather.GetInstances<EventSystem>();
     if (eventSystems.empty()) return;
 
@@ -92,4 +91,10 @@ void FeatherObject::AddEventHandler(EventType eventType, function<void(const Eve
     {
         (*eventSystems.begin())->SubscribeEvent(eventType, this);
     }
+}
+
+void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
+{
+    eventHandlers[eventType].push_back(handler);
+    SubscribeEvent(eventType);
 }

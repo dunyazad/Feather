@@ -5,6 +5,7 @@
 CameraBase::CameraBase()
 	: RegisterDerivation<CameraBase, ComponentBase>()
 {
+    PushCameraHistory();
 }
 
 CameraBase::~CameraBase()
@@ -41,6 +42,63 @@ MiniMath::M4 CameraBase::LookAt(const MiniMath::V3& eye, const MiniMath::V3& tar
     result.m[3][3] = 1.0f;
 
     return result;
+}
+
+void CameraBase::PushCameraHistory()
+{
+    cameraHistory.push_back({eye, target, up});
+    
+    JumpCameraHistory(cameraHistory.size() - 1);
+}
+
+void CameraBase::PopCameraHistory()
+{
+    if (1 >= cameraHistory.size()) return;
+    
+    cameraHistory.pop_back();
+
+    if (cameraHistoryIndex >= cameraHistory.size())
+    {
+        JumpCameraHistory(cameraHistory.size() - 1);
+    }
+}
+
+void CameraBase::JumpCameraHistory(i32 index)
+{
+    if (index >= cameraHistory.size()) return;
+
+    cameraHistoryIndex = index;
+     
+    auto [eye, target, up] = cameraHistory[cameraHistoryIndex];
+
+    SetEye(eye);
+    SetTarget(target);
+    SetUp(up);
+}
+
+void CameraBase::JumpToPreviousCameraHistory()
+{
+    if (0 == cameraHistoryIndex) return;
+
+    JumpCameraHistory(cameraHistoryIndex - 1);
+}
+
+void CameraBase::JumpToNextCameraHistory()
+{
+    if (cameraHistoryIndex >= cameraHistory.size()) return;
+
+    JumpCameraHistory(cameraHistoryIndex + 1);
+}
+
+void CameraBase::Reset()
+{
+    auto [eye, target, up] = cameraHistory.front();
+    cameraHistory.clear();
+    cameraHistory.push_back({eye, target, up});
+
+    SetEye(eye);
+    SetTarget(target);
+    SetUp(up);
 }
 
 PerspectiveCamera::PerspectiveCamera()
