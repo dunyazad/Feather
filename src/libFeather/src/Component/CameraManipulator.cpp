@@ -80,10 +80,10 @@ void CameraManipulatorOrbit::OnMousePosition(const Event& event)
 	if (isMButtonPressed)
 	{
 		auto hDelta = event.parameters.mousePosition.xpos - lastMousePositionX;
-		auto hPanning = hDelta * mouseSensitivity;
+		auto hPanning = hDelta * mousePanningSensitivity;
 
 		auto vDelta = event.parameters.mousePosition.ypos - lastMousePositionY;
-		auto vPanning = vDelta * mouseSensitivity;
+		auto vPanning = vDelta * mousePanningSensitivity;
 
 		auto viewMatrix = camera->GetViewMatrix();
 		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
@@ -283,6 +283,10 @@ void CameraManipulatorOrbit::OnKeyPress(const Event& event)
 
 		camera->SetTarget(target);
 		camera->SetEye(eye);
+	}
+	else if (GLFW_KEY_R == event.parameters.key.keyCode)
+	{
+		camera->Reset();
 	}
 	else if (GLFW_KEY_INSERT == event.parameters.key.keyCode)
 	{

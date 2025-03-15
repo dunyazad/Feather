@@ -237,8 +237,20 @@ public:
 		}
 	}
 
+	virtual inline void SwapAxisYZ() = 0;
+
 	inline const vector<float>& GetPoints() const { return points; }
 	inline vector<float>& GetPoints() { return points; }
+
+	inline tuple<float, float, float> GetAABBMin() { return make_tuple(aabbMinX, aabbMinY, aabbMinZ); }
+	inline tuple<float, float, float> GetAABBMax() { return make_tuple(aabbMaxX, aabbMaxY, aabbMaxZ); }
+	inline tuple<float, float, float> GetAABBCenter()
+	{
+		return make_tuple(
+			(aabbMinX + aabbMaxX) * 0.5f,
+			(aabbMinY + aabbMaxY) * 0.5f,
+			(aabbMinZ + aabbMaxZ) * 0.5f);
+	}
 
 protected:
 	vector<float> points;
@@ -1299,6 +1311,28 @@ public:
 
 	virtual inline void AddStartPatchID(const unsigned short patchID) {
 		startPatchIDs.push_back(patchID);
+	}
+
+	virtual inline void SwapAxisYZ()
+	{
+		if (false == points.empty())
+		{
+			for (size_t i = 0; i < points.size() / 3; i++)
+			{
+				auto temp = points[i * 3 + 1];
+				points[i * 3 + 1] = points[i * 3 + 2];
+				points[i * 3 + 2] = temp;
+			}
+		}
+		if (false == normals.empty())
+		{
+			for (size_t i = 0; i < normals.size() / 3; i++)
+			{
+				auto temp = normals[i * 3 + 1];
+				normals[i * 3 + 1] = normals[i * 3 + 2];
+				normals[i * 3 + 2] = temp;
+			}
+		}
 	}
 
 protected:

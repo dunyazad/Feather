@@ -123,18 +123,32 @@ public:
 	void AddIndex(ui32 index);
 	void AddVertex(const MiniMath::V3& vertex);
 	void AddNormal(const MiniMath::V3& normal);
+	void AddColor(const MiniMath::V3& color);
 	void AddColor(const MiniMath::V4& color);
 	void AddUV(const MiniMath::V2& uv);
 
 	void AddInstanceTransform(const MiniMath::M4& transform);
 
 	void AddIndices(const vector<ui32>& indices);
+	void AddIndices(const ui32* indices, ui32 numberOfElements);
+
 	void AddVertices(const vector<MiniMath::V3>& vertices);
+	void AddVertices(const MiniMath::V3* vertices, ui32 numberOfElements);
+
 	void AddNormals(const vector<MiniMath::V3>& normals);
+	void AddNormals(const MiniMath::V3* normals, ui32 numberOfElements);
+
+	void AddColors(const vector<MiniMath::V3>& colors);
+	void AddColors(const MiniMath::V3* colors, ui32 numberOfElements);
+
 	void AddColors(const vector<MiniMath::V4>& colors);
+	void AddColors(const MiniMath::V4* colors, ui32 numberOfElements);
+
 	void AddUVs(const vector<MiniMath::V2>& uvs);
+	void AddUVs(const MiniMath::V2* uvs, ui32 numberOfElements);
 
 	void AddInstanceTransforms(const vector<MiniMath::M4>& transforms);
+	void AddInstanceTransforms(const MiniMath::M4* transforms, ui32 numberOfElements);
 
 	inline Shader* GetShader() const { return shader; }
 	inline void SetShader(Shader* shader) { this->shader = shader; }
@@ -148,7 +162,8 @@ private:
 	GraphicsBuffer<ui32> indices;
 	GraphicsBuffer<MiniMath::V3> vertices;
 	GraphicsBuffer<MiniMath::V3> normals;
-	GraphicsBuffer<MiniMath::V4> colors;
+	GraphicsBuffer<MiniMath::V3> colors3;
+	GraphicsBuffer<MiniMath::V4> colors4;
 	GraphicsBuffer<MiniMath::V2> uvs;
 
 	GraphicsBuffer<MiniMath::M4> instanceTransforms;

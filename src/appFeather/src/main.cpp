@@ -69,9 +69,9 @@ int main(int argc, char** argv)
 			renderable->AddIndex(1);
 			renderable->AddIndex(2);
 		}
-#endif
+#endif // RENDER_TRIANGLE
 
-#define RENDER_VOXELS
+//#define RENDER_VOXELS
 #ifdef RENDER_VOXELS
 		{
 			auto entity = Feather.CreateInstance<Entity>("Box");
@@ -109,7 +109,49 @@ int main(int argc, char** argv)
 
 			renderable->EnableInstancing(tCount);
 		}
-#endif
+#endif // RENDER_VOXELS
+
+#define LOAD_PLY
+#ifdef LOAD_PLY
+		{
+			auto entity = Feather.CreateInstance<Entity>("Box");
+			auto shader = Feather.CreateInstance<Shader>();
+			shader->Initialize(File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs"));
+
+			auto renderable = Feather.CreateInstance<Renderable>();
+			renderable->Initialize(Renderable::GeometryMode::Points);
+			renderable->SetShader(shader);
+
+			PLYFormat ply;
+			ply.Deserialize("../../res/3D/Teeth.ply");
+			ply.SwapAxisYZ();
+
+			if(false == ply.GetPoints().empty())
+				renderable->AddVertices((MiniMath::V3*)ply.GetPoints().data(), ply.GetPoints().size() / 3);
+			if (false == ply.GetNormals().empty())
+				renderable->AddNormals((MiniMath::V3*)ply.GetNormals().data(), ply.GetNormals().size() / 3);
+			if (false == ply.GetColors().empty())
+			{
+				if (ply.UseAlpha())
+				{
+					renderable->AddColors((MiniMath::V4*)ply.GetColors().data(), ply.GetColors().size() / 4);
+				}
+				else
+				{
+					renderable->AddColors((MiniMath::V3*)ply.GetColors().data(), ply.GetColors().size() / 3);
+				}
+			}
+
+			auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorOrbit>();
+			auto camera = cameraManipulator->SetCamera();
+			auto [x, y, z] = ply.GetAABBCenter();
+			camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
+			camera->SetTarget({ x,y,z });
+
+			alog("%f %f %f\n", x, y, z);
+		}
+#endif // LOAD_PLY
+
 
 		});
 

@@ -11,6 +11,7 @@ public:
 	CameraManipulatorBase();
 	virtual ~CameraManipulatorBase() = default;
 
+	inline CameraBase* SetCamera() const { return camera; }
 	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
 
 protected:
@@ -31,6 +32,17 @@ public:
 	void OnMouseWheel(const Event& event);
 	void OnKeyPress(const Event& event);
 	void OnKeyRelease(const Event& event);
+
+	f32 GetAzimuth() { return azimuth; }
+	void SetAzimuth(f32 azimuth) { this->azimuth = azimuth; }
+	f32 GetElevation() { return elevation; }
+	void SetElevation(f32 elevation) { this->elevation = elevation; }
+	f32 GetRadius() { return radius; }
+	void SetRadius(f32 radius) { this->radius = radius; }
+	f32 GetMouseSensitivity() { return mouseSensitivity; }
+	void SetMouseSensitivity(f32 mouseSensitivity) { this->mouseSensitivity = mouseSensitivity; }
+	f32 GetMouseWheelSensitivity() { return mouseWheelSensitivity; }
+	void SetMouseWheelSensitivity(f32 mouseWheelSensitivity) { this->mouseWheelSensitivity = mouseWheelSensitivity; }
 
 protected:
 	set<i32> pressedKeys;
@@ -53,5 +65,6 @@ protected:
 	f32 elevation = 0.0f;
 	f32 radius = 5.0f;
 	f32 mouseSensitivity = 0.2f;
+	f32 mousePanningSensitivity = 0.1f;
 	f32 mouseWheelSensitivity = 0.5f;
 };

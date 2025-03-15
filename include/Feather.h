@@ -31,6 +31,14 @@ public:
 		return GetInstancesOfType<T>(typeid(T));
 	}
 
+	template<typename T>
+	T* GetFirstInstance()
+	{
+		auto instances = GetInstancesOfType<T>(typeid(T));
+		if (instances.empty()) return nullptr;
+		else return *instances.begin();
+	}
+
 	template <typename T, typename... Args>
 	T* CreateInstance(const string& name = "", Args&&... args)
 	{
