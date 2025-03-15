@@ -33,16 +33,16 @@ public:
 	void OnKeyPress(const Event& event);
 	void OnKeyRelease(const Event& event);
 
-	f32 GetAzimuth() { return azimuth; }
-	void SetAzimuth(f32 azimuth) { this->azimuth = azimuth; }
-	f32 GetElevation() { return elevation; }
-	void SetElevation(f32 elevation) { this->elevation = elevation; }
-	f32 GetRadius() { return radius; }
-	void SetRadius(f32 radius) { this->radius = radius; }
-	f32 GetMouseSensitivity() { return mouseSensitivity; }
-	void SetMouseSensitivity(f32 mouseSensitivity) { this->mouseSensitivity = mouseSensitivity; }
-	f32 GetMouseWheelSensitivity() { return mouseWheelSensitivity; }
-	void SetMouseWheelSensitivity(f32 mouseWheelSensitivity) { this->mouseWheelSensitivity = mouseWheelSensitivity; }
+	inline f32 GetAzimuth() { return azimuth; }
+	inline void SetAzimuth(f32 azimuth) { this->azimuth = azimuth; }
+	inline f32 GetElevation() { return elevation; }
+	inline void SetElevation(f32 elevation) { this->elevation = elevation; }
+	inline f32 GetRadius() { return radius; }
+	inline void SetRadius(f32 radius) { this->radius = radius; }
+	inline f32 GetMouseSensitivity() { return mouseSensitivity; }
+	inline void SetMouseSensitivity(f32 mouseSensitivity) { this->mouseSensitivity = mouseSensitivity; }
+	inline f32 GetMouseWheelSensitivity() { return mouseWheelSensitivity; }
+	inline void SetMouseWheelSensitivity(f32 mouseWheelSensitivity) { this->mouseWheelSensitivity = mouseWheelSensitivity; }
 
 protected:
 	set<i32> pressedKeys;
@@ -71,6 +71,13 @@ public:
 
 	void OnEvent(const Event& event) override;
 
+	inline f32 GetRadius() { return radius; }
+	inline void SetRadius(f32 radius) { this->radius = radius; }
+	inline f32 GetMouseSensitivity() { return mouseSensitivity; }
+	inline void SetMouseSensitivity(f32 mouseSensitivity) { this->mouseSensitivity = mouseSensitivity; }
+	inline f32 GetMouseWheelSensitivity() { return mouseWheelSensitivity; }
+	inline void SetMouseWheelSensitivity(f32 mouseWheelSensitivity) { this->mouseWheelSensitivity = mouseWheelSensitivity; }
+
 private:
 	void OnMousePosition(const Event& event);
 	void OnMouseButtonPress(const Event& event);
@@ -89,6 +96,7 @@ private:
 	float radius = 5.0f;
 	float mouseSensitivity = 0.005f;
 	float mousePanningSensitivity = 0.01f;
+	f32 mouseWheelSensitivity = 0.5f;
 
 	MiniMath::Quaternion cameraRotation = MiniMath::Quaternion::identity();
 

@@ -77,7 +77,7 @@ void FeatherObject::OnEvent(const Event& event)
     {
         for (auto& handler : eventHandlers[event.type])
         {
-            handler(event);
+            handler(event, this);
         }
     }
 }
@@ -93,7 +93,7 @@ void FeatherObject::SubscribeEvent(EventType eventType)
     }
 }
 
-void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&)> handler)
+void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler)
 {
     eventHandlers[eventType].push_back(handler);
     SubscribeEvent(eventType);

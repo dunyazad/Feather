@@ -3,7 +3,7 @@
 StatusPanel::StatusPanel()
 	: RegisterDerivation<StatusPanel, GUIComponentBase>(), fpsHistory(historySize, 60.0f)
 {
-	AddEventHandler(EventType::MousePosition, [&](const Event& event) {
+	AddEventHandler(EventType::MousePosition, [&](const Event& event, FeatherObject* object) {
         mouseX = (ui32)event.parameters.mousePosition.xpos;
         mouseY = (ui32)event.parameters.mousePosition.ypos;
 		});

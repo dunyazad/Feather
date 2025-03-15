@@ -28,14 +28,16 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 		Feather.GetFeatherWindow()->GetWidth(),
 		Feather.GetFeatherWindow()->GetHeight());
 
-	glPointSize(5.0f);
+	glPointSize(10.0f);
 	glLineWidth(2.0f);
 
+	glClear(GL_DEPTH_BUFFER_BIT);
+
 	// Enable anti-aliasing for smoother lines
-	glEnable(GL_LINE_SMOOTH);
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glEnable(GL_LINE_SMOOTH);
+	//glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Enable depth test if needed
 	glEnable(GL_DEPTH_TEST);
@@ -45,11 +47,11 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	{
 		if (nullptr != camera)
 		{
-			auto projection = camera->GetProjectionMatrix();
+			const auto& projection = camera->GetProjectionMatrix();
 			glMatrixMode(GL_PROJECTION);
 			glLoadMatrixf((float*)projection.m);
 
-			auto view = camera->GetViewMatrix();
+			const auto& view = camera->GetViewMatrix();
 			auto target = camera->GetTarget();
 			glMatrixMode(GL_MODELVIEW);
 			glLoadMatrixf((float*)view.m);

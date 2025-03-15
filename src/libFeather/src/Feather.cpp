@@ -19,10 +19,10 @@ void libFeather::Initialize(ui32 width, ui32 height)
     featherWindow->Initialize(width, height);
     
     CreateInstance<EventSystem>("EventSystem", featherWindow)->Initialize();
-    CreateInstance<GUISystem>("GUISystem", featherWindow)->Initialize();
     CreateInstance<InputSystem>("InputSystem", featherWindow)->Initialize();
-    CreateInstance<ImmediateModeRenderSystem>("ImmediateModeRenderSystem", featherWindow)->Initialize();
     CreateInstance<RenderSystem>("RenderSystem", featherWindow)->Initialize();
+    CreateInstance<ImmediateModeRenderSystem>("ImmediateModeRenderSystem", featherWindow)->Initialize();
+    CreateInstance<GUISystem>("GUISystem", featherWindow)->Initialize();
 
     /////////glfwSwapInterval(0);  // Disable V-Sync
 }
@@ -35,8 +35,14 @@ void libFeather::Terminate()
         {
             delete instance;
         }
-        objectInstances.clear();
     }
+    objectInstances.clear();
+
+    for (auto& pair : s_instanceMap)
+    {
+        pair.second.clear();
+    }
+    s_instanceMap.clear();
 
     if (nullptr != featherWindow)
     {
@@ -71,10 +77,20 @@ void libFeather::Run()
 
         glfwPollEvents();
 
-        for (auto& system : GetInstances<SystemBase>())
-        {
-            system->Update(frameNo, timeDelta);
-        }
+        auto eventSystem = GetFirstInstance<EventSystem>();
+        if (nullptr != eventSystem) eventSystem->Update(frameNo, timeDelta);
+
+        auto inputSystem = GetFirstInstance<InputSystem>();
+        if (nullptr != inputSystem) inputSystem->Update(frameNo, timeDelta);
+
+        auto renderSystem = GetFirstInstance<RenderSystem>();
+        if (nullptr != renderSystem) renderSystem->Update(frameNo, timeDelta);
+
+        auto immediateModeRenderSystem = GetFirstInstance<ImmediateModeRenderSystem>();
+        if (nullptr != immediateModeRenderSystem) immediateModeRenderSystem->Update(frameNo, timeDelta);
+
+        auto guiSystem = GetFirstInstance<GUISystem>();
+        if (nullptr != guiSystem) guiSystem->Update(frameNo, timeDelta);
 
         glfwSwapBuffers(glfwGetCurrentContext());
 

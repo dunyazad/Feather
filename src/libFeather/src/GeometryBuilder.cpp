@@ -78,3 +78,67 @@ GeometryBuilder::BuildBox(const MiniMath::V3& center, const MiniMath::V3& dimens
 
 	return make_tuple(indices, vertices, normals, colors, uvs);
 }
+
+std::tuple<std::vector<ui32>, std::vector<MiniMath::V3>, std::vector<MiniMath::V3>, std::vector<MiniMath::V4>, std::vector<MiniMath::V2>>
+GeometryBuilder::BuildSphere(const MiniMath::V3& center, f32 radius, ui32 horizontalSegments, ui32 verticalSegments)
+{
+	std::vector<ui32> indices;
+	std::vector<MiniMath::V3> vertices;
+	std::vector<MiniMath::V3> normals;
+	std::vector<MiniMath::V4> colors;
+	std::vector<MiniMath::V2> uvs;
+
+	float dTheta = 2.0f * M_PI / horizontalSegments;
+	float dPhi = M_PI / verticalSegments;
+
+	// Generate vertices
+	for (int i = 0; i <= verticalSegments; ++i)
+	{
+		float phi = i * dPhi;
+		for (int j = 0; j <= horizontalSegments; ++j)
+		{
+			float theta = j * dTheta;
+
+			// Compute vertex position
+			MiniMath::V3 normal(
+				std::cos(theta) * std::sin(phi),
+				std::cos(phi),
+				std::sin(theta) * std::sin(phi)
+			);
+
+			MiniMath::V3 position = center + radius * normal;
+
+			// Compute UV coordinates
+			MiniMath::V2 uv(
+				static_cast<float>(j) / horizontalSegments,
+				static_cast<float>(i) / verticalSegments
+			);
+
+			// Store vertex data
+			vertices.push_back(position);
+			normals.push_back(normal);
+			uvs.push_back(uv);
+			colors.push_back(MiniMath::V4(1.0f, 1.0f, 1.0f, 1.0f)); // White color
+		}
+	}
+
+	// Generate indices (triangles)
+	for (int i = 0; i < verticalSegments; ++i)
+	{
+		for (int j = 0; j < horizontalSegments; ++j)
+		{
+			int current = i * (horizontalSegments + 1) + j;
+			int next = current + horizontalSegments + 1;
+
+			indices.push_back(current);
+			indices.push_back(next);
+			indices.push_back(current + 1);
+
+			indices.push_back(current + 1);
+			indices.push_back(next);
+			indices.push_back(next + 1);
+		}
+	}
+
+	return std::make_tuple(indices, vertices, normals, colors, uvs);
+}

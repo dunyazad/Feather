@@ -64,29 +64,116 @@ void Renderable::Update(ui32 frameNo, f32 timeDelta)
 
 void Renderable::Draw()
 {
+	if (false == visible) return;
+
 	glBindVertexArray(vao);
 
-	if (0 < numberOfInstances)
+	if (Solid == drawingMode || WireFrame == drawingMode)
 	{
-		if (0 < indices.size())
+		if (WireFrame == drawingMode)
 		{
-			glDrawElementsInstanced(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr, numberOfInstances);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+
+		if (0 < numberOfInstances)
+		{
+			if (0 < indices.size())
+			{
+				glDrawElementsInstanced(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr, numberOfInstances);
+			}
+			else
+			{
+				glDrawArraysInstanced(geometryMode, 0, vertices.size(), numberOfInstances);
+			}
 		}
 		else
 		{
-			glDrawArraysInstanced(geometryMode, 0, vertices.size(), numberOfInstances);
+			if (0 != indices.size())
+			{
+				glDrawElements(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr);
+			}
+			else
+			{
+				glDrawArrays(geometryMode, 0, vertices.size());
+			}
+		}
+
+		if (WireFrame == drawingMode)
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 	}
-	else
+	else if (WireFrameOverSolid == drawingMode)
 	{
-		if (0 != indices.size())
+		glLineWidth(20.0f);
+
+		// Enable depth testing and render solid mesh
+		glEnable(GL_DEPTH_TEST);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		// Apply polygon offset to push filled mesh back slightly
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(1.0f, 1.0f);  // Push solid mesh back
+
+		if (0 < numberOfInstances)
 		{
-			glDrawElements(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr);
+			if (0 < indices.size())
+			{
+				glDrawElementsInstanced(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr, numberOfInstances);
+			}
+			else
+			{
+				glDrawArraysInstanced(geometryMode, 0, vertices.size(), numberOfInstances);
+			}
 		}
 		else
 		{
-			glDrawArrays(geometryMode, 0, vertices.size());
+			if (0 != indices.size())
+			{
+				glDrawElements(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr);
+			}
+			else
+			{
+				glDrawArrays(geometryMode, 0, vertices.size());
+			}
 		}
+
+		// Disable polygon offset for wireframe rendering
+		glDisable(GL_POLYGON_OFFSET_FILL);
+
+		// Render wireframe on top with depth test enabled
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glEnable(GL_POLYGON_OFFSET_LINE);
+		glPolygonOffset(0.5f, 0.5f);  // Slight offset to avoid z-fighting
+		glEnable(GL_DEPTH_TEST);  // Keep depth testing ON
+
+		if (0 < numberOfInstances)
+		{
+			if (0 < indices.size())
+			{
+				glDrawElementsInstanced(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr, numberOfInstances);
+			}
+			else
+			{
+				glDrawArraysInstanced(geometryMode, 0, vertices.size(), numberOfInstances);
+			}
+		}
+		else
+		{
+			if (0 != indices.size())
+			{
+				glDrawElements(geometryMode, indices.size(), GL_UNSIGNED_INT, nullptr);
+			}
+			else
+			{
+				glDrawArrays(geometryMode, 0, vertices.size());
+			}
+		}
+
+		// Restore default polygon mode
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		glLineWidth(2.0f);
 	}
 }
 

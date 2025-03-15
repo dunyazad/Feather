@@ -162,14 +162,14 @@ public:
 
 	virtual void OnEvent(const Event& event);
 	virtual void SubscribeEvent(EventType eventType);
-	virtual void AddEventHandler(EventType eventType, function<void(const Event&)> handler);
+	virtual void AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler);
 
 	inline const string& GetName() const { return name; }
 	inline void SetName(const string& name) { this->name = name; }
 
 protected:
 	string name = "";
-	map<EventType, vector<function<void(const Event&)>>> eventHandlers;
+	map<EventType, vector<function<void(const Event&, FeatherObject*)>>> eventHandlers;
 
 private:
 	static unordered_map<type_index, unordered_set<type_index>> subclass_map;

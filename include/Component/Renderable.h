@@ -84,7 +84,8 @@ public:
 		}
 	}
 
-	ui64 size() { return datas.size(); }
+	inline ui64 size() { return datas.size(); }
+	inline bool empty() { return datas.empty(); }
 
 protected:
 	BufferTarget bufferTarget = Array;
@@ -98,7 +99,8 @@ protected:
 class Renderable : public RegisterDerivation<Renderable, ComponentBase>
 {
 public:
-	enum GeometryMode {
+	enum GeometryMode
+	{
 		Points = GL_POINTS,
 		Lines = GL_LINES,
 		LineLoop = GL_LINE_LOOP,
@@ -107,6 +109,14 @@ public:
 		TriangleStrip = GL_TRIANGLE_STRIP,
 		TriangleFan = GL_TRIANGLE_FAN,
 		Quads = GL_QUADS
+	};
+
+	enum DrawingMode
+	{
+		Solid,
+		WireFrameOverSolid,
+		WireFrame,
+		NumberOfDrawingModes
 	};
 
 public:
@@ -150,14 +160,29 @@ public:
 	void AddInstanceTransforms(const vector<MiniMath::M4>& transforms);
 	void AddInstanceTransforms(const MiniMath::M4* transforms, ui32 numberOfElements);
 
+	inline bool IsVisible() const { return visible; }
+	inline void SetVisible(bool visible) { this->visible = visible; }
+	inline void ToggleVisible() { visible = !visible; }
+
 	inline Shader* GetShader() const { return shader; }
 	inline void SetShader(Shader* shader) { this->shader = shader; }
 
+	inline GeometryMode GetGeometryMode() { return geometryMode; }
+	inline void SetGeometryMode(GeometryMode geometryMode) { this->geometryMode = geometryMode; }
+
+	inline DrawingMode GetDrawingMode() { return drawingMode; }
+	inline void SetDrawingMode(DrawingMode drawingMode) { this->drawingMode = drawingMode; }
+
+	inline void NextDrawingMode() { drawingMode = (DrawingMode)((drawingMode + 1) % NumberOfDrawingModes); }
+
 private:
+	bool visible = true;
+
 	Shader* shader = nullptr;
 	GLuint vao = UINT_MAX;
 
 	GeometryMode geometryMode = Triangles;
+	DrawingMode drawingMode = Solid;
 
 	GraphicsBuffer<ui32> indices;
 	GraphicsBuffer<MiniMath::V3> vertices;

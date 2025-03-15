@@ -108,7 +108,7 @@ PerspectiveCamera::PerspectiveCamera()
 
     aspectRatio = (f32)window->GetWidth() / (f32)window->GetHeight();
 
-    AddEventHandler(EventType::FrameBufferResize, [&](const Event& event) {
+    AddEventHandler(EventType::FrameBufferResize, [&](const Event& event, FeatherObject* object) {
         aspectRatio =
             (f32)event.parameters.frameBufferResize.width /
             (f32)event.parameters.frameBufferResize.height;

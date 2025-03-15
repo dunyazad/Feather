@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 		{
 			auto appMain = Feather.CreateInstance<Entity>("AppMain");
 			auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
-			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {
+			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
 				if (GLFW_KEY_ESCAPE == event.parameters.key.keyCode)
 				{
 					glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
@@ -68,8 +68,8 @@ int main(int argc, char** argv)
 		}
 #endif // RENDER_TRIANGLE
 
-//#define RENDER_VOXELS
-#ifdef RENDER_VOXELS
+//#define RENDER_VOXELS_BOX
+#ifdef RENDER_VOXELS_BOX
 		{
 			auto entity = Feather.CreateInstance<Entity>("Box");
 			auto shader = Feather.CreateInstance<Shader>();
@@ -106,9 +106,58 @@ int main(int argc, char** argv)
 
 			renderable->EnableInstancing(tCount);
 		}
-#endif // RENDER_VOXELS
+#endif // RENDER_VOXELS_BOX
 
-#define LOAD_PLY
+//#define RENDER_VOXELS_SPHERE
+#ifdef RENDER_VOXELS_SPHERE
+		{
+			auto entity = Feather.CreateInstance<Entity>("Box");
+			auto shader = Feather.CreateInstance<Shader>();
+			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
+			auto renderable = Feather.CreateInstance<Renderable>();
+			renderable->Initialize(Renderable::GeometryMode::Triangles);
+			renderable->SetShader(shader);
+
+			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.25f, 6, 6);
+			//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
+			renderable->AddIndices(indices);
+			renderable->AddVertices(vertices);
+			renderable->AddNormals(normals);
+			renderable->AddColors(colors);
+			renderable->AddUVs(uvs);
+
+			int xCount = 100;
+			int yCount = 100;
+			int zCount = 100;
+			int tCount = xCount * yCount * zCount;
+
+			for (int i = 0; i < tCount; i++)
+			{
+				int z = i / (xCount * yCount);
+				int y = (i % (xCount * yCount)) / xCount;
+				int x = (i % (xCount * yCount)) % xCount;
+
+				MiniMath::M4 model = MiniMath::M4::identity();
+				model.m[0][0] = 0.5f;
+				model.m[1][1] = 0.5f;
+				model.m[2][2] = 0.5f;
+				model = MiniMath::translate(model, MiniMath::V3(x, y, z));
+				renderable->AddInstanceTransform(model);
+			}
+
+			renderable->EnableInstancing(tCount);
+
+			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
+				if (GLFW_KEY_M == event.parameters.key.keyCode)
+				{
+					auto renderable = dynamic_cast<Renderable*>(object);
+					renderable->NextDrawingMode();
+				}
+				});
+		}
+#endif // RENDER_VOXELS_BOX
+
+//#define LOAD_PLY
 #ifdef LOAD_PLY
 		{
 			auto entity = Feather.CreateInstance<Entity>("Teeth");
@@ -139,14 +188,60 @@ int main(int argc, char** argv)
 				}
 			}
 
-			//auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorOrbit>();
-			//auto camera = cameraManipulator->SetCamera();
-			//auto [x, y, z] = ply.GetAABBCenter();
-			//camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
-			//camera->SetTarget({ x,y,z });
+			auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorTrackball>();
+			auto camera = cameraManipulator->SetCamera();
+			auto [x, y, z] = ply.GetAABBCenter();
+			camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
+			camera->SetTarget({ x,y,z });
 		}
 #endif // LOAD_PLY
 
+		{
+			PLYFormat ply;
+			ply.Deserialize("../../res/3D/Teeth.ply");
+			ply.SwapAxisYZ();
+
+			auto entity = Feather.CreateInstance<Entity>("Box");
+			auto shader = Feather.CreateInstance<Shader>();
+			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
+			auto renderable = Feather.CreateInstance<Renderable>();
+			renderable->Initialize(Renderable::GeometryMode::Triangles);
+			renderable->SetShader(shader);
+
+			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.05f, 6, 6);
+			//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
+			renderable->AddIndices(indices);
+			renderable->AddVertices(vertices);
+			renderable->AddNormals(normals);
+			renderable->AddColors(colors);
+			renderable->AddUVs(uvs);
+
+			ui32 tCount = ply.GetPoints().size() / 3;
+
+			for (int i = 0; i < tCount; i++)
+			{
+				auto x = ply.GetPoints()[i * 3];
+				auto y = ply.GetPoints()[i * 3 + 1];
+				auto z = ply.GetPoints()[i * 3 + 2];
+
+				MiniMath::M4 model = MiniMath::M4::identity();
+				model.m[0][0] = 0.5f;
+				model.m[1][1] = 0.5f;
+				model.m[2][2] = 0.5f;
+				model = MiniMath::translate(model, MiniMath::V3(x, y, z));
+				renderable->AddInstanceTransform(model);
+			}
+
+			renderable->EnableInstancing(tCount);
+
+			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
+				if (GLFW_KEY_M == event.parameters.key.keyCode)
+				{
+					auto renderable = dynamic_cast<Renderable*>(object);
+					renderable->NextDrawingMode();
+				}
+				});
+		}
 
 		});
 
