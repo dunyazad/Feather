@@ -57,9 +57,9 @@ void EventSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int act
 	{
 		Event event;
 		event.type = EventType::KeyRelease;
-		event.parameters.key.keyCode = key;
-		event.parameters.key.scanCode = scancode;
-		event.parameters.key.mods = mods;
+		event.keyEvent.keyCode = key;
+		event.keyEvent.scanCode = scancode;
+		event.keyEvent.mods = mods;
 
 		for (auto& instance : s_instances)
 		{
@@ -70,9 +70,9 @@ void EventSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int act
 	{
 		Event event;
 		event.type = EventType::KeyPress;
-		event.parameters.key.keyCode = key;
-		event.parameters.key.scanCode = scancode;
-		event.parameters.key.mods = mods;
+		event.keyEvent.keyCode = key;
+		event.keyEvent.scanCode = scancode;
+		event.keyEvent.mods = mods;
 
 		for (auto& instance : s_instances)
 		{
@@ -85,8 +85,8 @@ void EventSystem::MousePositionCallback(GLFWwindow* window, f64 xpos, f64 ypos)
 {
 	Event event;
 	event.type = EventType::MousePosition;
-	event.parameters.mousePosition.xpos = xpos;
-	event.parameters.mousePosition.ypos = ypos;
+	event.mousePositionEvent.xpos = xpos;
+	event.mousePositionEvent.ypos = ypos;
 
 	for (auto& instance : s_instances)
 	{
@@ -103,13 +103,13 @@ void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action
 	{
 		Event event;
 		event.type = EventType::MouseButtonRelease;
-		event.parameters.mouseButton.button = button;
-		event.parameters.mouseButton.mods = mods;
+		event.mouseButtonEvent.button = button;
+		event.mouseButtonEvent.mods = mods;
 
 		for (auto& instance : s_instances)
 		{
-			event.parameters.mouseButton.xpos = instance->lastMousePositionX;
-			event.parameters.mouseButton.ypos = instance->lastMousePositionY;
+			event.mouseButtonEvent.xpos = instance->lastMousePositionX;
+			event.mouseButtonEvent.ypos = instance->lastMousePositionY;
 
 			instance->DispatchEvent(event);
 		}
@@ -118,13 +118,13 @@ void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action
 	{
 		Event event;
 		event.type = EventType::MouseButtonPress;
-		event.parameters.mouseButton.button = button;
-		event.parameters.mouseButton.mods = mods;
+		event.mouseButtonEvent.button = button;
+		event.mouseButtonEvent.mods = mods;
 
 		for (auto& instance : s_instances)
 		{
-			event.parameters.mouseButton.xpos = instance->lastMousePositionX;
-			event.parameters.mouseButton.ypos = instance->lastMousePositionY;
+			event.mouseButtonEvent.xpos = instance->lastMousePositionX;
+			event.mouseButtonEvent.ypos = instance->lastMousePositionY;
 
 			instance->DispatchEvent(event);
 		}
@@ -135,8 +135,8 @@ void EventSystem::MouseWheelCallback(GLFWwindow* window, f64 xoffset, f64 yoffse
 {
 	Event event;
 	event.type = EventType::MouseWheel;
-	event.parameters.mouseWheel.xoffset = xoffset;
-	event.parameters.mouseWheel.yoffset = yoffset;
+	event.mouseWheelEvent.xoffset = xoffset;
+	event.mouseWheelEvent.yoffset = yoffset;
 
 	for (auto& instance : s_instances)
 	{

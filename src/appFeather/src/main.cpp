@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 			auto appMain = Feather.CreateInstance<Entity>("AppMain");
 			auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
 			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_ESCAPE == event.parameters.key.keyCode)
+				if (GLFW_KEY_ESCAPE == event.keyEvent.keyCode)
 				{
 					glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
 				}
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 			renderable->EnableInstancing(tCount);
 
 			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_M == event.parameters.key.keyCode)
+				if (GLFW_KEY_M == event.keyEvent.keyCode)
 				{
 					auto renderable = dynamic_cast<Renderable*>(object);
 					renderable->NextDrawingMode();
@@ -235,7 +235,7 @@ int main(int argc, char** argv)
 			renderable->EnableInstancing(tCount);
 
 			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_M == event.parameters.key.keyCode)
+				if (GLFW_KEY_M == event.keyEvent.keyCode)
 				{
 					auto renderable = dynamic_cast<Renderable*>(object);
 					renderable->NextDrawingMode();

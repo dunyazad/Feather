@@ -141,14 +141,14 @@ struct MouseWheelEventParameters
 struct Event
 {
 	EventType type;
-	union Parameters
+	union
 	{
-		KeyEventParameters key;
-		MousePositionEventParameters mousePosition;
-		MouseButtonEventParameters mouseButton;
-		FrameBufferResizeParameters frameBufferResize;
-		MouseWheelEventParameters mouseWheel;
-	} parameters;
+		KeyEventParameters keyEvent;
+		MousePositionEventParameters mousePositionEvent;
+		MouseButtonEventParameters mouseButtonEvent;
+		FrameBufferResizeParameters frameBufferResizeEvent;
+		MouseWheelEventParameters mouseWheelEvent;
+	};
 };
 
 class FeatherObject

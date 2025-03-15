@@ -57,12 +57,12 @@ void CameraManipulatorOrbit::OnMousePosition(const Event& event)
 
 	if (isRButtonPressed)
 	{
-		auto hDelta = event.parameters.mousePosition.xpos - lastMousePositionX;
+		auto hDelta = event.mousePositionEvent.xpos - lastMousePositionX;
 		azimuth -= hDelta * mouseSensitivity;
 		if (azimuth < 0.0f) azimuth += 360.0f;
 		else if (azimuth >= 360.0f) azimuth -= 360.0f;
 
-		auto vDelta = event.parameters.mousePosition.ypos - lastMousePositionY;
+		auto vDelta = event.mousePositionEvent.ypos - lastMousePositionY;
 		elevation += vDelta * mouseSensitivity;
 		if (elevation <= -90.0f) elevation = -89.9f;
 		else if (elevation >= 90.0f) elevation = 89.9f;
@@ -79,10 +79,10 @@ void CameraManipulatorOrbit::OnMousePosition(const Event& event)
 
 	if (isMButtonPressed)
 	{
-		auto hDelta = event.parameters.mousePosition.xpos - lastMousePositionX;
+		auto hDelta = event.mousePositionEvent.xpos - lastMousePositionX;
 		auto hPanning = hDelta * mousePanningSensitivity;
 
-		auto vDelta = event.parameters.mousePosition.ypos - lastMousePositionY;
+		auto vDelta = event.mousePositionEvent.ypos - lastMousePositionY;
 		auto vPanning = vDelta * mousePanningSensitivity;
 
 		auto viewMatrix = camera->GetViewMatrix();
@@ -108,52 +108,52 @@ void CameraManipulatorOrbit::OnMousePosition(const Event& event)
 		camera->SetEye(eye);
 	}
 
-	lastMousePositionX = event.parameters.mousePosition.xpos;
-	lastMousePositionY = event.parameters.mousePosition.ypos;
+	lastMousePositionX = event.mousePositionEvent.xpos;
+	lastMousePositionY = event.mousePositionEvent.ypos;
 }
 
 void CameraManipulatorOrbit::OnMouseButtonPress(const Event& event)
 {
 	if (nullptr == camera) return;
 
-	if (0 == event.parameters.mouseButton.button)
+	if (0 == event.mouseButtonEvent.button)
 	{
 		isLButtonPressed = true;
 	}
-	else if (1 == event.parameters.mouseButton.button)
+	else if (1 == event.mouseButtonEvent.button)
 	{
 		isRButtonPressed = true;
 	}
-	else if (2 == event.parameters.mouseButton.button)
+	else if (2 == event.mouseButtonEvent.button)
 	{
 		isMButtonPressed = true;
 	}
 	//alog("Button Press : %d - x : %.2f, y : %.2f\n",
-	//	event.parameters.mouseButton.button,
-	//	event.parameters.mouseButton.xpos,
-	//	event.parameters.mouseButton.ypos);
+	//	event.mouseButtonEvent.button,
+	//	event.mouseButtonEvent.xpos,
+	//	event.mouseButtonEvent.ypos);
 }
 
 void CameraManipulatorOrbit::OnMouseButtonRelease(const Event& event)
 {
 	if (nullptr == camera) return;
 
-	if (0 == event.parameters.mouseButton.button)
+	if (0 == event.mouseButtonEvent.button)
 	{
 		isLButtonPressed = false;
 	}
-	else if (1 == event.parameters.mouseButton.button)
+	else if (1 == event.mouseButtonEvent.button)
 	{
 		isRButtonPressed = false;
 	}
-	else if (2 == event.parameters.mouseButton.button)
+	else if (2 == event.mouseButtonEvent.button)
 	{
 		isMButtonPressed = false;
 	}
 	//alog("Button Release : %d - x : %.2f, y : %.2f\n",
-	//	event.parameters.mouseButton.button,
-	//	event.parameters.mouseButton.xpos,
-	//	event.parameters.mouseButton.ypos);
+	//	event.mouseButtonEvent.button,
+	//	event.mouseButtonEvent.xpos,
+	//	event.mouseButtonEvent.ypos);
 }
 
 void CameraManipulatorOrbit::OnMouseWheel(const Event& event)
@@ -167,11 +167,11 @@ void CameraManipulatorOrbit::OnMouseWheel(const Event& event)
 		{
 			f32 fovy = perspectiveCamera->GetFOVY() * RAD2DEG;
 
-			if (0 > event.parameters.mouseWheel.yoffset)
+			if (0 > event.mouseWheelEvent.yoffset)
 			{
 				fovy += 1.0f;
 			}
-			else if (0 < event.parameters.mouseWheel.yoffset)
+			else if (0 < event.mouseWheelEvent.yoffset)
 			{
 				fovy -= 1.0f;
 			}
@@ -184,11 +184,11 @@ void CameraManipulatorOrbit::OnMouseWheel(const Event& event)
 	}
 	else
 	{
-		if (0 > event.parameters.mouseWheel.yoffset)
+		if (0 > event.mouseWheelEvent.yoffset)
 		{
 			radius *= 1.1f;
 		}
-		else if (0 < event.parameters.mouseWheel.yoffset)
+		else if (0 < event.mouseWheelEvent.yoffset)
 		{
 			radius *= 0.9f;
 		}
@@ -206,11 +206,11 @@ void CameraManipulatorOrbit::OnMouseWheel(const Event& event)
 
 void CameraManipulatorOrbit::OnKeyPress(const Event& event)
 {
-	pressedKeys.insert(event.parameters.key.keyCode);
+	pressedKeys.insert(event.keyEvent.keyCode);
 
 	if (nullptr == camera) return;
 
-	if (GLFW_KEY_LEFT == event.parameters.key.keyCode)
+	if (GLFW_KEY_LEFT == event.keyEvent.keyCode)
 	{
 		auto hDelta = 1;
 		auto hPanning = hDelta * mouseSensitivity;
@@ -240,7 +240,7 @@ void CameraManipulatorOrbit::OnKeyPress(const Event& event)
 		camera->SetTarget(target);
 		camera->SetEye(eye);
 	}
-	else if (GLFW_KEY_RIGHT == event.parameters.key.keyCode)
+	else if (GLFW_KEY_RIGHT == event.keyEvent.keyCode)
 	{
 		auto hDelta = -1;
 		auto hPanning = hDelta * mouseSensitivity;
@@ -270,37 +270,37 @@ void CameraManipulatorOrbit::OnKeyPress(const Event& event)
 		camera->SetTarget(target);
 		camera->SetEye(eye);
 	}
-	else if (GLFW_KEY_R == event.parameters.key.keyCode)
+	else if (GLFW_KEY_R == event.keyEvent.keyCode)
 	{
 		camera->Reset();
 	}
-	else if (GLFW_KEY_INSERT == event.parameters.key.keyCode)
+	else if (GLFW_KEY_INSERT == event.keyEvent.keyCode)
 	{
 		camera->PushCameraHistory();
 	}
-	else if (GLFW_KEY_DELETE == event.parameters.key.keyCode)
+	else if (GLFW_KEY_DELETE == event.keyEvent.keyCode)
 	{
 		camera->PopCameraHistory();
 	}
-	else if (GLFW_KEY_PAGE_UP == event.parameters.key.keyCode)
+	else if (GLFW_KEY_PAGE_UP == event.keyEvent.keyCode)
 	{
 		camera->JumpToNextCameraHistory();
 	}
-	else if (GLFW_KEY_PAGE_DOWN == event.parameters.key.keyCode)
+	else if (GLFW_KEY_PAGE_DOWN == event.keyEvent.keyCode)
 	{
 		camera->JumpToPreviousCameraHistory();
 	}
 	else if (
-		GLFW_KEY_0 <= event.parameters.key.keyCode &&
-		GLFW_KEY_9 >= event.parameters.key.keyCode)
+		GLFW_KEY_0 <= event.keyEvent.keyCode &&
+		GLFW_KEY_9 >= event.keyEvent.keyCode)
 	{
-		camera->JumpCameraHistory(event.parameters.key.keyCode - GLFW_KEY_0);
+		camera->JumpCameraHistory(event.keyEvent.keyCode - GLFW_KEY_0);
 	}
 }
 
 void CameraManipulatorOrbit::OnKeyRelease(const Event& event)
 {
-	pressedKeys.erase(event.parameters.key.keyCode);
+	pressedKeys.erase(event.keyEvent.keyCode);
 
 	if (nullptr == camera) return;
 }
@@ -356,8 +356,8 @@ void CameraManipulatorTrackball::OnMousePosition(const Event& event)
 {
 	if (nullptr == camera) return;
 
-	float dx = event.parameters.mousePosition.xpos - lastMousePositionX;
-	float dy = event.parameters.mousePosition.ypos - lastMousePositionY;
+	float dx = event.mousePositionEvent.xpos - lastMousePositionX;
+	float dy = event.mousePositionEvent.ypos - lastMousePositionY;
 
 	if (isRButtonPressed)
 	{
@@ -402,44 +402,44 @@ void CameraManipulatorTrackball::OnMousePosition(const Event& event)
 		camera->SetEye(eye);
 	}
 
-	lastMousePositionX = event.parameters.mousePosition.xpos;
-	lastMousePositionY = event.parameters.mousePosition.ypos;
+	lastMousePositionX = event.mousePositionEvent.xpos;
+	lastMousePositionY = event.mousePositionEvent.ypos;
 }
 
 void CameraManipulatorTrackball::OnMouseButtonPress(const Event& event)
 {
 	if (nullptr == camera) return;
 
-	if (event.parameters.mouseButton.button == 0)
+	if (event.mouseButtonEvent.button == 0)
 	{
 		isLButtonPressed = true;
 	}
-	else if (event.parameters.mouseButton.button == 1)
+	else if (event.mouseButtonEvent.button == 1)
 	{
 		isRButtonPressed = true;
 	}
-	else if (event.parameters.mouseButton.button == 2)
+	else if (event.mouseButtonEvent.button == 2)
 	{
 		isMButtonPressed = true;
 	}
 
-	lastMousePositionX = event.parameters.mouseButton.xpos;
-	lastMousePositionY = event.parameters.mouseButton.ypos;
+	lastMousePositionX = event.mouseButtonEvent.xpos;
+	lastMousePositionY = event.mouseButtonEvent.ypos;
 }
 
 void CameraManipulatorTrackball::OnMouseButtonRelease(const Event& event)
 {
 	if (nullptr == camera) return;
 
-	if (event.parameters.mouseButton.button == 0)
+	if (event.mouseButtonEvent.button == 0)
 	{
 		isLButtonPressed = false;
 	}
-	else if (event.parameters.mouseButton.button == 1)
+	else if (event.mouseButtonEvent.button == 1)
 	{
 		isRButtonPressed = false;
 	}
-	else if (event.parameters.mouseButton.button == 2)
+	else if (event.mouseButtonEvent.button == 2)
 	{
 		isMButtonPressed = false;
 	}
@@ -456,11 +456,11 @@ void CameraManipulatorTrackball::OnMouseWheel(const Event& event)
 		{
 			f32 fovy = perspectiveCamera->GetFOVY() * RAD2DEG;
 
-			if (0 > event.parameters.mouseWheel.yoffset)
+			if (0 > event.mouseWheelEvent.yoffset)
 			{
 				fovy += 1.0f;
 			}
-			else if (0 < event.parameters.mouseWheel.yoffset)
+			else if (0 < event.mouseWheelEvent.yoffset)
 			{
 				fovy -= 1.0f;
 			}
@@ -473,11 +473,11 @@ void CameraManipulatorTrackball::OnMouseWheel(const Event& event)
 	}
 	else
 	{
-		if (0 > event.parameters.mouseWheel.yoffset)
+		if (0 > event.mouseWheelEvent.yoffset)
 		{
 			radius *= 1.1f;
 		}
-		else if (0 < event.parameters.mouseWheel.yoffset)
+		else if (0 < event.mouseWheelEvent.yoffset)
 		{
 			radius *= 0.9f;
 		}
@@ -492,7 +492,7 @@ void CameraManipulatorTrackball::OnMouseWheel(const Event& event)
 
 void CameraManipulatorTrackball::OnKeyPress(const Event& event)
 {
-	pressedKeys.insert(event.parameters.key.keyCode);
+	pressedKeys.insert(event.keyEvent.keyCode);
 
 	if (nullptr == camera) return;
 
@@ -504,27 +504,27 @@ void CameraManipulatorTrackball::OnKeyPress(const Event& event)
 
 	float moveStep = 0.2f;
 
-	if (event.parameters.key.keyCode == GLFW_KEY_W)
+	if (event.keyEvent.keyCode == GLFW_KEY_W)
 	{
 		eye += viewDir * moveStep;
 		target += viewDir * moveStep;
 	}
-	else if (event.parameters.key.keyCode == GLFW_KEY_S)
+	else if (event.keyEvent.keyCode == GLFW_KEY_S)
 	{
 		eye -= viewDir * moveStep;
 		target -= viewDir * moveStep;
 	}
-	else if (event.parameters.key.keyCode == GLFW_KEY_A)
+	else if (event.keyEvent.keyCode == GLFW_KEY_A)
 	{
 		eye -= right * moveStep;
 		target -= right * moveStep;
 	}
-	else if (event.parameters.key.keyCode == GLFW_KEY_D)
+	else if (event.keyEvent.keyCode == GLFW_KEY_D)
 	{
 		eye += right * moveStep;
 		target += right * moveStep;
 	}
-	else if (event.parameters.key.keyCode == GLFW_KEY_R)
+	else if (event.keyEvent.keyCode == GLFW_KEY_R)
 	{
 		camera->Reset();
 	}
@@ -535,5 +535,5 @@ void CameraManipulatorTrackball::OnKeyPress(const Event& event)
 
 void CameraManipulatorTrackball::OnKeyRelease(const Event& event)
 {
-	pressedKeys.erase(event.parameters.key.keyCode);
+	pressedKeys.erase(event.keyEvent.keyCode);
 }
