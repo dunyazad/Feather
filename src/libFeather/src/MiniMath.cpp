@@ -372,6 +372,16 @@ namespace MiniMath
 		z = axis.z * sinHalfAngle;
 	}
 
+	Quaternion Quaternion::identity()
+	{
+		return Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+	}
+
+	Quaternion Quaternion::zero()
+	{
+		return Quaternion(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+
 	Quaternion conjugate(const Quaternion q) { return { q.w, -q.x, -q.y, -q.z }; }
 
 	Quaternion operator*(const Quaternion& q1, const Quaternion& q2)

@@ -50,13 +50,6 @@ protected:
 	f64 lastMousePositionX = UINT32_MAX;
 	f64 lastMousePositionY = UINT32_MAX;
 	
-	f64 lastLButtonPositionX = UINT32_MAX;
-	f64 lastLButtonPositionY = UINT32_MAX;
-	f64 lastMButtonPositionX = UINT32_MAX;
-	f64 lastMButtonPositionY = UINT32_MAX;
-	f64 lastRButtonPositionX = UINT32_MAX;
-	f64 lastRButtonPositionY = UINT32_MAX;
-
 	bool isLButtonPressed = false;
 	bool isMButtonPressed = false;
 	bool isRButtonPressed = false;
@@ -67,4 +60,37 @@ protected:
 	f32 mouseSensitivity = 0.2f;
 	f32 mousePanningSensitivity = 0.1f;
 	f32 mouseWheelSensitivity = 0.5f;
+};
+
+
+class CameraManipulatorTrackball : public RegisterDerivation<CameraManipulatorTrackball, CameraManipulatorBase>
+{
+public:
+	CameraManipulatorTrackball();
+	virtual ~CameraManipulatorTrackball();
+
+	void OnEvent(const Event& event) override;
+
+private:
+	void OnMousePosition(const Event& event);
+	void OnMouseButtonPress(const Event& event);
+	void OnMouseButtonRelease(const Event& event);
+	void OnMouseWheel(const Event& event);
+	void OnKeyPress(const Event& event);
+	void OnKeyRelease(const Event& event);
+
+	float lastMousePositionX = 0.0f;
+	float lastMousePositionY = 0.0f;
+
+	bool isLButtonPressed = false;
+	bool isMButtonPressed = false;
+	bool isRButtonPressed = false;
+
+	float radius = 5.0f;
+	float mouseSensitivity = 0.005f;
+	float mousePanningSensitivity = 0.01f;
+
+	MiniMath::Quaternion cameraRotation = MiniMath::Quaternion::identity();
+
+	std::unordered_set<int> pressedKeys;
 };

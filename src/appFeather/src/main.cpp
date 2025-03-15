@@ -17,7 +17,6 @@ int main(int argc, char** argv)
 		{
 			auto appMain = Feather.CreateInstance<Entity>("AppMain");
 			auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
-			//appMain->AddComponent(appMainEventReceiver);
 			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event) {
 				if (GLFW_KEY_ESCAPE == event.parameters.key.keyCode)
 				{
@@ -28,17 +27,17 @@ int main(int argc, char** argv)
 		{
 			auto camera = Feather.CreateInstance<Entity>("Camera");
 			auto perspectiveCamera = Feather.CreateInstance<PerspectiveCamera>();
-			//camera->AddComponent(perspectiveCamera);
 
-			auto cameraManipulator = Feather.CreateInstance<CameraManipulatorOrbit>();
-			//camera->AddComponent(cameraManipulator);
+			//auto cameraManipulator = Feather.CreateInstance<CameraManipulatorOrbit>();
+			//cameraManipulator->SetCamera(perspectiveCamera);
+
+			auto cameraManipulator = Feather.CreateInstance<CameraManipulatorTrackball>();
 			cameraManipulator->SetCamera(perspectiveCamera);
 		}
 
 		{
 			auto gui = Feather.CreateInstance<Entity>("GUI");
 			auto statusPanel = Feather.CreateInstance<StatusPanel>();
-			//gui->AddComponent(statusPanel);
 		}
 
 //#define RENDER_TRIANGLE
@@ -50,8 +49,6 @@ int main(int argc, char** argv)
 			auto renderable = Feather.CreateInstance<Renderable>();
 			renderable->Initialize(Renderable::GeometryMode::Triangles);
 			renderable->SetShader(shader);
-			//entity->AddComponent(shader);
-			//entity->AddComponent(renderable);
 
 			renderable->AddVertex({ -1.0f, -1.0f, 0.0f });
 			renderable->AddVertex({ 1.0f, -1.0f, 0.0f });
@@ -142,13 +139,11 @@ int main(int argc, char** argv)
 				}
 			}
 
-			auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorOrbit>();
-			auto camera = cameraManipulator->SetCamera();
-			auto [x, y, z] = ply.GetAABBCenter();
-			camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
-			camera->SetTarget({ x,y,z });
-
-			alog("%f %f %f\n", x, y, z);
+			//auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorOrbit>();
+			//auto camera = cameraManipulator->SetCamera();
+			//auto [x, y, z] = ply.GetAABBCenter();
+			//camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
+			//camera->SetTarget({ x,y,z });
 		}
 #endif // LOAD_PLY
 

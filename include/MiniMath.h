@@ -137,6 +137,9 @@ namespace MiniMath
 
 		Quaternion(float, float, float, float);
 		Quaternion(float, const V3&);
+
+		static Quaternion identity();
+		static Quaternion zero();
 	};
 
 	Quaternion operator*(const Quaternion& q1, const Quaternion& q2);
