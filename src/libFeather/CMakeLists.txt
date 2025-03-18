@@ -178,6 +178,8 @@ target_compile_definitions(libFeather PUBLIC IMGUI_ENABLE_DOCKING IMGUI_DEFINE_M
 target_link_libraries(libFeather
     glfw
     glad
+    uv
+    #libuv
 )
 
 # Group source files in IDE

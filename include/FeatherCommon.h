@@ -59,6 +59,8 @@ using namespace std;
 #define GLFW_EXPOSE_NATIVE_WIN32  // Win32 관련 기능을 활성화
 #include <GLFW/glfw3native.h>
 
+#include <uv.h>
+
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "backends/imgui_impl_glfw.h"

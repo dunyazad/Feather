@@ -92,11 +92,17 @@ public:
 	inline void AddOnRenderCallback(function<void(f32)> callback) { onRenderCallbacks.push_back(callback); }
 	inline void AddOnTerminateCallback(function<void()> callback) { onTerminateCallbacks.push_back(callback); }
 
+	inline uv_loop_t* GetLoop() const { return loop; }
+
 private:
 	static libFeather* s_instance;
 
 	libFeather();
 	~libFeather();
+
+	uv_loop_t* loop = nullptr;
+	uv_poll_t glfw_poll;
+	uv_idle_t idle_handle;
 
 	FeatherWindow* featherWindow = nullptr;
 

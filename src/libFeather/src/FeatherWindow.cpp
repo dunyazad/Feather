@@ -18,12 +18,6 @@ GLFWwindow* FeatherWindow::Initialize(ui32 width, ui32 height)
     this->width = width;
     this->height = height;
 
-    if (!glfwInit())
-    {
-        std::cerr << "Failed to initialize GLFW\n";
-        return nullptr;
-    }
-
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -55,7 +49,6 @@ GLFWwindow* FeatherWindow::Initialize(ui32 width, ui32 height)
 void FeatherWindow::Terminate()
 {
     glfwDestroyWindow(window);
-    glfwTerminate();
 }
 
 void FeatherWindow::FrameBufferSizeCallback(GLFWwindow* window, i32 width, i32 height)
