@@ -10,43 +10,49 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # MSVC-specific options
 if (MSVC)
+    add_compile_options(/wd4819)
+    add_compile_options(/wd4005)
     add_compile_options(/std:c++17 /Zc:__cplusplus)
 endif()
 
 # Fetch dependencies
-FetchContent_Declare(
-    glad
-    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-    GIT_TAG        v0.1.36
-)
-FetchContent_MakeAvailable(glad)
+macro(fetch_dependency name repo tag)
+    FetchContent_Declare(
+        ${name}
+        GIT_REPOSITORY ${repo}
+        GIT_TAG ${tag}
+    )
+    FetchContent_GetProperties(${name})
+    if(NOT ${name}_POPULATED)
+        FetchContent_MakeAvailable(${name})
+    endif()
+endmacro()
 
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Do not build GLFW examples" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "Do not build GLFW tests" FORCE)
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "Do not build GLFW documentation" FORCE)
+# Disable unwanted builds for dependencies
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Disable GLFW examples" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "Disable GLFW tests" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "Disable GLFW documentation" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "Disable GLFW installation target" FORCE)
-set(GLFW_BUILD_SHARED_LIBS OFF CACHE BOOL "Build GLFW as a static library" FORCE)  # Ensure static build
 
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG        3.3.8
-)
-FetchContent_MakeAvailable(glfw)
+set(IMPLOT_BUILD_EXAMPLES OFF CACHE BOOL "Disable ImPlot examples" FORCE)
 
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG        docking
-)
-FetchContent_MakeAvailable(imgui)
+set(LIBUV_BUILD_TESTS OFF CACHE BOOL "Disable libuv tests" FORCE)
 
-FetchContent_Declare(
-    implot
-    GIT_REPOSITORY https://github.com/epezent/implot.git
-    GIT_TAG        v0.15
-)
-FetchContent_MakeAvailable(implot)
+fetch_dependency(glad "https://github.com/Dav1dde/glad.git" "v0.1.36")
+fetch_dependency(glfw "https://github.com/glfw/glfw.git" "3.3.8")
+fetch_dependency(imgui "https://github.com/ocornut/imgui.git" "docking")
+fetch_dependency(implot "https://github.com/epezent/implot.git" "v0.15")
+fetch_dependency(entt "https://github.com/skypjack/entt.git" "v3.11.1")
+fetch_dependency(glm "https://github.com/g-truc/glm.git" "0.9.9.8")
+
+set(BUILD_TESTING OFF CACHE BOOL "Disable Eigen testing" FORCE)
+set(EIGEN_BUILD_TESTING OFF CACHE BOOL "Disable Eigen testing" FORCE)
+set(EIGEN_BUILD_DOC OFF CACHE BOOL "Disable Eigen documentation" FORCE)
+set(EIGEN_BUILD_EXAMPLES OFF CACHE BOOL "Disable Eigen examples" FORCE)
+set(EIGEN_LEAVE_TEST_IN_ALL_TARGET OFF CACHE BOOL "Disable Eigen tests" FORCE)
+fetch_dependency(eigen "https://gitlab.com/libeigen/eigen.git" "3.4.0")
+
+fetch_dependency(libuv "https://github.com/libuv/libuv.git" "v1.46.0")
 
 set(source_list
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
@@ -159,6 +165,10 @@ target_include_directories(libFeather PUBLIC
     ${glfw_SOURCE_DIR}/include
     ${imgui_SOURCE_DIR}
     ${implot_SOURCE_DIR}
+    ${entt_SOURCE_DIR}/single_include
+    ${glm_SOURCE_DIR}
+    ${eigen_SOURCE_DIR}
+    ${libuv_SOURCE_DIR}/include
 )
 
 # Enable Docking feature for ImGui
@@ -187,9 +197,12 @@ endfunction(assign_source_group)
 assign_source_group(${source_list})
 
 # Organizing the Visual Studio Solution Explorer
+set_target_properties(uninstall PROPERTIES FOLDER "CMakePredefinedTargets")
 set_target_properties(glad PROPERTIES FOLDER "Libraries")
 set_target_properties(glad-generate-files PROPERTIES FOLDER "Libraries")
 set_target_properties(glfw PROPERTIES FOLDER "Libraries")
+set_target_properties(uv PROPERTIES FOLDER "Libraries")
+set_target_properties(uv_a PROPERTIES FOLDER "Libraries")
 # Move update_mappings into Libraries folder (if it exists)
 if (TARGET update_mappings)
     set_target_properties(update_mappings PROPERTIES FOLDER "Libraries")

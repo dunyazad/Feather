@@ -36,6 +36,18 @@ using namespace std;
 
 #include <omp.h>
 
+#include <entt/entt.hpp>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/IterativeLinearSolvers>
+#include <Eigen/LU>
+#include <Eigen/Sparse>
+
 #define WIN32_LEAN_AND_MEAN
 #define NO_MINMAX
 #define NO_BYTE
