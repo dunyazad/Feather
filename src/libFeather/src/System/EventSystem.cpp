@@ -5,7 +5,6 @@
 vector<EventSystem*> EventSystem::s_instances;
 
 EventSystem::EventSystem(FeatherWindow* window)
-	: RegisterDerivation<EventSystem, SystemBase>(window)
 {
 	s_instances.push_back(this);
 }
@@ -16,10 +15,10 @@ EventSystem::~EventSystem()
 
 void EventSystem::Initialize()
 {
-	glfwSetKeyCallback(window->GetGLFWwindow(), KeyCallback);
-	glfwSetCursorPosCallback(window->GetGLFWwindow(), MousePositionCallback);
-	glfwSetMouseButtonCallback(window->GetGLFWwindow(), MouseButtonCallback);
-	glfwSetScrollCallback(window->GetGLFWwindow(), MouseWheelCallback);
+	//glfwSetKeyCallback(window->GetGLFWwindow(), KeyCallback);
+	//glfwSetCursorPosCallback(window->GetGLFWwindow(), MousePositionCallback);
+	//glfwSetMouseButtonCallback(window->GetGLFWwindow(), MouseButtonCallback);
+	//glfwSetScrollCallback(window->GetGLFWwindow(), MouseWheelCallback);
 }
 
 void EventSystem::Terminate()
@@ -42,13 +41,13 @@ void EventSystem::UnsubscribeEvent(EventType eventType, FeatherObject* eventRece
 
 void EventSystem::DispatchEvent(const Event& event)
 {
-	if (0 != eventReceivers.count(event.type))
-	{
-		for (auto& receiver : eventReceivers[event.type])
-		{
-			receiver->OnEvent(event);
-		}
-	}
+	//if (0 != eventReceivers.count(event.type))
+	//{
+	//	for (auto& receiver : eventReceivers[event.type])
+	//	{
+	//		receiver->OnEvent(event);
+	//	}
+	//}
 }
 
 void EventSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

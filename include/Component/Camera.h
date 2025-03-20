@@ -4,6 +4,20 @@
 
 #include <Component/ComponentBase.h>
 
+enum CameraProjectionMode { Perspective, Orghogonal };
+
+struct Camera
+{
+	Eigen::Matrix4f projectionMatrix = Eigen::Matrix4f::Identity();
+	Eigen::Matrix4f viewMatrix = Eigen::Matrix4f::Identity();
+	
+	Eigen::Vector3f eye = Eigen::Vector3f(0.0f, 0.0f, 5.0f);
+	Eigen::Vector3f target = Eigen::Vector3f(0.0f, 0.0f, 0.0f);
+	Eigen::Vector3f up = Eigen::Vector3f(0.0f, 1.0f, 0.0f);
+
+	CameraProjectionMode projectionMode;
+};
+
 struct ProjectionInfoOrthogonal
 {
 	f32 left, right, bottom, top, zNear, zFar;
@@ -14,7 +28,7 @@ struct ProjectionInfoPerspective
 	f32 fovy, aspectRatio, zNear, zFar;
 };
 
-class CameraBase : public RegisterDerivation<CameraBase, ComponentBase>
+class CameraBase
 {
 public:
 	enum ProjectionMode { Perspective, Orghogonal };
@@ -59,13 +73,11 @@ protected:
 	i32 cameraHistoryIndex = 0;
 };
 
-class PerspectiveCamera : public RegisterDerivation<PerspectiveCamera, CameraBase>
+class PerspectiveCamera : public CameraBase
 {
 public:
 	PerspectiveCamera();
 	virtual ~PerspectiveCamera();
-
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
 
 	inline f32 GetFOVY() { return fovy; }
 	inline f32 GetAspectRatio() { return aspectRatio; }
@@ -84,13 +96,11 @@ protected:
 	f32 zFar = 1000.0f;
 };
 
-class OrthogonalCamera : public RegisterDerivation<OrthogonalCamera, CameraBase>
+class OrthogonalCamera : public CameraBase
 {
 public:
 	OrthogonalCamera();
 	virtual ~OrthogonalCamera();
-
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
 
 protected:
 	f32 left = -1.0f;

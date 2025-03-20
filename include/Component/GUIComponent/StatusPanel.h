@@ -2,14 +2,14 @@
 
 #include<Component/GUIComponent/GUIComponentBase.h>
 
-class StatusPanel : public RegisterDerivation<StatusPanel, GUIComponentBase>
+class StatusPanel
 {
 public:
 	StatusPanel();
 	~StatusPanel();
 
-	virtual void Render() override;
-private:
+	virtual void Render();
+
     const ui32 historySize = 50;
 
     vector<f32> fpsHistory;

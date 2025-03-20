@@ -3,53 +3,52 @@
 #include <Feather.h>
 
 CameraManipulatorBase::CameraManipulatorBase()
-	: RegisterDerivation<CameraManipulatorBase, ComponentBase>()
 {
 }
 
 CameraManipulatorOrbit::CameraManipulatorOrbit()
-	: RegisterDerivation<CameraManipulatorOrbit, CameraManipulatorBase>()
+	: CameraManipulatorBase()
 {
-	SubscribeEvent(EventType::MousePosition);
-	SubscribeEvent(EventType::MouseButtonPress);
-	SubscribeEvent(EventType::MouseButtonRelease);
-	SubscribeEvent(EventType::MouseWheel);
-	SubscribeEvent(EventType::KeyPress);
-	SubscribeEvent(EventType::KeyRelease);
+	//SubscribeEvent(EventType::MousePosition);
+	//SubscribeEvent(EventType::MouseButtonPress);
+	//SubscribeEvent(EventType::MouseButtonRelease);
+	//SubscribeEvent(EventType::MouseWheel);
+	//SubscribeEvent(EventType::KeyPress);
+	//SubscribeEvent(EventType::KeyRelease);
 }
 
 CameraManipulatorOrbit::~CameraManipulatorOrbit()
 {
 }
 
-void CameraManipulatorOrbit::OnEvent(const Event& event)
-{
-	CameraManipulatorBase::OnEvent(event);
-
-	switch (event.type)
-	{
-	case EventType::MousePosition:
-		OnMousePosition(event);
-		break;
-	case EventType::MouseButtonPress:
-		OnMouseButtonPress(event);
-		break;
-	case EventType::MouseButtonRelease:
-		OnMouseButtonRelease(event);
-		break;
-	case EventType::MouseWheel:
-		OnMouseWheel(event);
-		break;
-	case EventType::KeyPress:
-		OnKeyPress(event);
-		break;
-	case EventType::KeyRelease:
-		OnKeyRelease(event);
-		break;
-	default:
-		break;
-	}
-}
+//void CameraManipulatorOrbit::OnEvent(const Event& event)
+//{
+//	CameraManipulatorBase::OnEvent(event);
+//
+//	switch (event.type)
+//	{
+//	case EventType::MousePosition:
+//		OnMousePosition(event);
+//		break;
+//	case EventType::MouseButtonPress:
+//		OnMouseButtonPress(event);
+//		break;
+//	case EventType::MouseButtonRelease:
+//		OnMouseButtonRelease(event);
+//		break;
+//	case EventType::MouseWheel:
+//		OnMouseWheel(event);
+//		break;
+//	case EventType::KeyPress:
+//		OnKeyPress(event);
+//		break;
+//	case EventType::KeyRelease:
+//		OnKeyRelease(event);
+//		break;
+//	default:
+//		break;
+//	}
+//}
 
 void CameraManipulatorOrbit::OnMousePosition(const Event& event)
 {
@@ -306,7 +305,7 @@ void CameraManipulatorOrbit::OnKeyRelease(const Event& event)
 }
 
 CameraManipulatorTrackball::CameraManipulatorTrackball()
-	: RegisterDerivation<CameraManipulatorTrackball, CameraManipulatorBase>(),
+	: CameraManipulatorBase(),
 	radius(10.0f),
 	mouseSensitivity(0.005f),
 	mousePanningSensitivity(0.01f),
@@ -314,43 +313,43 @@ CameraManipulatorTrackball::CameraManipulatorTrackball()
 	isMButtonPressed(false),
 	isRButtonPressed(false)
 {
-	SubscribeEvent(EventType::MousePosition);
-	SubscribeEvent(EventType::MouseButtonPress);
-	SubscribeEvent(EventType::MouseButtonRelease);
-	SubscribeEvent(EventType::MouseWheel);
-	SubscribeEvent(EventType::KeyPress);
-	SubscribeEvent(EventType::KeyRelease);
+	//SubscribeEvent(EventType::MousePosition);
+	//SubscribeEvent(EventType::MouseButtonPress);
+	//SubscribeEvent(EventType::MouseButtonRelease);
+	//SubscribeEvent(EventType::MouseWheel);
+	//SubscribeEvent(EventType::KeyPress);
+	//SubscribeEvent(EventType::KeyRelease);
 }
 
 CameraManipulatorTrackball::~CameraManipulatorTrackball() {}
 
-void CameraManipulatorTrackball::OnEvent(const Event& event)
-{
-	CameraManipulatorBase::OnEvent(event);
-
-	switch (event.type) {
-	case EventType::MousePosition:
-		OnMousePosition(event);
-		break;
-	case EventType::MouseButtonPress:
-		OnMouseButtonPress(event);
-		break;
-	case EventType::MouseButtonRelease:
-		OnMouseButtonRelease(event);
-		break;
-	case EventType::MouseWheel:
-		OnMouseWheel(event);
-		break;
-	case EventType::KeyPress:
-		OnKeyPress(event);
-		break;
-	case EventType::KeyRelease:
-		OnKeyRelease(event);
-		break;
-	default:
-		break;
-	}
-}
+//void CameraManipulatorTrackball::OnEvent(const Event& event)
+//{
+//	CameraManipulatorBase::OnEvent(event);
+//
+//	switch (event.type) {
+//	case EventType::MousePosition:
+//		OnMousePosition(event);
+//		break;
+//	case EventType::MouseButtonPress:
+//		OnMouseButtonPress(event);
+//		break;
+//	case EventType::MouseButtonRelease:
+//		OnMouseButtonRelease(event);
+//		break;
+//	case EventType::MouseWheel:
+//		OnMouseWheel(event);
+//		break;
+//	case EventType::KeyPress:
+//		OnKeyPress(event);
+//		break;
+//	case EventType::KeyRelease:
+//		OnKeyRelease(event);
+//		break;
+//	default:
+//		break;
+//	}
+//}
 
 void CameraManipulatorTrackball::OnMousePosition(const Event& event)
 {

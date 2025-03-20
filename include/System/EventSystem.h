@@ -4,15 +4,15 @@
 
 class EventReceiver;
 
-class EventSystem : public RegisterDerivation<EventSystem, SystemBase>
+class EventSystem
 {
 public:
 	EventSystem(FeatherWindow* window);
 	~EventSystem();
 
-	virtual void Initialize() override;
-	virtual void Terminate() override;
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
+	virtual void Initialize();
+	virtual void Terminate();
+	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	void SubscribeEvent(EventType eventType, FeatherObject* eventReceiver);
 	void UnsubscribeEvent(EventType eventType, FeatherObject* eventReceiver);

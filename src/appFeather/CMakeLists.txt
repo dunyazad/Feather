@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.20)
 project(appFeather)
 
+# Enable C++17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# MSVC-specific options
+if (MSVC)
+    add_compile_options(/wd4819)
+    add_compile_options(/wd4005)
+    add_compile_options(/std:c++17 /Zc:__cplusplus)
+endif()
+
 add_executable(appFeather
     src/main.cpp
 )

@@ -96,7 +96,7 @@ protected:
 	vector<T> datas;
 };
 
-class Renderable : public RegisterDerivation<Renderable, ComponentBase>
+class Renderable
 {
 public:
 	enum GeometryMode

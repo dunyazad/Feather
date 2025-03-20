@@ -4,15 +4,15 @@
 
 class Shader;
 
-class RenderSystem : public RegisterDerivation<RenderSystem, SystemBase>
+class RenderSystem
 {
 public:
 	RenderSystem(FeatherWindow* window);
 	~RenderSystem();
 
-	virtual void Initialize() override;
-	virtual void Terminate() override;
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
+	virtual void Initialize();
+	virtual void Terminate();
+	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	Shader* CreateShader();
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <TypeDefinition.h>
+
 #include <cstdio>
 #include <stdio.h>
 #include <limits.h>
@@ -69,23 +71,12 @@ using namespace std;
 
 #define Feather libFeather::GetStaticInstance()
 
-typedef char i8;
-typedef short i16;
-typedef int i32;
-typedef long i64;
-
-typedef unsigned char ui8;
-typedef unsigned short ui16;
-typedef unsigned int ui32;
-typedef unsigned long ui64;
-
-typedef float f32;
-typedef double f64;
-
 typedef ui32 EntityID;
 typedef ui32 ComponentID;
 
 #include <MiniMath.h>
+
+using Entity = entt::entity;
 
 namespace Time
 {
@@ -170,13 +161,13 @@ class FeatherObject
 public:
 	virtual ~FeatherObject() = default;
 
-	static unordered_map<type_index, unordered_set<type_index>>& GetSubclassMap();
-	static void RegisterClass(type_index baseType, type_index derivedType);
-	static unordered_set<type_index> GetAllSubclasses(type_index baseType);
+	//static unordered_map<type_index, unordered_set<type_index>>& GetSubclassMap();
+	//static void RegisterClass(type_index baseType, type_index derivedType);
+	//static unordered_set<type_index> GetAllSubclasses(type_index baseType);
 
-	virtual void OnEvent(const Event& event);
-	virtual void SubscribeEvent(EventType eventType);
-	virtual void AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler);
+	//virtual void OnEvent(const Event& event);
+	//virtual void SubscribeEvent(EventType eventType);
+	//virtual void AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler);
 
 	inline const string& GetName() const { return name; }
 	inline void SetName(const string& name) { this->name = name; }

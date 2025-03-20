@@ -23,7 +23,6 @@ GLFWwindow* FeatherWindow::Initialize(ui32 width, ui32 height)
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE); // Allows glBegin/glEnd
 
-
     window = glfwCreateWindow(width, height, "Feather", nullptr, nullptr);
 
     if (!window)
@@ -35,8 +34,6 @@ GLFWwindow* FeatherWindow::Initialize(ui32 width, ui32 height)
 
     glfwMakeContextCurrent(window);
 
-    glfwSetFramebufferSizeCallback(window, FrameBufferSizeCallback);
-    
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cerr << "Failed to initialize GLAD\n";
@@ -56,7 +53,7 @@ void FeatherWindow::FrameBufferSizeCallback(GLFWwindow* window, i32 width, i32 h
     s_instance->width = width;
     s_instance->height = height;
 
-    auto eventSystems = Feather.GetInstances<EventSystem>();
+ /*   auto eventSystems = Feather.GetInstances<EventSystem>();
     if (eventSystems.empty()) return;
 
     auto eventSystem = *(eventSystems.begin());
@@ -65,5 +62,5 @@ void FeatherWindow::FrameBufferSizeCallback(GLFWwindow* window, i32 width, i32 h
     event.frameBufferResizeEvent.width = width;
     event.frameBufferResizeEvent.height = height;
 
-    eventSystem->DispatchEvent(event);
+    eventSystem->DispatchEvent(event);*/
 }

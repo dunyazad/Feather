@@ -42,59 +42,59 @@ namespace Time
     }
 }
 
-unordered_map<type_index, unordered_set<type_index>> FeatherObject::subclass_map;
-
-unordered_map<type_index, unordered_set<type_index>>& FeatherObject::GetSubclassMap()
-{
-	return subclass_map;
-}
-
-void FeatherObject::RegisterClass(type_index baseType, type_index derivedType)
-{
-	GetSubclassMap()[baseType].insert(derivedType);
-}
-
-unordered_set<type_index> FeatherObject::GetAllSubclasses(type_index baseType)
-{
-	unordered_set<type_index> subclasses;
-	if (GetSubclassMap().find(baseType) != GetSubclassMap().end())
-	{
-		for (const auto& subType : GetSubclassMap()[baseType])
-		{
-			if (subclasses.insert(subType).second)
-			{
-				auto childSubclasses = GetAllSubclasses(subType);
-				subclasses.insert(childSubclasses.begin(), childSubclasses.end());
-			}
-		}
-	}
-	return subclasses;
-}
-
-void FeatherObject::OnEvent(const Event& event)
-{
-    if (0 != eventHandlers.count(event.type))
-    {
-        for (auto& handler : eventHandlers[event.type])
-        {
-            handler(event, this);
-        }
-    }
-}
-
-void FeatherObject::SubscribeEvent(EventType eventType)
-{
-    auto eventSystems = Feather.GetInstances<EventSystem>();
-    if (eventSystems.empty()) return;
-
-    if (nullptr != *eventSystems.begin())
-    {
-        (*eventSystems.begin())->SubscribeEvent(eventType, this);
-    }
-}
-
-void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler)
-{
-    eventHandlers[eventType].push_back(handler);
-    SubscribeEvent(eventType);
-}
+//unordered_map<type_index, unordered_set<type_index>> FeatherObject::subclass_map;
+//
+//unordered_map<type_index, unordered_set<type_index>>& FeatherObject::GetSubclassMap()
+//{
+//	return subclass_map;
+//}
+//
+//void FeatherObject::RegisterClass(type_index baseType, type_index derivedType)
+//{
+//	GetSubclassMap()[baseType].insert(derivedType);
+//}
+//
+//unordered_set<type_index> FeatherObject::GetAllSubclasses(type_index baseType)
+//{
+//	unordered_set<type_index> subclasses;
+//	if (GetSubclassMap().find(baseType) != GetSubclassMap().end())
+//	{
+//		for (const auto& subType : GetSubclassMap()[baseType])
+//		{
+//			if (subclasses.insert(subType).second)
+//			{
+//				auto childSubclasses = GetAllSubclasses(subType);
+//				subclasses.insert(childSubclasses.begin(), childSubclasses.end());
+//			}
+//		}
+//	}
+//	return subclasses;
+//}
+//
+//void FeatherObject::OnEvent(const Event& event)
+//{
+//    if (0 != eventHandlers.count(event.type))
+//    {
+//        for (auto& handler : eventHandlers[event.type])
+//        {
+//            handler(event, this);
+//        }
+//    }
+//}
+//
+//void FeatherObject::SubscribeEvent(EventType eventType)
+//{
+//    auto eventSystems = Feather.GetInstances<EventSystem>();
+//    if (eventSystems.empty()) return;
+//
+//    if (nullptr != *eventSystems.begin())
+//    {
+//        (*eventSystems.begin())->SubscribeEvent(eventType, this);
+//    }
+//}
+//
+//void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler)
+//{
+//    eventHandlers[eventType].push_back(handler);
+//    SubscribeEvent(eventType);
+//}

@@ -45,15 +45,15 @@ struct InputEvent
 	InputEventParameters parameters;
 };
 
-class InputSystem : public RegisterDerivation<InputSystem, SystemBase>
+class InputSystem
 {
 public:
 	InputSystem(FeatherWindow* window);
 	~InputSystem();
 
-	virtual void Initialize() override;
-	virtual void Terminate() override;
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
+	virtual void Initialize();
+	virtual void Terminate();
+	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	void AddKeyPressEventHandler(int key, function<void(GLFWwindow*, KeyInputEventParameters)> handler);
 	void AddKeyReleaseEventHandler(int key, function<void(GLFWwindow*, KeyInputEventParameters)> handler);

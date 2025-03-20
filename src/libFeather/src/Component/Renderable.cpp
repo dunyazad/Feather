@@ -1,7 +1,6 @@
 #include <Component/Renderable.h>
 
 Renderable::Renderable()
-	: RegisterDerivation<Renderable, ComponentBase>()
 {
 }
 

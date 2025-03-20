@@ -13,9 +13,9 @@ int main(int argc, char** argv)
 
 	auto w = Feather.GetFeatherWindow();
 
+	/*
 	Feather.AddOnInitializeCallback([&]() {
 		{
-			auto appMain = Feather.CreateInstance<Entity>("AppMain");
 			auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
 			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
 				if (GLFW_KEY_ESCAPE == event.keyEvent.keyCode)
@@ -25,7 +25,6 @@ int main(int argc, char** argv)
 				});
 		}
 		{
-			auto camera = Feather.CreateInstance<Entity>("Camera");
 			auto perspectiveCamera = Feather.CreateInstance<PerspectiveCamera>();
 
 			//auto cameraManipulator = Feather.CreateInstance<CameraManipulatorOrbit>();
@@ -36,14 +35,12 @@ int main(int argc, char** argv)
 		}
 
 		{
-			auto gui = Feather.CreateInstance<Entity>("GUI");
 			auto statusPanel = Feather.CreateInstance<StatusPanel>();
 		}
 
 //#define RENDER_TRIANGLE
 #ifdef RENDER_TRIANGLE
 		{
-			auto entity = Feather.CreateInstance<Entity>("Triangle");
 			auto shader = Feather.CreateInstance<Shader>();
 			shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
 			auto renderable = Feather.CreateInstance<Renderable>();
@@ -71,7 +68,6 @@ int main(int argc, char** argv)
 //#define RENDER_VOXELS_BOX
 #ifdef RENDER_VOXELS_BOX
 		{
-			auto entity = Feather.CreateInstance<Entity>("Box");
 			auto shader = Feather.CreateInstance<Shader>();
 			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
 			auto renderable = Feather.CreateInstance<Renderable>();
@@ -111,7 +107,6 @@ int main(int argc, char** argv)
 //#define RENDER_VOXELS_SPHERE
 #ifdef RENDER_VOXELS_SPHERE
 		{
-			auto entity = Feather.CreateInstance<Entity>("Box");
 			auto shader = Feather.CreateInstance<Shader>();
 			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
 			auto renderable = Feather.CreateInstance<Renderable>();
@@ -160,7 +155,6 @@ int main(int argc, char** argv)
 //#define LOAD_PLY
 #ifdef LOAD_PLY
 		{
-			auto entity = Feather.CreateInstance<Entity>("Teeth");
 			auto shader = Feather.CreateInstance<Shader>();
 			shader->Initialize(File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs"));
 
@@ -201,7 +195,6 @@ int main(int argc, char** argv)
 			ply.Deserialize("../../res/3D/Teeth.ply");
 			ply.SwapAxisYZ();
 
-			auto entity = Feather.CreateInstance<Entity>("Box");
 			auto shader = Feather.CreateInstance<Shader>();
 			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
 			auto renderable = Feather.CreateInstance<Renderable>();
@@ -244,6 +237,17 @@ int main(int argc, char** argv)
 		}
 
 		});
+	*/
+
+	auto appMain = Feather.CreateEntity();
+	EventDispatcher::RegisterEntityEvent<KeyEvent>(appMain, [w](KeyEvent keyEvent) {
+		if (GLFW_KEY_ESCAPE == keyEvent.keyCode)
+		{
+			glfwSetWindowShouldClose(w->GetGLFWwindow(), true);
+		}});
+
+	auto gui = Feather.CreateEntity();
+	auto statusPanel = Feather.CreateComponent<StatusPanel>(gui);
 
 	Feather.Run();
 

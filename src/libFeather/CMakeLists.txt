@@ -59,13 +59,16 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/FeatherCommon.h
     ${CMAKE_SOURCE_DIR}/include/Feather.h
 
-    ${CMAKE_SOURCE_DIR}/include/Entity.h
+    ${CMAKE_SOURCE_DIR}/include/Event.h
+    ${CMAKE_SOURCE_DIR}/include/EventDispatcher.h
+    ${CMAKE_SOURCE_DIR}/include/EventHandler.h
     ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/File.h
     ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
     ${CMAKE_SOURCE_DIR}/include/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/Monitor.h
     ${CMAKE_SOURCE_DIR}/include/Serialization.hpp
+    ${CMAKE_SOURCE_DIR}/include/TypeDefinition.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/Components.h
     ${CMAKE_SOURCE_DIR}/include/Component/ComponentBase.h
@@ -89,8 +92,9 @@ set(source_list
 
     src/Feather.cpp
     src/FeatherCommon.cpp
-    src/Entity.cpp
     src/MiniMath.cpp
+    src/EventDispatcher.cpp
+    src/EventHandler.cpp
     src/FeatherWindow.cpp
     src/File.cpp
     src/GeometryBuilder.cpp

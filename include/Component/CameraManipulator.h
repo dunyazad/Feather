@@ -5,7 +5,7 @@
 
 class CameraBase;
 
-class CameraManipulatorBase : public RegisterDerivation<CameraManipulatorBase, ComponentBase>
+class CameraManipulatorBase
 {
 public:
 	CameraManipulatorBase();
@@ -18,13 +18,13 @@ protected:
 	CameraBase* camera = nullptr;
 };
 
-class CameraManipulatorOrbit : public RegisterDerivation<CameraManipulatorOrbit, CameraManipulatorBase>
+class CameraManipulatorOrbit : public CameraManipulatorBase
 {
 public:
 	CameraManipulatorOrbit();
 	~CameraManipulatorOrbit();
 	
-	virtual void OnEvent(const Event& event) override;
+	//virtual void OnEvent(const Event& event) override;
 
 	void OnMousePosition(const Event& event);
 	void OnMouseButtonPress(const Event& event);
@@ -63,13 +63,13 @@ protected:
 };
 
 
-class CameraManipulatorTrackball : public RegisterDerivation<CameraManipulatorTrackball, CameraManipulatorBase>
+class CameraManipulatorTrackball : public CameraManipulatorBase
 {
 public:
 	CameraManipulatorTrackball();
 	virtual ~CameraManipulatorTrackball();
 
-	void OnEvent(const Event& event) override;
+	//void OnEvent(const Event& event) override;
 
 	inline f32 GetRadius() { return radius; }
 	inline void SetRadius(f32 radius) { this->radius = radius; }

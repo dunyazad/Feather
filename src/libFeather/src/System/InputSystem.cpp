@@ -4,7 +4,6 @@
 vector<InputSystem*> InputSystem::s_instances;
 
 InputSystem::InputSystem(FeatherWindow* window)
-	: RegisterDerivation<InputSystem, SystemBase>(window)
 {
 	s_instances.push_back(this);
 }

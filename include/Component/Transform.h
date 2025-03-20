@@ -4,7 +4,7 @@
 
 #include <Component/ComponentBase.h>
 
-class Transform : public RegisterDerivation<Transform , ComponentBase>
+class Transform
 {
 public:
 	Transform();
