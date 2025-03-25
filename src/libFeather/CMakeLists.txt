@@ -162,6 +162,7 @@ target_include_directories(libFeather PUBLIC
     ${CMAKE_SOURCE_DIR}/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${glad_SOURCE_DIR}/include
+    ${glad_BINARY_DIR}/include
     ${glfw_SOURCE_DIR}/include
     ${imgui_SOURCE_DIR}
     ${implot_SOURCE_DIR}
@@ -174,6 +175,19 @@ target_compile_definitions(libFeather PUBLIC IMGUI_ENABLE_DOCKING IMGUI_DEFINE_M
 target_link_libraries(libFeather
     glfw
     glad
+)
+
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY_DEBUG   ${Feather_SOURCE_DIR}/bin/Debug
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG   ${Feather_SOURCE_DIR}/bin/Debug
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG   ${Feather_SOURCE_DIR}/bin/Debug
+
+    ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${Feather_SOURCE_DIR}/bin/Release
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE ${Feather_SOURCE_DIR}/bin/Release
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${Feather_SOURCE_DIR}/bin/Release
+
+    VS_DEBUGGER_WORKING_DIRECTORY "$<IF:$<CONFIG:Debug>,${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG},${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}>"
 )
 
 # Group source files in IDE
@@ -201,12 +215,3 @@ if (TARGET update_mappings)
     set_target_properties(update_mappings PROPERTIES FOLDER "Libraries")
 endif()
 #set_target_properties(glfw-static PROPERTIES FOLDER "Libraries")
-
-# Output directories
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin/Debug)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin/Release)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY "$<IF:$<CONFIG:Debug>,${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG},${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}>"
-)
