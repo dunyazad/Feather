@@ -196,9 +196,10 @@ int main(int argc, char** argv)
 		}
 #endif // LOAD_PLY
 
+		/*
 		{
 			PLYFormat ply;
-			ply.Deserialize("../../res/3D/Teeth.ply");
+			ply.Deserialize("../../res/3D/Teeth_Full.ply");
 			ply.SwapAxisYZ();
 
 			auto entity = Feather.CreateInstance<Entity>("Box");
@@ -242,7 +243,106 @@ int main(int argc, char** argv)
 				}
 				});
 		}
+		*/
+		
+		{
+			struct Point
+			{
+				MiniMath::V3 point;
+				MiniMath::V3 normal;
+				MiniMath::V3 color;
+			};
+			ALPFormat<Point> alp;
+			if (false == alp.Deserialize("../../res/3D/Teeth_Full.alp"))
+			{
+				PLYFormat ply;
+				ply.Deserialize("../../res/3D/Teeth_Full.ply");
+				ply.SwapAxisYZ();
 
+				vector<Point> points;
+				for (size_t i = 0; i < ply.GetPoints().size() / 3; i++)
+				{
+					auto px = ply.GetPoints()[i * 3];
+					auto py = ply.GetPoints()[i * 3 + 1];
+					auto pz = ply.GetPoints()[i * 3 + 2];
+
+					auto nx = ply.GetNormals()[i * 3];
+					auto ny = ply.GetNormals()[i * 3 + 1];
+					auto nz = ply.GetNormals()[i * 3 + 2];
+
+					auto cx = ply.GetColors()[i * 3];
+					auto cy = ply.GetColors()[i * 3 + 1];
+					auto cz = ply.GetColors()[i * 3 + 2];
+
+					points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
+				}
+
+				alp.AddPoints(points);
+				alp.Serialize("../../res/3D/Teeth_Full.alp");
+			}
+
+			auto entity = Feather.CreateInstance<Entity>("Box");
+			auto renderable = Feather.CreateInstance<Renderable>();
+			renderable->Initialize(Renderable::GeometryMode::Triangles);
+			{
+				auto shader = Feather.CreateInstance<Shader>();
+				shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
+				renderable->AddShader(shader);
+			}
+			{
+				auto shader = Feather.CreateInstance<Shader>();
+				shader->Initialize(File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
+				renderable->AddShader(shader);
+				renderable->SetActiveShaderIndex(1);
+			}
+
+			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.05f, 6, 6);
+			//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
+			renderable->AddIndices(indices);
+			renderable->AddVertices(vertices);
+			renderable->AddNormals(normals);
+			renderable->AddColors(colors);
+			renderable->AddUVs(uvs);
+
+			for (auto& p : alp.GetPoints())
+			{
+				auto r = p.color.x;
+				auto g = p.color.y;
+				auto b = p.color.z;
+				auto a = 1.f;
+
+				renderable->AddInstanceColor(MiniMath::V4(r, g, b, a));
+				renderable->AddInstanceNormal(p.normal);
+
+				MiniMath::M4 model = MiniMath::M4::identity();
+				model.m[0][0] = 1.5f;
+				model.m[1][1] = 1.5f;
+				model.m[2][2] = 1.5f;
+				model = MiniMath::translate(model, p.point);
+				renderable->AddInstanceTransform(model);
+			}
+
+			renderable->EnableInstancing(alp.GetPoints().size());
+
+			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
+				if (GLFW_KEY_M == event.keyEvent.keyCode)
+				{
+					auto renderable = dynamic_cast<Renderable*>(object);
+					renderable->NextDrawingMode();
+				}
+				else if (GLFW_KEY_1 == event.keyEvent.keyCode)
+				{
+					auto renderable = dynamic_cast<Renderable*>(object);
+					renderable->SetActiveShaderIndex(0);
+				}
+				else if (GLFW_KEY_2 == event.keyEvent.keyCode)
+				{
+					auto renderable = dynamic_cast<Renderable*>(object);
+					renderable->SetActiveShaderIndex(1);
+				}
+				});
+		}
+		
 		});
 
 	Feather.Run();

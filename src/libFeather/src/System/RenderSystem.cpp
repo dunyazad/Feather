@@ -45,7 +45,7 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
     auto renderables = Feather.GetInstances<Renderable>();
     for (auto& renderable : renderables)
     {
-        auto shader = renderable->GetShader();
+        auto shader = renderable->GetActiveShader();
         shaderMapping[shader].push_back(renderable);
     }
 

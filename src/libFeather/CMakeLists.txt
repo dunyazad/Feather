@@ -56,10 +56,12 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Entity.h
     ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/File.h
-    ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
     ${CMAKE_SOURCE_DIR}/include/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/Monitor.h
     ${CMAKE_SOURCE_DIR}/include/Serialization.hpp
+    
+    ${CMAKE_SOURCE_DIR}/include/AsyncLoader.h
+    ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/Components.h
     ${CMAKE_SOURCE_DIR}/include/Component/ComponentBase.h
@@ -87,8 +89,10 @@ set(source_list
     src/MiniMath.cpp
     src/FeatherWindow.cpp
     src/File.cpp
-    src/GeometryBuilder.cpp
     src/Monitor.cpp
+
+    src/AsyncLoader.cpp
+    src/GeometryBuilder.cpp
     
     src/Component/ComponentBase.cpp
     src/Component/Camera.cpp
@@ -111,6 +115,8 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/res/Shaders/Default.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Instancing.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Instancing.fs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/InstancingWithoutNormal.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/InstancingWithoutNormal.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.fs
 )

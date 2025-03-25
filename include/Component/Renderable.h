@@ -61,18 +61,37 @@ public:
 
 			if constexpr (is_same_v<T, ui32>) {
 				glVertexAttribIPointer(attributeIndex, 1, GL_UNSIGNED_INT, sizeof(T), (void*)0);
+				if (useInstancing)
+				{
+					glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
+				}
 			}
 			else if constexpr (is_same_v<T, MiniMath::V3>) {
 				glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+				if (useInstancing)
+				{
+					glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
+				}
 			}
 			else if constexpr (is_same_v<T, MiniMath::V4>) {
 				glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+				if (useInstancing)
+				{
+					glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
+				}
 			}
 			else if constexpr (is_same_v<T, MiniMath::M4>) {
-				for (int i = 0; i < 4; i++) {
-					glVertexAttribPointer(attributeIndex + i, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)(sizeof(float) * i * 4));
-					glEnableVertexAttribArray(attributeIndex + i);
-					glVertexAttribDivisor(attributeIndex + i, 1); // Set attribute to be per-instance
+				if (useInstancing)
+				{
+					for (int i = 0; i < 4; i++) {
+						glVertexAttribPointer(attributeIndex + i, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)(sizeof(float) * i * 4));
+						glEnableVertexAttribArray(attributeIndex + i);
+						glVertexAttribDivisor(attributeIndex + i, 1); // Set attribute to be per-instance
+					}
+				}
+				else
+				{
+					glVertexAttribPointer(attributeIndex, 16, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 				}
 			}
 			else {
@@ -86,10 +105,14 @@ public:
 
 	inline ui64 size() { return datas.size(); }
 	inline bool empty() { return datas.empty(); }
+	inline bool IsUseInstancing() { return useInstancing; }
+	inline void SetUseInstancing(bool use) { useInstancing = use; }
 
 protected:
 	BufferTarget bufferTarget = Array;
 	BufferUsage bufferUsage = Static;
+
+	bool useInstancing = false;
 
 	bool needToUpdate = true;
 	GLuint attributeIndex = UINT32_MAX;
@@ -137,6 +160,8 @@ public:
 	void AddColor(const MiniMath::V4& color);
 	void AddUV(const MiniMath::V2& uv);
 
+	void AddInstanceColor(const MiniMath::V4& color);
+	void AddInstanceNormal(const MiniMath::V3& normal);
 	void AddInstanceTransform(const MiniMath::M4& transform);
 
 	void AddIndices(const vector<ui32>& indices);
@@ -157,6 +182,12 @@ public:
 	void AddUVs(const vector<MiniMath::V2>& uvs);
 	void AddUVs(const MiniMath::V2* uvs, ui32 numberOfElements);
 
+	void AddInstanceColors(const vector<MiniMath::V4>& colors);
+	void AddInstanceColors(const MiniMath::V4* colors, ui32 numberOfElements);
+
+	void AddInstanceNormals(const vector<MiniMath::V3>& normals);
+	void AddInstanceNormals(const MiniMath::V3* normals, ui32 numberOfElements);
+
 	void AddInstanceTransforms(const vector<MiniMath::M4>& transforms);
 	void AddInstanceTransforms(const MiniMath::M4* transforms, ui32 numberOfElements);
 
@@ -164,8 +195,10 @@ public:
 	inline void SetVisible(bool visible) { this->visible = visible; }
 	inline void ToggleVisible() { visible = !visible; }
 
-	inline Shader* GetShader() const { return shader; }
-	inline void SetShader(Shader* shader) { this->shader = shader; }
+	inline Shader* GetActiveShader() const { if (shaders.empty()) return nullptr; else return shaders[activeShaderIndex]; }
+	inline void SetActiveShaderIndex(ui32 index) { activeShaderIndex = index; }
+	inline const vector<Shader*>& GetShaders() const { return shaders; }
+	inline void AddShader(Shader* shader) { shaders.push_back(shader); }
 
 	inline GeometryMode GetGeometryMode() { return geometryMode; }
 	inline void SetGeometryMode(GeometryMode geometryMode) { this->geometryMode = geometryMode; }
@@ -178,7 +211,8 @@ public:
 private:
 	bool visible = true;
 
-	Shader* shader = nullptr;
+	ui32 activeShaderIndex = 0;
+	vector<Shader*> shaders;
 	GLuint vao = UINT_MAX;
 
 	GeometryMode geometryMode = Triangles;
@@ -192,6 +226,8 @@ private:
 	GraphicsBuffer<MiniMath::V2> uvs;
 
 	GraphicsBuffer<MiniMath::M4> instanceTransforms;
+	GraphicsBuffer<MiniMath::V4> instanceColors;
+	GraphicsBuffer<MiniMath::V3> instanceNormals;
 
 	ui32 numberOfInstances = 1;
 };

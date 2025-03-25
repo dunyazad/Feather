@@ -33,7 +33,14 @@ void Renderable::EnableInstancing(ui32 numberOfInstances)
 
 	glBindVertexArray(vao);
 
-	instanceTransforms.Initialize(4, GraphicsBuffer<MiniMath::M4>::BufferTarget::Array);
+	instanceColors.Initialize(4, GraphicsBuffer<MiniMath::V4>::BufferTarget::Array);
+	instanceColors.SetUseInstancing(true);
+
+	instanceNormals.Initialize(5, GraphicsBuffer<MiniMath::V3>::BufferTarget::Array);
+	instanceNormals.SetUseInstancing(true);
+
+	instanceTransforms.Initialize(6, GraphicsBuffer<MiniMath::M4>::BufferTarget::Array);
+	instanceTransforms.SetUseInstancing(true);
 
 	glBindVertexArray(0);
 }
@@ -56,6 +63,8 @@ void Renderable::Update(ui32 frameNo, f32 timeDelta)
 
 	if (numberOfInstances > 1)
 	{
+		instanceColors.Update();
+		instanceNormals.Update();
 		instanceTransforms.Update();
 	}
 
@@ -207,6 +216,16 @@ void Renderable::AddUV(const MiniMath::V2& uv)
 	uvs.AddData(uv);
 }
 
+void Renderable::AddInstanceColor(const MiniMath::V4& color)
+{
+	instanceColors.AddData(color);
+}
+
+void Renderable::AddInstanceNormal(const MiniMath::V3& normal)
+{
+	instanceNormals.AddData(normal);
+}
+
 void Renderable::AddInstanceTransform(const MiniMath::M4& transform)
 {
 	instanceTransforms.AddData(transform);
@@ -270,6 +289,26 @@ void Renderable::AddUVs(const vector<MiniMath::V2>& uvs)
 void Renderable::AddUVs(const MiniMath::V2* uvs, ui32 numberOfElements)
 {
 	this->uvs.AddData(uvs, numberOfElements);
+}
+
+void Renderable::AddInstanceColors(const vector<MiniMath::V4>& colors)
+{
+	this->instanceColors.AddData(colors.data(), colors.size());
+}
+
+void Renderable::AddInstanceColors(const MiniMath::V4* colors, ui32 numberOfElements)
+{
+	this->instanceColors.AddData(colors, numberOfElements);
+}
+
+void Renderable::AddInstanceNormals(const vector<MiniMath::V3>& normals)
+{
+	this->instanceNormals.AddData(normals.data(), normals.size());
+}
+
+void Renderable::AddInstanceNormals(const MiniMath::V3* normals, ui32 numberOfElements)
+{
+	this->instanceNormals.AddData(normals, numberOfElements);
 }
 
 void Renderable::AddInstanceTransforms(const vector<MiniMath::M4>& transforms)

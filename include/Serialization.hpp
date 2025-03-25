@@ -1357,3 +1357,97 @@ protected:
 	vector<unsigned short> startPatchIDs;
 	bool useAlpha = false;
 };
+
+// Asynchronous Loadable PointCloud
+template<typename Point>
+class ALPFormat
+{
+public:
+	bool Serialize(const string& filename)
+	{
+		ofstream ofs(filename, ios::out | ios::binary);
+		if (false == ofs.is_open())
+		{
+			printf("filename : %s is not open\n", filename.c_str());
+			return false;
+		}
+
+		unsigned long writtenSize = 0;
+
+		unsigned long nop = points.size();
+		ofs.write((char*)&nop, sizeof(unsigned long));
+		writtenSize += sizeof(unsigned long);
+
+		unsigned int pointSize = sizeof(Point);
+		ofs.write((char*)&pointSize, sizeof(unsigned int));
+		writtenSize += sizeof(unsigned int);
+
+		for (auto& p : points)
+		{
+			ofs.write((char*)&p, pointSize);
+		}
+
+		writtenSize += points.size() * pointSize;
+
+		ofs.close();
+		
+		printf("%s written : %llu bytes\n", filename.c_str(), writtenSize);
+
+		return true;
+	}
+
+	bool Deserialize(const string& filename)
+	{
+		ifstream ifs(filename, ios::in | ios::binary);
+		if (false == ifs.is_open())
+		{
+			printf("filename : %s is not open\n", filename.c_str());
+			return false;
+		}
+
+		unsigned long readSize = 0;
+
+		unsigned long nop = 0;
+		ifs.read((char*)&nop, sizeof(unsigned long));
+		readSize += sizeof(unsigned long);
+
+		unsigned int pointSize = 0;
+		ifs.read((char*)&pointSize, sizeof(unsigned int));
+		readSize += sizeof(unsigned int);
+
+		for (size_t i = 0; i < nop; i++)
+		{
+			Point p;
+			ifs.read((char*)&p, pointSize);
+			points.push_back(p);
+		}
+		ifs.close();
+
+		readSize += pointSize * nop;
+		printf("%s read : %llu bytes\n", filename.c_str(), readSize);
+
+		return true;
+	}
+
+	void AddPoint(const Point& point)
+	{
+		lock_guard<mutex> lock(points_mutex);
+		points.push_back(point);
+	}
+
+	void AddPoints(const vector<Point>& inputPoints)
+	{
+		lock_guard<mutex> lock(points_mutex);
+		points.insert(points.end(), inputPoints.begin(), inputPoints.end());
+	}
+
+	const vector<Point>& GetPoints() const
+	{
+		lock_guard<mutex> lock(points_mutex);
+		return points;
+	}
+
+protected:
+	mutable mutex points_mutex;
+	vector<Point> points;
+};
