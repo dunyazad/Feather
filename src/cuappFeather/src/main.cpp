@@ -7,6 +7,9 @@ using namespace std;
 
 #include <libFeather.h>
 
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+
 int main(int argc, char** argv)
 {
 	TestCUDA();
@@ -18,6 +21,14 @@ int main(int argc, char** argv)
 	GLuint VAO, VBO;
 
 	auto w = Feather.GetFeatherWindow();
+
+	struct Point
+	{
+		MiniMath::V3 position;
+		MiniMath::V3 normal;
+		MiniMath::V3 color;
+	};
+	ALPFormat<Point> alp;
 
 	Feather.AddOnInitializeCallback([&]() {
 		{
@@ -205,7 +216,7 @@ int main(int argc, char** argv)
 		/*
 		{
 			PLYFormat ply;
-			ply.Deserialize("../../res/3D/Building.ply");
+			ply.Deserialize("../../res/3D/Teeth.ply");
 			ply.SwapAxisYZ();
 
 			auto entity = Feather.CreateInstance<Entity>("Box");
@@ -253,18 +264,13 @@ int main(int argc, char** argv)
 
 #pragma region Load PLY and Convert to ALP format
 		{
-			struct Point
-			{
-				MiniMath::V3 position;
-				MiniMath::V3 normal;
-				//MiniMath::V3 color;
-			};
-			ALPFormat<Point> alp;
-			if (false == alp.Deserialize("../../res/3D/Building.alp"))
+			auto t = Time::Now();
+
+			if (false == alp.Deserialize("../../res/3D/Compound.alp"))
 			{
 				PLYFormat ply;
-				ply.Deserialize("../../res/3D/Building.ply");
-				ply.SwapAxisYZ();
+				ply.Deserialize("../../res/3D/Compound.ply");
+				//ply.SwapAxisYZ();
 
 				vector<Point> points;
 				for (size_t i = 0; i < ply.GetPoints().size() / 3; i++)
@@ -277,17 +283,28 @@ int main(int argc, char** argv)
 					auto ny = ply.GetNormals()[i * 3 + 1];
 					auto nz = ply.GetNormals()[i * 3 + 2];
 
-					//auto cx = ply.GetColors()[i * 3];
-					//auto cy = ply.GetColors()[i * 3 + 1];
-					//auto cz = ply.GetColors()[i * 3 + 2];
+					if (false == ply.GetColors().empty())
+					{
+						auto cx = ply.GetColors()[i * 3];
+						auto cy = ply.GetColors()[i * 3 + 1];
+						auto cz = ply.GetColors()[i * 3 + 2];
 
-					//points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
-					points.push_back({ {px, py, pz}, {nx, ny, nz} });
+						points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
+					}
+					else
+					{
+						points.push_back({ {px, py, pz}, {nx, ny, nz}, {1.0f, 1.0f, 1.0f} });
+					}
+
 				}
 
+				alog("PLY %d points loaded\n", points.size());
+
 				alp.AddPoints(points);
-				alp.Serialize("../../res/3D/Building.alp");
+				alp.Serialize("../../res/3D/Compound.alp");
 			}
+
+			t = Time::End(t, "Loading Teeth");
 
 			auto entity = Feather.CreateInstance<Entity>("Box");
 			auto renderable = Feather.CreateInstance<Renderable>();
@@ -312,14 +329,18 @@ int main(int argc, char** argv)
 			renderable->AddColors(colors);
 			renderable->AddUVs(uvs);
 
+			//PLYFormat tempPLY;
+
+			vector<float3> host_points;
+
 			for (auto& p : alp.GetPoints())
 			{
-				//auto r = p.color.x;
-				//auto g = p.color.y;
-				//auto b = p.color.z;
-				//auto a = 1.f;
+				auto r = p.color.x;
+				auto g = p.color.y;
+				auto b = p.color.z;
+				auto a = 1.f;
 
-				//renderable->AddInstanceColor(MiniMath::V4(r, g, b, a));
+				renderable->AddInstanceColor(MiniMath::V4(r, g, b, a));
 				renderable->AddInstanceNormal(p.normal);
 
 				MiniMath::M4 model = MiniMath::M4::identity();
@@ -328,7 +349,16 @@ int main(int argc, char** argv)
 				model.m[2][2] = 1.5f;
 				model = MiniMath::translate(model, p.position);
 				renderable->AddInstanceTransform(model);
+
+				//tempPLY.AddPoint(p.position.x, p.position.y, p.position.z);
+				//tempPLY.AddNormal(p.normal.x, p.normal.y, p.normal.z);
+				//tempPLY.AddColor(p.color.x, p.color.y, p.color.z);
+
+				host_points.push_back(make_float3(p.position.x, p.position.y, p.position.z));
 			}
+			//tempPLY.Serialize("../../res/3D/Teeth_temp.ply");
+
+			alog("ALP %d points loaded\n", alp.GetPoints().size());
 
 			renderable->EnableInstancing(alp.GetPoints().size());
 
@@ -352,11 +382,42 @@ int main(int argc, char** argv)
 				{
 					auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorTrackball>();
 					auto camera = cameraManipulator->SetCamera();
-					auto [x, y, z] = alp.GetAABB().center;
+					auto [x, y, z] = alp.GetAABBCenter();
 					camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
 					camera->SetTarget({ x,y,z });
 				}
 				});
+			
+			t = Time::End(t, "Upload to GPU");
+
+			auto hashToFloat = [](uint32_t seed) -> float {
+				seed ^= seed >> 13;
+				seed *= 0x5bd1e995;
+				seed ^= seed >> 15;
+				return (seed & 0xFFFFFF) / static_cast<float>(0xFFFFFF);
+			};
+
+			auto [x, y, z] = alp.GetAABBCenter();
+			auto pointIndices = cuMain(host_points, make_float3(x,y,z));
+			for (size_t i = 0; i < pointIndices.size(); i++)
+			{
+				auto index = pointIndices[i];
+				if (index != -1)
+				{
+					float r = hashToFloat(index * 3 + 0);
+					float g = hashToFloat(index * 3 + 1);
+					float b = hashToFloat(index * 3 + 2);
+
+					//if (index == 0)
+					//{
+					//	renderable->SetInstanceColor(i, MiniMath::V4(1.0f, 0.0f, 0.0f, 1.0f));
+					//}
+					//else
+					//{
+					renderable->SetInstanceColor(i, MiniMath::V4(r, g, b, 1.0f));
+					//}
+				}
+			}
 		}
 #pragma endregion
 		});

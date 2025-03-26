@@ -76,6 +76,9 @@ typedef ui32 ComponentID;
 
 #include <MiniMath.h>
 
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+
 namespace Time
 {
     chrono::steady_clock::time_point Now();

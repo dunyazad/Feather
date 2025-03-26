@@ -270,7 +270,7 @@ void CameraManipulatorOrbit::OnKeyPress(const Event& event)
 		camera->SetTarget(target);
 		camera->SetEye(eye);
 	}
-	else if (GLFW_KEY_R == event.keyEvent.keyCode)
+	else if (GLFW_KEY_L == event.keyEvent.keyCode)
 	{
 		camera->Reset();
 	}

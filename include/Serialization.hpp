@@ -4,10 +4,11 @@
 #include <future>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <thread>
-#include <vector>
 #include <tuple>
+#include <vector>
 using namespace std;
 
 #define FLT_VALID(x) ((x) < 3.402823466e+36F)
@@ -1335,13 +1336,13 @@ public:
 		}
 
 		{
-			f32 temp = aabbMinY;
+			float temp = aabbMinY;
 			aabbMinY = aabbMinZ;
 			aabbMinZ = temp;
 		}
 
 		{
-			f32 temp = aabbMaxY;
+			float temp = aabbMaxY;
 			aabbMaxY = aabbMaxZ;
 			aabbMaxZ = temp;
 		}
@@ -1420,6 +1421,14 @@ public:
 			Point p;
 			ifs.read((char*)&p, pointSize);
 			points.push_back(p);
+
+			aabbMinX = p.position.x < aabbMinX ? p.position.x : aabbMinX;
+			aabbMinY = p.position.y < aabbMinY ? p.position.y : aabbMinY;
+			aabbMinZ = p.position.z < aabbMinZ ? p.position.z : aabbMinZ;
+
+			aabbMaxX = p.position.x > aabbMaxX ? p.position.x : aabbMaxX;
+			aabbMaxY = p.position.y > aabbMaxY ? p.position.y : aabbMaxY;
+			aabbMaxZ = p.position.z > aabbMaxZ ? p.position.z : aabbMaxZ;
 		}
 		ifs.close();
 
@@ -1434,7 +1443,13 @@ public:
 		lock_guard<mutex> lock(points_mutex);
 		points.push_back(point);
 
-		aabb.Expand(point.position);
+		aabbMinX = point.position.x < aabbMinX ? point.position.x : aabbMinX;
+		aabbMinY = point.position.y < aabbMinY ? point.position.y : aabbMinY;
+		aabbMinZ = point.position.z < aabbMinZ ? point.position.z : aabbMinZ;
+
+		aabbMaxX = point.position.x > aabbMaxX ? point.position.x : aabbMaxX;
+		aabbMaxY = point.position.y > aabbMaxY ? point.position.y : aabbMaxY;
+		aabbMaxZ = point.position.z > aabbMaxZ ? point.position.z : aabbMaxZ;
 	}
 
 	void AddPoints(const vector<Point>& inputPoints)
@@ -1444,7 +1459,13 @@ public:
 
 		for (auto& point : points)
 		{
-			aabb.Expand(point.position);
+			aabbMinX = point.position.x < aabbMinX ? point.position.x : aabbMinX;
+			aabbMinY = point.position.y < aabbMinY ? point.position.y : aabbMinY;
+			aabbMinZ = point.position.z < aabbMinZ ? point.position.z : aabbMinZ;
+
+			aabbMaxX = point.position.x > aabbMaxX ? point.position.x : aabbMaxX;
+			aabbMaxY = point.position.y > aabbMaxY ? point.position.y : aabbMaxY;
+			aabbMaxZ = point.position.z > aabbMaxZ ? point.position.z : aabbMaxZ;
 		}
 	}
 
@@ -1454,11 +1475,25 @@ public:
 		return points;
 	}
 
-	const MiniMath::AABB& GetAABB() const { return aabb; }
+	inline tuple<float, float, float> GetAABBMin() { return make_tuple(aabbMinX, aabbMinY, aabbMinZ); }
+	inline tuple<float, float, float> GetAABBMax() { return make_tuple(aabbMaxX, aabbMaxY, aabbMaxZ); }
+	inline tuple<float, float, float> GetAABBCenter()
+	{
+		return make_tuple(
+			(aabbMinX + aabbMaxX) * 0.5f,
+			(aabbMinY + aabbMaxY) * 0.5f,
+			(aabbMinZ + aabbMaxZ) * 0.5f);
+	}
 
 protected:
 	mutable mutex points_mutex;
 	vector<Point> points;
 
-	MiniMath::AABB aabb;
+	float aabbMinX = FLT_MAX;
+	float aabbMinY = FLT_MAX;
+	float aabbMinZ = FLT_MAX;
+
+	float aabbMaxX = -FLT_MAX;
+	float aabbMaxY = -FLT_MAX;
+	float aabbMaxZ = -FLT_MAX;
 };

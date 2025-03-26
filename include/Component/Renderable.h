@@ -42,6 +42,15 @@ public:
 		needToUpdate = true;
 	}
 
+	void SetData(ui32 bufferIndex, const T& data)
+	{
+		if (bufferIndex >= datas.size() - 1) return;
+
+		datas[bufferIndex] = data;
+
+		needToUpdate = true;
+	}
+
 	void AddData(const T* datas, ui32 numberOfDatas)
 	{
 		this->datas.insert(this->datas.end(), datas, datas + numberOfDatas);
@@ -160,9 +169,20 @@ public:
 	void AddColor(const MiniMath::V4& color);
 	void AddUV(const MiniMath::V2& uv);
 
+	void SetIndex(ui32 bufferIndex, ui32 index);
+	void SetVertex(ui32 bufferIndex, const MiniMath::V3& vertex);
+	void SetNormal(ui32 bufferIndex, const MiniMath::V3& normal);
+	void SetColor(ui32 bufferIndex, const MiniMath::V3& color);
+	void SetColor(ui32 bufferIndex, const MiniMath::V4& color);
+	void SetUV(ui32 bufferIndex, const MiniMath::V2& uv);
+
 	void AddInstanceColor(const MiniMath::V4& color);
 	void AddInstanceNormal(const MiniMath::V3& normal);
 	void AddInstanceTransform(const MiniMath::M4& transform);
+
+	void SetInstanceColor(ui32 bufferIndex, const MiniMath::V4& color);
+	void SetInstanceNormal(ui32 bufferIndex, const MiniMath::V3& normal);
+	void SetInstanceTransform(ui32 bufferIndex, const MiniMath::M4& transform);
 
 	void AddIndices(const vector<ui32>& indices);
 	void AddIndices(const ui32* indices, ui32 numberOfElements);

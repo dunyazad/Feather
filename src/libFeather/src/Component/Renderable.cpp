@@ -232,6 +232,48 @@ void Renderable::AddUV(const MiniMath::V2& uv)
 	uvs.AddData(uv);
 }
 
+void Renderable::SetIndex(ui32 bufferIndex, ui32 index)
+{
+	needToUpdate = true;
+
+	indices.SetData(bufferIndex, index);
+}
+
+void Renderable::SetVertex(ui32 bufferIndex, const MiniMath::V3& vertex)
+{
+	needToUpdate = true;
+
+	vertices.SetData(bufferIndex, vertex);
+}
+
+void Renderable::SetNormal(ui32 bufferIndex, const MiniMath::V3& normal)
+{
+	needToUpdate = true;
+
+	normals.SetData(bufferIndex, normal);
+}
+
+void Renderable::SetColor(ui32 bufferIndex, const MiniMath::V3& color)
+{
+	needToUpdate = true;
+
+	colors3.SetData(bufferIndex, color);
+}
+
+void Renderable::SetColor(ui32 bufferIndex, const MiniMath::V4& color)
+{
+	needToUpdate = true;
+
+	colors4.SetData(bufferIndex, color);
+}
+
+void Renderable::SetUV(ui32 bufferIndex, const MiniMath::V2& uv)
+{
+	needToUpdate = true;
+
+	uvs.SetData(bufferIndex, uv);
+}
+
 void Renderable::AddInstanceColor(const MiniMath::V4& color)
 {
 	needToUpdate = true;
@@ -251,6 +293,27 @@ void Renderable::AddInstanceTransform(const MiniMath::M4& transform)
 	needToUpdate = true;
 
 	instanceTransforms.AddData(transform);
+}
+
+void Renderable::SetInstanceColor(ui32 bufferIndex, const MiniMath::V4& color)
+{
+	needToUpdate = true;
+
+	instanceColors.SetData(bufferIndex, color);
+}
+
+void Renderable::SetInstanceNormal(ui32 bufferIndex, const MiniMath::V3& normal)
+{
+	needToUpdate = true;
+
+	instanceNormals.SetData(bufferIndex, normal);
+}
+
+void Renderable::SetInstanceTransform(ui32 bufferIndex, const MiniMath::M4& transform)
+{
+	needToUpdate = true;
+
+	instanceTransforms.SetData(bufferIndex, transform);
 }
 
 void Renderable::AddIndices(const vector<ui32>& indices)
