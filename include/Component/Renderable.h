@@ -210,6 +210,7 @@ public:
 
 private:
 	bool visible = true;
+	bool needToUpdate = true;
 
 	ui32 activeShaderIndex = 0;
 	vector<Shader*> shaders;

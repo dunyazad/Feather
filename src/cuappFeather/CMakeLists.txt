@@ -19,42 +19,6 @@ enable_language(CUDA)
 
 set(CMAKE_CUDA_ARCHITECTURES 75 86) # Replace with architectures suitable for your GPU(s)
 
-# Fetch dependencies
-FetchContent_Declare(
-    glad
-    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-    GIT_TAG        v0.1.36
-)
-FetchContent_MakeAvailable(glad)
-
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Do not build GLFW examples" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "Do not build GLFW tests" FORCE)
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "Do not build GLFW documentation" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "Disable GLFW installation target" FORCE)
-set(GLFW_BUILD_SHARED_LIBS OFF CACHE BOOL "Build GLFW as a static library" FORCE)  # Ensure static build
-
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG        3.3.8
-)
-FetchContent_MakeAvailable(glfw)
-
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG        docking
-)
-FetchContent_MakeAvailable(imgui)
-
-FetchContent_Declare(
-    implot
-    GIT_REPOSITORY https://github.com/epezent/implot.git
-    GIT_TAG        v0.15
-)
-FetchContent_MakeAvailable(implot)
-
-
 set(cuda_source_list
     src/main.cuh
     src/main.cu
@@ -66,11 +30,11 @@ set(source_list
 
 set_source_files_properties(${cuda_source_list} PROPERTIES LANGUAGE CUDA)
 
-add_library(cuda_objects OBJECT ${cuda_source_list})
+add_library(cuappFeather_cuda_objects OBJECT ${cuda_source_list})
 
 add_executable(cuappFeather
  ${source_list}
-$<TARGET_OBJECTS:cuda_objects>  # Link CUDA object files here
+$<TARGET_OBJECTS:cuappFeather_cuda_objects>
 )
 
 target_include_directories(cuappFeather PRIVATE
@@ -92,7 +56,7 @@ target_include_directories(cuappFeather PRIVATE
     ${CUDAToolkit_INCLUDE_DIRS}
 )
 
-target_include_directories(cuda_objects PRIVATE
+target_include_directories(cuappFeather_cuda_objects PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/libFeather/include
     ${glad_SOURCE_DIR}/include
@@ -127,14 +91,14 @@ target_link_libraries(cuappFeather
     #${CMAKE_CURRENT_SOURCE_DIR}/External/nvapi/amd64/nvapi64.lib
 )
 
-target_link_libraries(cuda_objects PRIVATE
+target_link_libraries(cuappFeather_cuda_objects PRIVATE
     #${VTK_LIBRARIES}
     libFeather
     CUDA::cufft
 )
 
 
-target_compile_options(cuda_objects PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
+target_compile_options(cuappFeather_cuda_objects PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>)
 
 if(MSVC)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT cuappFeather)

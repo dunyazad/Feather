@@ -1,52 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(libFeather)
 
-include(FetchContent)
+# Set module path for custom cmake files
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-# Enable C++17
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-# MSVC-specific options
-if (MSVC)
-    add_compile_options(/std:c++17 /Zc:__cplusplus)
-endif()
-
-# Fetch dependencies
-FetchContent_Declare(
-    glad
-    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-    GIT_TAG        v0.1.36
-)
-FetchContent_MakeAvailable(glad)
-
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Do not build GLFW examples" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "Do not build GLFW tests" FORCE)
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "Do not build GLFW documentation" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "Disable GLFW installation target" FORCE)
-set(GLFW_BUILD_SHARED_LIBS OFF CACHE BOOL "Build GLFW as a static library" FORCE)  # Ensure static build
-
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG        3.3.8
-)
-FetchContent_MakeAvailable(glfw)
-
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG        docking
-)
-FetchContent_MakeAvailable(imgui)
-
-FetchContent_Declare(
-    implot
-    GIT_REPOSITORY https://github.com/epezent/implot.git
-    GIT_TAG        v0.15
-)
-FetchContent_MakeAvailable(implot)
+# Include dependencies
+include(Dependencies)
 
 set(source_list
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
@@ -176,7 +135,6 @@ target_link_libraries(libFeather
     glfw
     glad
 )
-
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY_DEBUG   ${Feather_SOURCE_DIR}/bin/Debug

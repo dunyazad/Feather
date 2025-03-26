@@ -42,6 +42,27 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	// Enable depth test if needed
 	glEnable(GL_DEPTH_TEST);
 
+	// Draw X-axis (Red)
+	glBegin(GL_LINES);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(-100.f, 0.0f, 0.0f);
+	glVertex3f(100.0f, 0.0f, 0.0f);
+	glEnd();
+
+	// Draw Y-axis (Green)
+	glBegin(GL_LINES);
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(0.0f, -100.0f, 0.0f);
+	glVertex3f(0.0f, 100.0f, 0.0f);
+	glEnd();
+
+	// Draw Z-axis (Blue)
+	glBegin(GL_LINES);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glVertex3f(0.0f, 0.0f, -100.0f);
+	glVertex3f(0.0f, 0.0f, 100.0f);
+	glEnd();
+
 	auto cameras = Feather.GetInstances<PerspectiveCamera>();
 	for (auto& camera : cameras)
 	{
@@ -60,27 +81,27 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 			glBegin(GL_POINTS);
 			glVertex3f(target.x, target.y, target.z);
 			glEnd();
+
+			// Draw X-axis (Red)
+			glBegin(GL_LINES);
+			glColor3f(1.0f, 0.0f, 0.0f);
+			glVertex3f(target.x - 0.5f, target.y, target.z);
+			glVertex3f(target.x + 1.0f, target.y, target.z);
+			glEnd();
+
+			// Draw Y-axis (Green)
+			glBegin(GL_LINES);
+			glColor3f(0.0f, 1.0f, 0.0f);
+			glVertex3f(target.x, target.y - 0.5f, target.z);
+			glVertex3f(target.x, target.y + 1.0f, target.z);
+			glEnd();
+
+			// Draw Z-axis (Blue)
+			glBegin(GL_LINES);
+			glColor3f(0.0f, 0.0f, 1.0f);
+			glVertex3f(target.x, target.y, target.z - 0.5f);
+			glVertex3f(target.x, target.y, target.z + 1.0f);
+			glEnd();
 		}
 	}
-
-	// Draw X-axis (Red)
-	glBegin(GL_LINES);
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(-0.5f, 0.0f, 0.0f);
-	glVertex3f(1.0f, 0.0f, 0.0f);
-	glEnd();
-
-	// Draw Y-axis (Green)
-	glBegin(GL_LINES);
-	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, -0.5f, 0.0f);
-	glVertex3f(0.0f, 1.0f, 0.0f);
-	glEnd();
-
-	// Draw Z-axis (Blue)
-	glBegin(GL_LINES);
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(0.0f, 0.0f, -0.5f);
-	glVertex3f(0.0f, 0.0f, 1.0f);
-	glEnd();
 }

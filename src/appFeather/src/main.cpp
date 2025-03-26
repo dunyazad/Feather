@@ -248,7 +248,7 @@ int main(int argc, char** argv)
 		{
 			struct Point
 			{
-				MiniMath::V3 point;
+				MiniMath::V3 position;
 				MiniMath::V3 normal;
 				MiniMath::V3 color;
 			};
@@ -318,7 +318,7 @@ int main(int argc, char** argv)
 				model.m[0][0] = 1.5f;
 				model.m[1][1] = 1.5f;
 				model.m[2][2] = 1.5f;
-				model = MiniMath::translate(model, p.point);
+				model = MiniMath::translate(model, p.position);
 				renderable->AddInstanceTransform(model);
 			}
 

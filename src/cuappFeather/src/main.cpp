@@ -205,7 +205,7 @@ int main(int argc, char** argv)
 		/*
 		{
 			PLYFormat ply;
-			ply.Deserialize("../../res/3D/Teeth_Full.ply");
+			ply.Deserialize("../../res/3D/Building.ply");
 			ply.SwapAxisYZ();
 
 			auto entity = Feather.CreateInstance<Entity>("Box");
@@ -251,18 +251,19 @@ int main(int argc, char** argv)
 		}
 		*/
 
+#pragma region Load PLY and Convert to ALP format
 		{
 			struct Point
 			{
-				MiniMath::V3 point;
+				MiniMath::V3 position;
 				MiniMath::V3 normal;
-				MiniMath::V3 color;
+				//MiniMath::V3 color;
 			};
 			ALPFormat<Point> alp;
-			if (false == alp.Deserialize("../../res/3D/Teeth_Full.alp"))
+			if (false == alp.Deserialize("../../res/3D/Building.alp"))
 			{
 				PLYFormat ply;
-				ply.Deserialize("../../res/3D/Teeth_Full.ply");
+				ply.Deserialize("../../res/3D/Building.ply");
 				ply.SwapAxisYZ();
 
 				vector<Point> points;
@@ -276,15 +277,16 @@ int main(int argc, char** argv)
 					auto ny = ply.GetNormals()[i * 3 + 1];
 					auto nz = ply.GetNormals()[i * 3 + 2];
 
-					auto cx = ply.GetColors()[i * 3];
-					auto cy = ply.GetColors()[i * 3 + 1];
-					auto cz = ply.GetColors()[i * 3 + 2];
+					//auto cx = ply.GetColors()[i * 3];
+					//auto cy = ply.GetColors()[i * 3 + 1];
+					//auto cz = ply.GetColors()[i * 3 + 2];
 
-					points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
+					//points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
+					points.push_back({ {px, py, pz}, {nx, ny, nz} });
 				}
 
 				alp.AddPoints(points);
-				alp.Serialize("../../res/3D/Teeth_Full.alp");
+				alp.Serialize("../../res/3D/Building.alp");
 			}
 
 			auto entity = Feather.CreateInstance<Entity>("Box");
@@ -312,19 +314,19 @@ int main(int argc, char** argv)
 
 			for (auto& p : alp.GetPoints())
 			{
-				auto r = p.color.x;
-				auto g = p.color.y;
-				auto b = p.color.z;
-				auto a = 1.f;
+				//auto r = p.color.x;
+				//auto g = p.color.y;
+				//auto b = p.color.z;
+				//auto a = 1.f;
 
-				renderable->AddInstanceColor(MiniMath::V4(r, g, b, a));
+				//renderable->AddInstanceColor(MiniMath::V4(r, g, b, a));
 				renderable->AddInstanceNormal(p.normal);
 
 				MiniMath::M4 model = MiniMath::M4::identity();
 				model.m[0][0] = 1.5f;
 				model.m[1][1] = 1.5f;
 				model.m[2][2] = 1.5f;
-				model = MiniMath::translate(model, p.point);
+				model = MiniMath::translate(model, p.position);
 				renderable->AddInstanceTransform(model);
 			}
 
@@ -346,9 +348,17 @@ int main(int argc, char** argv)
 					auto renderable = dynamic_cast<Renderable*>(object);
 					renderable->SetActiveShaderIndex(1);
 				}
+				else if (GLFW_KEY_R == event.keyEvent.keyCode)
+				{
+					auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorTrackball>();
+					auto camera = cameraManipulator->SetCamera();
+					auto [x, y, z] = alp.GetAABB().center;
+					camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
+					camera->SetTarget({ x,y,z });
+				}
 				});
 		}
-
+#pragma endregion
 		});
 
 	Feather.Run();

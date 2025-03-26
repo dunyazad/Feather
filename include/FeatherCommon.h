@@ -71,6 +71,9 @@ typedef double f64;
 typedef ui32 EntityID;
 typedef ui32 ComponentID;
 
+#define f32_max (FLT_MAX)
+#define f32_min (-FLT_MAX)
+
 #include <MiniMath.h>
 
 namespace Time

@@ -1391,7 +1391,7 @@ public:
 
 		ofs.close();
 		
-		printf("%s written : %llu bytes\n", filename.c_str(), writtenSize);
+		printf("%s written : %d bytes\n", filename.c_str(), writtenSize);
 
 		return true;
 	}
@@ -1424,7 +1424,7 @@ public:
 		ifs.close();
 
 		readSize += pointSize * nop;
-		printf("%s read : %llu bytes\n", filename.c_str(), readSize);
+		printf("%s read : %d bytes\n", filename.c_str(), readSize);
 
 		return true;
 	}
@@ -1433,12 +1433,19 @@ public:
 	{
 		lock_guard<mutex> lock(points_mutex);
 		points.push_back(point);
+
+		aabb.Expand(point.position);
 	}
 
 	void AddPoints(const vector<Point>& inputPoints)
 	{
 		lock_guard<mutex> lock(points_mutex);
 		points.insert(points.end(), inputPoints.begin(), inputPoints.end());
+
+		for (auto& point : points)
+		{
+			aabb.Expand(point.position);
+		}
 	}
 
 	const vector<Point>& GetPoints() const
@@ -1447,7 +1454,11 @@ public:
 		return points;
 	}
 
+	const MiniMath::AABB& GetAABB() const { return aabb; }
+
 protected:
 	mutable mutex points_mutex;
 	vector<Point> points;
+
+	MiniMath::AABB aabb;
 };
