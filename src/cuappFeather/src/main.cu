@@ -159,89 +159,90 @@ namespace Clustering
 		nvtxRangePop();
 	}
 
-	__device__ __forceinline__ unsigned int FindRoot(Voxel* d_voxels, unsigned int index)
-	{
-		while (d_voxels[index].label != index)
-		{
-			unsigned int parent = d_voxels[index].label;
-			unsigned int grandparent = d_voxels[parent].label;
-
-			if (parent != grandparent)
-			{
-				atomicCAS(&d_voxels[index].label, parent, grandparent);
-			}
-			index = d_voxels[index].label;
+	__device__ __forceinline__ unsigned int FindRoot(Voxel* voxels, unsigned int idx) {
+		while (true) {
+			unsigned int parent = voxels[idx].label;
+			unsigned int grand = voxels[parent].label;
+			if (parent == idx) break;
+			if (parent != grand) voxels[idx].label = grand;
+			idx = parent;
 		}
-		return index;
+		return idx;
 	}
 
-	__device__ __forceinline__ void Union(Voxel* d_voxels, unsigned int a, unsigned int b)
-	{
-		unsigned int rootA = FindRoot(d_voxels, a);
-		unsigned int rootB = FindRoot(d_voxels, b);
-
-		if (rootA != rootB)
-		{
+	__device__ __forceinline__ void Union(Voxel* voxels, unsigned int a, unsigned int b) {
+		unsigned int rootA = FindRoot(voxels, a);
+		unsigned int rootB = FindRoot(voxels, b);
+		if (rootA != rootB) {
 			if (rootA < rootB)
-				atomicMin(&d_voxels[rootB].label, rootA);
+				atomicMin(&voxels[rootB].label, rootA);
 			else
-				atomicMin(&d_voxels[rootA].label, rootB);
+				atomicMin(&voxels[rootA].label, rootB);
 		}
 	}
 
-	__global__ void Kernel_ConnectedComponentLabeling(
-		Voxel* d_voxels,
-		uint3* occupiedVoxelIndices,
-		unsigned int numberOfOccupiedVoxels,
-		dim3 volumeDimensions)
+	__global__ void Kernel_BlockLocalFloodFill(Voxel* voxels, dim3 volumeDims) {
+		__shared__ unsigned int sharedLabels[256];
+
+		unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
+		if (tid >= volumeDims.x * volumeDims.y * volumeDims.z) return;
+
+		Voxel voxel = voxels[tid];
+		if (voxel.position.x == FLT_MAX) return;
+
+		sharedLabels[threadIdx.x] = tid;
+		__syncthreads();
+
+		if (threadIdx.x > 0 && threadIdx.x < blockDim.x - 1) {
+			if (sharedLabels[threadIdx.x - 1] != UINT_MAX)
+				sharedLabels[threadIdx.x] = min(sharedLabels[threadIdx.x], sharedLabels[threadIdx.x - 1]);
+			if (sharedLabels[threadIdx.x + 1] != UINT_MAX)
+				sharedLabels[threadIdx.x] = min(sharedLabels[threadIdx.x], sharedLabels[threadIdx.x + 1]);
+		}
+
+		__syncthreads();
+		voxels[tid].label = sharedLabels[threadIdx.x];
+	}
+
+	__global__ void Kernel_InterBlockMerge(
+		Voxel* voxels,
+		uint3* occupiedIndices,
+		unsigned int numOccupied,
+		dim3 dims)
 	{
-		unsigned int threadid = blockIdx.x * blockDim.x + threadIdx.x;
-		if (threadid >= numberOfOccupiedVoxels) return;
+		unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
+		if (tid >= numOccupied) return;
 
-		dim3 voxelIndex = occupiedVoxelIndices[threadid];
-		unsigned int index = voxelIndex.z * volumeDimensions.x * volumeDimensions.y + voxelIndex.y * volumeDimensions.x + voxelIndex.x;
+		uint3 idx = occupiedIndices[tid];
+		unsigned int center = idx.z * dims.y * dims.x + idx.y * dims.x + idx.x;
+		if (voxels[center].position.x == FLT_MAX) return;
 
-		if (d_voxels[index].position.x == FLT_MAX ||
-			d_voxels[index].position.y == FLT_MAX ||
-			d_voxels[index].position.z == FLT_MAX) return;
+		for (int dz = -1; dz <= 1; dz++) {
+			int nz = idx.z + dz;
+			if (nz < 0 || nz >= dims.z) continue;
+			for (int dy = -1; dy <= 1; dy++) {
+				int ny = idx.y + dy;
+				if (ny < 0 || ny >= dims.y) continue;
+				for (int dx = -1; dx <= 1; dx++) {
+					int nx = idx.x + dx;
+					if (nx < 0 || nx >= dims.x) continue;
+					if (dx == 0 && dy == 0 && dz == 0) continue;
 
-		int offset = 1;
-		int xIndex = (int)voxelIndex.x;
-		int yIndex = (int)voxelIndex.y;
-		int zIndex = (int)voxelIndex.z;
-
-		for (int zOffset = -offset; zOffset <= offset; zOffset++)
-		{
-			int nz = zIndex + zOffset;
-
-			if (0 > nz || (int)volumeDimensions.z <= nz) continue;
-			for (int yOffset = -offset; yOffset <= offset; yOffset++)
-			{
-				int ny = yIndex + yOffset;
-
-				if (0 > ny || (int)volumeDimensions.y <= ny) continue;
-				for (int xOffset = -offset; xOffset <= offset; xOffset++)
-				{
-					int nx = xIndex + xOffset;
-
-					if (0 > nx || (int)volumeDimensions.x <= nx) continue;
-					if (0 == xOffset && 0 == yOffset && 0 == zOffset) continue;
-
-
-					if (nx >= 0 && nx < volumeDimensions.x &&
-						ny >= 0 && ny < volumeDimensions.y &&
-						nz >= 0 && nz < volumeDimensions.z)
-					{
-						unsigned int neighborIndex = nz * volumeDimensions.x * volumeDimensions.y + ny * volumeDimensions.x + nx;
-
-						// Check if the neighbor is occupied
-						if (d_voxels[neighborIndex].position.x != FLT_MAX)
-						{
-							Union(d_voxels, index, neighborIndex);
-						}
+					unsigned int neighbor = nz * dims.y * dims.x + ny * dims.x + nx;
+					if (voxels[neighbor].position.x != FLT_MAX) {
+						Union(voxels, center, neighbor);
 					}
 				}
 			}
+		}
+	}
+
+	__global__ void Kernel_CompressLabels(Voxel* voxels, unsigned int N) {
+		unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
+		if (tid >= N) return;
+
+		if (voxels[tid].position.x != FLT_MAX) {
+			voxels[tid].label = FindRoot(voxels, tid);
 		}
 	}
 
@@ -251,178 +252,174 @@ namespace Clustering
 		unsigned int numberOfOccupiedVoxelIndices,
 		dim3 volumeDimensions)
 	{
-		nvtxRangePush("ConnectedComponentLabeling");
-
+		unsigned int totalVoxels = volumeDimensions.x * volumeDimensions.y * volumeDimensions.z;
 		unsigned int blockSize = 256;
-		unsigned int gridSize = (numberOfOccupiedVoxelIndices + blockSize - 1) / blockSize;
+		unsigned int gridVoxels = (totalVoxels + blockSize - 1) / blockSize;
+		unsigned int gridOccupied = (numberOfOccupiedVoxelIndices + blockSize - 1) / blockSize;
 
-		//for (int i = 0; i < 20; i++) // Increase iterations to ensure full convergence
-		for (int i = 0; i < 2; i++)
-		{
-			Kernel_ConnectedComponentLabeling << <gridSize, blockSize >> > (
-				d_voxels, occupiedVoxelIndices, numberOfOccupiedVoxelIndices, volumeDimensions);
-			cudaDeviceSynchronize();
-		}
+		// Block-local flood fill Á¦°ÅµÊ
 
+		Kernel_InterBlockMerge << <gridOccupied, blockSize >> > (d_voxels, occupiedVoxelIndices, numberOfOccupiedVoxelIndices, volumeDimensions);
 		cudaDeviceSynchronize();
-		nvtxRangePop();
+
+		Kernel_CompressLabels << <gridVoxels, blockSize >> > (d_voxels, totalVoxels);
 	}
 
-	__global__ void Kernel_GetLabels(
-		float* d_points,
-		unsigned int numberOfPoints,
-		Voxel* d_voxels,
-		unsigned int numberOfVoxels,
-		dim3 volumeDimensions,
-		float voxelSize,
-		float3 volumeMin,
-		float3 volumeCenter,
-		unsigned int* d_labels)
+__global__ void Kernel_GetLabels(
+	float* d_points,
+	unsigned int numberOfPoints,
+	Voxel* d_voxels,
+	unsigned int numberOfVoxels,
+	dim3 volumeDimensions,
+	float voxelSize,
+	float3 volumeMin,
+	float3 volumeCenter,
+	unsigned int* d_labels)
+{
+	unsigned int threadid = blockIdx.x * blockDim.x + threadIdx.x;
+	if (threadid >= numberOfPoints) return;
+
+	auto gx = d_points[threadid * 3];
+	auto gy = d_points[threadid * 3 + 1];
+	auto gz = d_points[threadid * 3 + 2];
+
+	if (gx < volumeMin.x || gx > volumeMin.x + volumeDimensions.x * voxelSize ||
+		gy < volumeMin.y || gy > volumeMin.y + volumeDimensions.y * voxelSize ||
+		gz < volumeMin.z || gz > volumeMin.z + volumeDimensions.z * voxelSize)
 	{
-		unsigned int threadid = blockIdx.x * blockDim.x + threadIdx.x;
-		if (threadid >= numberOfPoints) return;
-
-		auto gx = d_points[threadid * 3];
-		auto gy = d_points[threadid * 3 + 1];
-		auto gz = d_points[threadid * 3 + 2];
-
-		if (gx < volumeMin.x || gx > volumeMin.x + volumeDimensions.x * voxelSize ||
-			gy < volumeMin.y || gy > volumeMin.y + volumeDimensions.y * voxelSize ||
-			gz < volumeMin.z || gz > volumeMin.z + volumeDimensions.z * voxelSize)
-		{
-			return;
-		}
-
-		unsigned int ix = (unsigned int)floorf((gx - volumeMin.x) / voxelSize);
-		unsigned int iy = (unsigned int)floorf((gy - volumeMin.y) / voxelSize);
-		unsigned int iz = (unsigned int)floorf((gz - volumeMin.z) / voxelSize);
-
-		if (ix >= volumeDimensions.x || iy >= volumeDimensions.y || iz >= volumeDimensions.z) return;
-
-		unsigned int volumeIndex = iz * volumeDimensions.x * volumeDimensions.y + iy * volumeDimensions.x + ix;
-		auto& voxel = d_voxels[volumeIndex];
-
-		d_labels[threadid] = voxel.label;
+		return;
 	}
 
-	std::vector<unsigned int> GetLabels(
-		float* d_points,
-		unsigned int numberOfPoints,
-		Voxel* d_voxels,
-		unsigned int numberOfVoxels,
-		dim3 volumeDimensions,
-		float voxelSize,
-		float3 volumeMin,
-		float3 volumeCenter)
+	unsigned int ix = (unsigned int)floorf((gx - volumeMin.x) / voxelSize);
+	unsigned int iy = (unsigned int)floorf((gy - volumeMin.y) / voxelSize);
+	unsigned int iz = (unsigned int)floorf((gz - volumeMin.z) / voxelSize);
+
+	if (ix >= volumeDimensions.x || iy >= volumeDimensions.y || iz >= volumeDimensions.z) return;
+
+	unsigned int volumeIndex = iz * volumeDimensions.x * volumeDimensions.y + iy * volumeDimensions.x + ix;
+	auto& voxel = d_voxels[volumeIndex];
+
+	d_labels[threadid] = voxel.label;
+}
+
+std::vector<unsigned int> GetLabels(
+	float* d_points,
+	unsigned int numberOfPoints,
+	Voxel* d_voxels,
+	unsigned int numberOfVoxels,
+	dim3 volumeDimensions,
+	float voxelSize,
+	float3 volumeMin,
+	float3 volumeCenter)
+{
+	unsigned int* d_labels = nullptr;
+	cudaMalloc(&d_labels, sizeof(unsigned int) * numberOfPoints);
+	cudaMemset(d_labels, -1, sizeof(unsigned int) * numberOfPoints);
+	cudaDeviceSynchronize();
+
+	unsigned int blockSize = 256;
+	unsigned int gridSize = (numberOfPoints + blockSize - 1) / blockSize;
+
+	Kernel_GetLabels << <gridSize, blockSize >> > (
+		d_points,
+		numberOfPoints,
+		d_voxels,
+		numberOfVoxels,
+		volumeDimensions,
+		voxelSize,
+		volumeMin,
+		volumeCenter,
+		d_labels);
+
+	cudaDeviceSynchronize();
+	nvtxRangePop();
+
+	std::vector<unsigned int> result(numberOfPoints);
+	cudaMemcpy(result.data(), d_labels, sizeof(unsigned int) * numberOfPoints, cudaMemcpyDeviceToHost);
+	cudaDeviceSynchronize();
+
+	cudaFree(d_labels);
+
+	return result;
+}
+
+void VisualizeVoxels(
+	Voxel* d_voxels,
+	unsigned int numberOfVoxels,
+	dim3 volumeDimensions,
+	float voxelSize,
+	float3 volumeMin)
+{
+	nvtxRangePush("VisualizeVoxels");
+
+	Voxel* h_voxels = new Voxel[numberOfVoxels];
+	cudaMemcpy(h_voxels, d_voxels, sizeof(Voxel) * numberOfVoxels, cudaMemcpyDeviceToHost);
+
+	std::unordered_map<unsigned int, std::tuple<unsigned char, unsigned char, unsigned char>> labelToColor;
+
+	std::unordered_map<unsigned int, unsigned int> labelHistogram;
+
+	for (size_t i = 0; i < numberOfVoxels; i++)
 	{
-		unsigned int* d_labels = nullptr;
-		cudaMalloc(&d_labels, sizeof(unsigned int) * numberOfPoints);
-		cudaMemset(d_labels, -1, sizeof(unsigned int) * numberOfPoints);
-		cudaDeviceSynchronize();
+		auto& voxel = h_voxels[i];
 
-		unsigned int blockSize = 256;
-		unsigned int gridSize = (numberOfPoints + blockSize - 1) / blockSize;
-
-		Kernel_GetLabels << <gridSize, blockSize >> > (
-			d_points,
-			numberOfPoints,
-			d_voxels,
-			numberOfVoxels,
-			volumeDimensions,
-			voxelSize,
-			volumeMin,
-			volumeCenter,
-			d_labels);
-
-		cudaDeviceSynchronize();
-		nvtxRangePop();
-
-		std::vector<unsigned int> result(numberOfPoints);
-		cudaMemcpy(result.data(), d_labels, sizeof(unsigned int) * numberOfPoints, cudaMemcpyDeviceToHost);
-		cudaDeviceSynchronize();
-
-		cudaFree(d_labels);
-
-		return result;
-	}
-
-	void VisualizeVoxels(
-		Voxel* d_voxels,
-		unsigned int numberOfVoxels,
-		dim3 volumeDimensions,
-		float voxelSize,
-		float3 volumeMin)
-	{
-		nvtxRangePush("VisualizeVoxels");
-
-		Voxel* h_voxels = new Voxel[numberOfVoxels];
-		cudaMemcpy(h_voxels, d_voxels, sizeof(Voxel) * numberOfVoxels, cudaMemcpyDeviceToHost);
-
-		std::unordered_map<unsigned int, std::tuple<unsigned char, unsigned char, unsigned char>> labelToColor;
-
-		std::unordered_map<unsigned int, unsigned int> labelHistogram;
-
-		for (size_t i = 0; i < numberOfVoxels; i++)
+		if (voxel.position.x != FLT_MAX) // Only visualize occupied voxels
 		{
-			auto& voxel = h_voxels[i];
+			unsigned int label = voxel.label;
 
-			if (voxel.position.x != FLT_MAX) // Only visualize occupied voxels
+			// Assign a unique color per label using a hash function
+			if (labelToColor.find(label) == labelToColor.end())
 			{
-				unsigned int label = voxel.label;
+				unsigned char r = (label * 53) % 256;
+				unsigned char g = (label * 97) % 256;
+				unsigned char b = (label * 151) % 256;
+				labelToColor[label] = std::make_tuple(r, g, b);
+			}
 
-				// Assign a unique color per label using a hash function
-				if (labelToColor.find(label) == labelToColor.end())
-				{
-					unsigned char r = (label * 53) % 256;
-					unsigned char g = (label * 97) % 256;
-					unsigned char b = (label * 151) % 256;
-					labelToColor[label] = std::make_tuple(r, g, b);
-				}
+			// Get the assigned color
+			auto [r, g, b] = labelToColor[label];
 
-				// Get the assigned color
-				auto [r, g, b] = labelToColor[label];
+			// Visualize the voxel with the computed color
+/*               VD::AddCube("labeled voxels", { voxel.position.x, voxel.position.y, voxel.position.z },
+				   0.05f, { r, g, b, 255 });*/
 
-				// Visualize the voxel with the computed color
- /*               VD::AddCube("labeled voxels", { voxel.position.x, voxel.position.y, voxel.position.z },
-					0.05f, { r, g, b, 255 });*/
-
-				if (0 == labelHistogram.count(voxel.label))
-				{
-					labelHistogram[voxel.label] = 1;
-				}
-				else
-				{
-					labelHistogram[voxel.label] += 1;
-				}
+			if (0 == labelHistogram.count(voxel.label))
+			{
+				labelHistogram[voxel.label] = 1;
+			}
+			else
+			{
+				labelHistogram[voxel.label] += 1;
 			}
 		}
-
-		int i = 0;
-		for (auto& [label, count] : labelHistogram)
-		{
-			alog("[%4d] voxel label - %16d : count - %8d\n", i++, label, count);
-		}
-		alog("\n");
-
-		delete[] h_voxels;
-
-		cudaDeviceSynchronize();
-		nvtxRangePop();
 	}
 
-	struct ClusteringCacheInfo
+	int i = 0;
+	for (auto& [label, count] : labelHistogram)
 	{
-		float voxelSize;
-		dim3 cacheDimensions;
-		unsigned int numberOfVoxels;
-		float3 cacheMin;
+		alog("[%4d] voxel label - %16d : count - %8d\n", i++, label, count);
+	}
+	alog("\n");
 
-		cudaArray* cacheData3D = nullptr;
-		cudaSurfaceObject_t surfaceObject3D;
+	delete[] h_voxels;
 
-		uint3* occupiedVoxelIndices;
-		unsigned int* numberOfOccupiedVoxelIndices;
-	};
+	cudaDeviceSynchronize();
+	nvtxRangePop();
+}
+
+struct ClusteringCacheInfo
+{
+	float voxelSize;
+	dim3 cacheDimensions;
+	unsigned int numberOfVoxels;
+	float3 cacheMin;
+
+	cudaArray* cacheData3D = nullptr;
+	cudaSurfaceObject_t surfaceObject3D;
+
+	uint3* occupiedVoxelIndices;
+	unsigned int* numberOfOccupiedVoxelIndices;
+};
 }
 
 
@@ -482,7 +479,11 @@ std::vector<unsigned int> cuMain(const std::vector<float3>& host_points, float3 
 	unsigned int h_numberOfOccupiedVoxelIndices = 0;
 	cudaMemcpy(&h_numberOfOccupiedVoxelIndices, numberOfOccupiedVoxelIndices, sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
+	nvtxRangePushA("CCL");
+
 	ConnectedComponentLabeling(d_voxels, occupiedVoxelIndices, h_numberOfOccupiedVoxelIndices, volumeDimensions);
+
+	nvtxRangePop();
 
 	VisualizeVoxels(
 		d_voxels,

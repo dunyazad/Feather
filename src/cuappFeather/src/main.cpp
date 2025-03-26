@@ -266,10 +266,10 @@ int main(int argc, char** argv)
 		{
 			auto t = Time::Now();
 
-			if (false == alp.Deserialize("../../res/3D/Compound.alp"))
+			if (false == alp.Deserialize("../../res/3D/ZeroCrossingPoints.alp"))
 			{
 				PLYFormat ply;
-				ply.Deserialize("../../res/3D/Compound.ply");
+				ply.Deserialize("../../res/3D/ZeroCrossingPoints.ply");
 				//ply.SwapAxisYZ();
 
 				vector<Point> points;
@@ -301,7 +301,7 @@ int main(int argc, char** argv)
 				alog("PLY %d points loaded\n", points.size());
 
 				alp.AddPoints(points);
-				alp.Serialize("../../res/3D/Compound.alp");
+				alp.Serialize("../../res/3D/ZeroCrossingPoints.alp");
 			}
 
 			t = Time::End(t, "Loading Teeth");
