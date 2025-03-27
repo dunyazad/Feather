@@ -71,30 +71,30 @@ unordered_set<type_index> FeatherObject::GetAllSubclasses(type_index baseType)
 	return subclasses;
 }
 
-void FeatherObject::OnEvent(const Event& event)
-{
-    if (0 != eventHandlers.count(event.type))
-    {
-        for (auto& handler : eventHandlers[event.type])
-        {
-            handler(event, this);
-        }
-    }
-}
-
-void FeatherObject::SubscribeEvent(EventType eventType)
-{
-    auto eventSystems = Feather.GetInstances<EventSystem>();
-    if (eventSystems.empty()) return;
-
-    if (nullptr != *eventSystems.begin())
-    {
-        (*eventSystems.begin())->SubscribeEvent(eventType, this);
-    }
-}
-
-void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler)
-{
-    eventHandlers[eventType].push_back(handler);
-    SubscribeEvent(eventType);
-}
+//void FeatherObject::OnEvent(const Event& event)
+//{
+//    if (0 != eventHandlers.count(event.type))
+//    {
+//        for (auto& handler : eventHandlers[event.type])
+//        {
+//            handler(event, this);
+//        }
+//    }
+//}
+//
+//void FeatherObject::SubscribeEvent(EventType eventType)
+//{
+//    auto eventSystems = Feather.GetInstances<EventSystem>();
+//    if (eventSystems.empty()) return;
+//
+//    if (nullptr != *eventSystems.begin())
+//    {
+//        (*eventSystems.begin())->SubscribeEvent(eventType, this);
+//    }
+//}
+//
+//void FeatherObject::AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler)
+//{
+//    eventHandlers[eventType].push_back(handler);
+//    SubscribeEvent(eventType);
+//}

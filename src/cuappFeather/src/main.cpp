@@ -10,6 +10,14 @@ using namespace std;
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 
+void OnKey(const KeyEvent& event)
+{
+	if (GLFW_KEY_ESCAPE == event.keyCode)
+	{
+		glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
+	}
+}
+
 int main(int argc, char** argv)
 {
 	TestCUDA();
@@ -33,23 +41,13 @@ int main(int argc, char** argv)
 	Feather.AddOnInitializeCallback([&]() {
 		{
 			auto appMain = Feather.CreateInstance<Entity>("AppMain");
-			auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
-			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_ESCAPE == event.keyEvent.keyCode)
-				{
-					glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
-				}
-				});
+			Feather.GetDispatcher().sink<KeyEvent>().connect<&OnKey>();
 		}
 		{
-			auto camera = Feather.CreateInstance<Entity>("Camera");
-			auto perspectiveCamera = Feather.CreateInstance<PerspectiveCamera>();
-
-			//auto cameraManipulator = Feather.CreateInstance<CameraManipulatorOrbit>();
-			//cameraManipulator->SetCamera(perspectiveCamera);
-
-			auto cameraManipulator = Feather.CreateInstance<CameraManipulatorTrackball>();
-			cameraManipulator->SetCamera(perspectiveCamera);
+			entt::entity cam = Feather.GetRegistry().create();
+			auto& pcam = Feather.GetRegistry().emplace<PerspectiveCamera>(cam);
+			auto& pcamMan = Feather.GetRegistry().emplace<CameraManipulatorTrackball>(cam);
+			pcamMan.SetCamera(&pcam);
 		}
 
 		{
@@ -362,39 +360,39 @@ int main(int argc, char** argv)
 
 			renderable->EnableInstancing(alp.GetPoints().size());
 
-			renderable->AddEventHandler(EventType::KeyPress, [renderable, &alp](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_M == event.keyEvent.keyCode)
-				{
-					auto renderable = dynamic_cast<Renderable*>(object);
-					renderable->NextDrawingMode();
-				}
-				else if (GLFW_KEY_1 == event.keyEvent.keyCode)
-				{
-					auto renderable = dynamic_cast<Renderable*>(object);
-					renderable->SetActiveShaderIndex(0);
-				}
-				else if (GLFW_KEY_2 == event.keyEvent.keyCode)
-				{
-					auto renderable = dynamic_cast<Renderable*>(object);
-					renderable->SetActiveShaderIndex(1);
-				}
-				else if (GLFW_KEY_R == event.keyEvent.keyCode)
-				{
-					auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorTrackball>();
-					auto camera = cameraManipulator->SetCamera();
-					auto [x, y, z] = alp.GetAABBCenter();
-					camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
-					camera->SetTarget({ x,y,z });
-				}
-				});
-			renderable->AddEventHandler(EventType::MouseButtonRelease, [renderable](const Event& event, FeatherObject* object) {
-				if (GLFW_MOUSE_BUTTON_1 == event.mouseButtonEvent.button)
-				{
-					auto camera = Feather.GetFirstInstance<PerspectiveCamera>();
-					auto viewMatrix = camera->GetViewMatrix();
-					//viewMatrix.at(0, 3)
-				}
-				});
+			//renderable->AddEventHandler(EventType::KeyPress, [renderable, &alp](const Event& event, FeatherObject* object) {
+			//	if (GLFW_KEY_M == event.keyEvent.keyCode)
+			//	{
+			//		auto renderable = dynamic_cast<Renderable*>(object);
+			//		renderable->NextDrawingMode();
+			//	}
+			//	else if (GLFW_KEY_1 == event.keyEvent.keyCode)
+			//	{
+			//		auto renderable = dynamic_cast<Renderable*>(object);
+			//		renderable->SetActiveShaderIndex(0);
+			//	}
+			//	else if (GLFW_KEY_2 == event.keyEvent.keyCode)
+			//	{
+			//		auto renderable = dynamic_cast<Renderable*>(object);
+			//		renderable->SetActiveShaderIndex(1);
+			//	}
+			//	else if (GLFW_KEY_R == event.keyEvent.keyCode)
+			//	{
+			//		auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorTrackball>();
+			//		auto camera = cameraManipulator->SetCamera();
+			//		auto [x, y, z] = alp.GetAABBCenter();
+			//		camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
+			//		camera->SetTarget({ x,y,z });
+			//	}
+			//	});
+			//renderable->AddEventHandler(EventType::MouseButtonRelease, [renderable](const Event& event, FeatherObject* object) {
+			//	if (GLFW_MOUSE_BUTTON_1 == event.mouseButtonEvent.button)
+			//	{
+			//		auto camera = Feather.GetFirstInstance<PerspectiveCamera>();
+			//		auto viewMatrix = camera->GetViewMatrix();
+			//		//viewMatrix.at(0, 3)
+			//	}
+			//	});
 			
 			t = Time::End(t, "Upload to GPU");
 

@@ -10,300 +10,112 @@ CameraManipulatorBase::CameraManipulatorBase()
 CameraManipulatorOrbit::CameraManipulatorOrbit()
 	: RegisterDerivation<CameraManipulatorOrbit, CameraManipulatorBase>()
 {
-	SubscribeEvent(EventType::MousePosition);
-	SubscribeEvent(EventType::MouseButtonPress);
-	SubscribeEvent(EventType::MouseButtonRelease);
-	SubscribeEvent(EventType::MouseWheel);
-	SubscribeEvent(EventType::KeyPress);
-	SubscribeEvent(EventType::KeyRelease);
 }
 
 CameraManipulatorOrbit::~CameraManipulatorOrbit()
 {
 }
 
-void CameraManipulatorOrbit::OnEvent(const Event& event)
-{
-	CameraManipulatorBase::OnEvent(event);
-
-	switch (event.type)
-	{
-	case EventType::MousePosition:
-		OnMousePosition(event);
-		break;
-	case EventType::MouseButtonPress:
-		OnMouseButtonPress(event);
-		break;
-	case EventType::MouseButtonRelease:
-		OnMouseButtonRelease(event);
-		break;
-	case EventType::MouseWheel:
-		OnMouseWheel(event);
-		break;
-	case EventType::KeyPress:
-		OnKeyPress(event);
-		break;
-	case EventType::KeyRelease:
-		OnKeyRelease(event);
-		break;
-	default:
-		break;
-	}
-}
-
-void CameraManipulatorOrbit::OnMousePosition(const Event& event)
-{
-	if (nullptr == camera) return;
-
-	if (isRButtonPressed)
-	{
-		auto hDelta = event.mousePositionEvent.xpos - lastMousePositionX;
-		azimuth -= hDelta * mouseSensitivity;
-		if (azimuth < 0.0f) azimuth += 360.0f;
-		else if (azimuth >= 360.0f) azimuth -= 360.0f;
-
-		auto vDelta = event.mousePositionEvent.ypos - lastMousePositionY;
-		elevation += vDelta * mouseSensitivity;
-		if (elevation <= -90.0f) elevation = -89.9f;
-		else if (elevation >= 90.0f) elevation = 89.9f;
-
-		auto target = camera->GetTarget();
-
-		MiniMath::V3 eye(
-			target.x + radius * cos(elevation * DEG2RAD) * sin(azimuth * DEG2RAD),
-			target.y + radius * sin(elevation * DEG2RAD),
-			target.z + radius * cos(elevation * DEG2RAD) * cos(azimuth * DEG2RAD));
-
-		camera->SetEye(eye);
-	}
-
-	if (isMButtonPressed)
-	{
-		auto hDelta = event.mousePositionEvent.xpos - lastMousePositionX;
-		auto hPanning = hDelta * mousePanningSensitivity;
-
-		auto vDelta = event.mousePositionEvent.ypos - lastMousePositionY;
-		auto vPanning = vDelta * mousePanningSensitivity;
-
-		auto viewMatrix = camera->GetViewMatrix();
-		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
-		MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
-
-		auto target = camera->GetTarget();
-		auto eye = camera->GetEye();
-
-		if (hDelta != 0)
-		{
-			target -= right * (hPanning * radius * 0.01f);
-			eye -= right * (hPanning * radius * 0.01f);
-		}
-
-		if (vDelta != 0)
-		{
-			target += up * (vPanning * radius * 0.01f);
-			eye += up * (vPanning * radius * 0.01f);
-		}
-
-		camera->SetTarget(target);
-		camera->SetEye(eye);
-	}
-
-	lastMousePositionX = event.mousePositionEvent.xpos;
-	lastMousePositionY = event.mousePositionEvent.ypos;
-}
-
-void CameraManipulatorOrbit::OnMouseButtonPress(const Event& event)
-{
-	if (nullptr == camera) return;
-
-	if (0 == event.mouseButtonEvent.button)
-	{
-		isLButtonPressed = true;
-	}
-	else if (1 == event.mouseButtonEvent.button)
-	{
-		isRButtonPressed = true;
-	}
-	else if (2 == event.mouseButtonEvent.button)
-	{
-		isMButtonPressed = true;
-	}
-	//alog("Button Press : %d - x : %.2f, y : %.2f\n",
-	//	event.mouseButtonEvent.button,
-	//	event.mouseButtonEvent.xpos,
-	//	event.mouseButtonEvent.ypos);
-}
-
-void CameraManipulatorOrbit::OnMouseButtonRelease(const Event& event)
-{
-	if (nullptr == camera) return;
-
-	if (0 == event.mouseButtonEvent.button)
-	{
-		isLButtonPressed = false;
-	}
-	else if (1 == event.mouseButtonEvent.button)
-	{
-		isRButtonPressed = false;
-	}
-	else if (2 == event.mouseButtonEvent.button)
-	{
-		isMButtonPressed = false;
-	}
-	//alog("Button Release : %d - x : %.2f, y : %.2f\n",
-	//	event.mouseButtonEvent.button,
-	//	event.mouseButtonEvent.xpos,
-	//	event.mouseButtonEvent.ypos);
-}
-
-void CameraManipulatorOrbit::OnMouseWheel(const Event& event)
-{
-	if (nullptr == camera) return;
-
-	if (0 != pressedKeys.count(GLFW_KEY_LEFT_SHIFT) || 0 != pressedKeys.count(GLFW_KEY_RIGHT_SHIFT))
-	{
-		auto perspectiveCamera = dynamic_cast<PerspectiveCamera*>(camera);
-		if (nullptr != perspectiveCamera)
-		{
-			f32 fovy = perspectiveCamera->GetFOVY() * RAD2DEG;
-
-			if (0 > event.mouseWheelEvent.yoffset)
-			{
-				fovy += 1.0f;
-			}
-			else if (0 < event.mouseWheelEvent.yoffset)
-			{
-				fovy -= 1.0f;
-			}
-
-			if (1 > fovy) fovy = 1.0f;
-			if (90 < fovy) fovy = 90.0f;
-
-			perspectiveCamera->SetFOVY(fovy * DEG2RAD);
-		}
-	}
-	else
-	{
-		if (0 > event.mouseWheelEvent.yoffset)
-		{
-			radius *= 1.1f;
-		}
-		else if (0 < event.mouseWheelEvent.yoffset)
-		{
-			radius *= 0.9f;
-		}
-
-		auto target = camera->GetTarget();
-
-		MiniMath::V3 eye(
-			target.x + radius * cos(elevation * DEG2RAD) * sin(azimuth * DEG2RAD),
-			target.y + radius * sin(elevation * DEG2RAD),
-			target.z + radius * cos(elevation * DEG2RAD) * cos(azimuth * DEG2RAD));
-
-		camera->SetEye(eye);
-	}
-}
-
-void CameraManipulatorOrbit::OnKeyPress(const Event& event)
-{
-	pressedKeys.insert(event.keyEvent.keyCode);
-
-	if (nullptr == camera) return;
-
-	if (GLFW_KEY_LEFT == event.keyEvent.keyCode)
-	{
-		auto hDelta = 1;
-		auto hPanning = hDelta * mouseSensitivity;
-
-		auto vDelta = 0;
-		auto vPanning = vDelta * mouseSensitivity;
-
-		auto viewMatrix = camera->GetViewMatrix();
-		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
-		MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
-
-		auto target = camera->GetTarget();
-		auto eye = camera->GetEye();
-
-		if (hDelta != 0)
-		{
-			target -= right * (hPanning * radius * 0.01f);
-			eye -= right * (hPanning * radius * 0.01f);
-		}
-
-		if (vDelta != 0)
-		{
-			target += up * (vPanning * radius * 0.01f);
-			eye += up * (vPanning * radius * 0.01f);
-		}
-
-		camera->SetTarget(target);
-		camera->SetEye(eye);
-	}
-	else if (GLFW_KEY_RIGHT == event.keyEvent.keyCode)
-	{
-		auto hDelta = -1;
-		auto hPanning = hDelta * mouseSensitivity;
-
-		auto vDelta = 0;
-		auto vPanning = vDelta * mouseSensitivity;
-
-		auto viewMatrix = camera->GetViewMatrix();
-		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
-		MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
-
-		auto target = camera->GetTarget();
-		auto eye = camera->GetEye();
-
-		if (hDelta != 0)
-		{
-			target -= right * (hPanning * radius * 0.01f);
-			eye -= right * (hPanning * radius * 0.01f);
-		}
-
-		if (vDelta != 0)
-		{
-			target += up * (vPanning * radius * 0.01f);
-			eye += up * (vPanning * radius * 0.01f);
-		}
-
-		camera->SetTarget(target);
-		camera->SetEye(eye);
-	}
-	else if (GLFW_KEY_L == event.keyEvent.keyCode)
-	{
-		camera->Reset();
-	}
-	else if (GLFW_KEY_INSERT == event.keyEvent.keyCode)
-	{
-		camera->PushCameraHistory();
-	}
-	else if (GLFW_KEY_DELETE == event.keyEvent.keyCode)
-	{
-		camera->PopCameraHistory();
-	}
-	else if (GLFW_KEY_PAGE_UP == event.keyEvent.keyCode)
-	{
-		camera->JumpToNextCameraHistory();
-	}
-	else if (GLFW_KEY_PAGE_DOWN == event.keyEvent.keyCode)
-	{
-		camera->JumpToPreviousCameraHistory();
-	}
-	else if (
-		GLFW_KEY_0 <= event.keyEvent.keyCode &&
-		GLFW_KEY_9 >= event.keyEvent.keyCode)
-	{
-		camera->JumpCameraHistory(event.keyEvent.keyCode - GLFW_KEY_0);
-	}
-}
-
-void CameraManipulatorOrbit::OnKeyRelease(const Event& event)
-{
-	pressedKeys.erase(event.keyEvent.keyCode);
-
-	if (nullptr == camera) return;
-}
+//void CameraManipulatorOrbit::OnKey(const KeyEvent& event)
+//{
+//	pressedKeys.insert(event.keyCode);
+//
+//	if (nullptr == camera) return;
+//
+//	if (GLFW_KEY_LEFT == event.keyEvent.keyCode)
+//	{
+//		auto hDelta = 1;
+//		auto hPanning = hDelta * mouseSensitivity;
+//
+//		auto vDelta = 0;
+//		auto vPanning = vDelta * mouseSensitivity;
+//
+//		auto viewMatrix = camera->GetViewMatrix();
+//		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
+//		MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
+//
+//		auto target = camera->GetTarget();
+//		auto eye = camera->GetEye();
+//
+//		if (hDelta != 0)
+//		{
+//			target -= right * (hPanning * radius * 0.01f);
+//			eye -= right * (hPanning * radius * 0.01f);
+//		}
+//
+//		if (vDelta != 0)
+//		{
+//			target += up * (vPanning * radius * 0.01f);
+//			eye += up * (vPanning * radius * 0.01f);
+//		}
+//
+//		camera->SetTarget(target);
+//		camera->SetEye(eye);
+//	}
+//	else if (GLFW_KEY_RIGHT == event.keyEvent.keyCode)
+//	{
+//		auto hDelta = -1;
+//		auto hPanning = hDelta * mouseSensitivity;
+//
+//		auto vDelta = 0;
+//		auto vPanning = vDelta * mouseSensitivity;
+//
+//		auto viewMatrix = camera->GetViewMatrix();
+//		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
+//		MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
+//
+//		auto target = camera->GetTarget();
+//		auto eye = camera->GetEye();
+//
+//		if (hDelta != 0)
+//		{
+//			target -= right * (hPanning * radius * 0.01f);
+//			eye -= right * (hPanning * radius * 0.01f);
+//		}
+//
+//		if (vDelta != 0)
+//		{
+//			target += up * (vPanning * radius * 0.01f);
+//			eye += up * (vPanning * radius * 0.01f);
+//		}
+//
+//		camera->SetTarget(target);
+//		camera->SetEye(eye);
+//	}
+//	else if (GLFW_KEY_L == event.keyEvent.keyCode)
+//	{
+//		camera->Reset();
+//	}
+//	else if (GLFW_KEY_INSERT == event.keyEvent.keyCode)
+//	{
+//		camera->PushCameraHistory();
+//	}
+//	else if (GLFW_KEY_DELETE == event.keyEvent.keyCode)
+//	{
+//		camera->PopCameraHistory();
+//	}
+//	else if (GLFW_KEY_PAGE_UP == event.keyEvent.keyCode)
+//	{
+//		camera->JumpToNextCameraHistory();
+//	}
+//	else if (GLFW_KEY_PAGE_DOWN == event.keyEvent.keyCode)
+//	{
+//		camera->JumpToPreviousCameraHistory();
+//	}
+//	else if (
+//		GLFW_KEY_0 <= event.keyEvent.keyCode &&
+//		GLFW_KEY_9 >= event.keyEvent.keyCode)
+//	{
+//		camera->JumpCameraHistory(event.keyEvent.keyCode - GLFW_KEY_0);
+//	}
+//}
+//
+//void CameraManipulatorOrbit::OnKeyRelease(const Event& event)
+//{
+//	pressedKeys.erase(event.keyEvent.keyCode);
+//
+//	if (nullptr == camera) return;
+//}
 
 CameraManipulatorTrackball::CameraManipulatorTrackball()
 	: RegisterDerivation<CameraManipulatorTrackball, CameraManipulatorBase>(),
@@ -314,50 +126,20 @@ CameraManipulatorTrackball::CameraManipulatorTrackball()
 	isMButtonPressed(false),
 	isRButtonPressed(false)
 {
-	SubscribeEvent(EventType::MousePosition);
-	SubscribeEvent(EventType::MouseButtonPress);
-	SubscribeEvent(EventType::MouseButtonRelease);
-	SubscribeEvent(EventType::MouseWheel);
-	SubscribeEvent(EventType::KeyPress);
-	SubscribeEvent(EventType::KeyRelease);
+	Feather.GetDispatcher().sink<KeyEvent>().connect<&CameraManipulatorTrackball::OnKey>(*this);
+	Feather.GetDispatcher().sink<MousePositionEvent>().connect<&CameraManipulatorTrackball::OnMousePosition>(*this);
+	Feather.GetDispatcher().sink<MouseButtonEvent>().connect<&CameraManipulatorTrackball::OnMouseButton>(*this);
+	Feather.GetDispatcher().sink<MouseWheelEvent>().connect<&CameraManipulatorTrackball::OnMouseWheel>(*this);
 }
 
 CameraManipulatorTrackball::~CameraManipulatorTrackball() {}
 
-void CameraManipulatorTrackball::OnEvent(const Event& event)
-{
-	CameraManipulatorBase::OnEvent(event);
-
-	switch (event.type) {
-	case EventType::MousePosition:
-		OnMousePosition(event);
-		break;
-	case EventType::MouseButtonPress:
-		OnMouseButtonPress(event);
-		break;
-	case EventType::MouseButtonRelease:
-		OnMouseButtonRelease(event);
-		break;
-	case EventType::MouseWheel:
-		OnMouseWheel(event);
-		break;
-	case EventType::KeyPress:
-		OnKeyPress(event);
-		break;
-	case EventType::KeyRelease:
-		OnKeyRelease(event);
-		break;
-	default:
-		break;
-	}
-}
-
-void CameraManipulatorTrackball::OnMousePosition(const Event& event)
+void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event)
 {
 	if (nullptr == camera) return;
 
-	float dx = event.mousePositionEvent.xpos - lastMousePositionX;
-	float dy = event.mousePositionEvent.ypos - lastMousePositionY;
+	float dx = event.xpos - lastMousePositionX;
+	float dy = event.ypos - lastMousePositionY;
 
 	if (isRButtonPressed)
 	{
@@ -402,50 +184,32 @@ void CameraManipulatorTrackball::OnMousePosition(const Event& event)
 		camera->SetEye(eye);
 	}
 
-	lastMousePositionX = event.mousePositionEvent.xpos;
-	lastMousePositionY = event.mousePositionEvent.ypos;
+	lastMousePositionX = event.xpos;
+	lastMousePositionY = event.ypos;
 }
 
-void CameraManipulatorTrackball::OnMouseButtonPress(const Event& event)
+void CameraManipulatorTrackball::OnMouseButton(const MouseButtonEvent& event)
 {
 	if (nullptr == camera) return;
 
-	if (event.mouseButtonEvent.button == 0)
+	if (event.button == 0)
 	{
-		isLButtonPressed = true;
+		isLButtonPressed = event.action == 1;
 	}
-	else if (event.mouseButtonEvent.button == 1)
+	else if (event.button == 1)
 	{
-		isRButtonPressed = true;
+		isRButtonPressed = event.action == 1;
 	}
-	else if (event.mouseButtonEvent.button == 2)
+	else if (event.button == 2)
 	{
-		isMButtonPressed = true;
+		isMButtonPressed = event.action == 1;
 	}
 
-	lastMousePositionX = event.mouseButtonEvent.xpos;
-	lastMousePositionY = event.mouseButtonEvent.ypos;
+	lastMousePositionX = event.xpos;
+	lastMousePositionY = event.ypos;
 }
 
-void CameraManipulatorTrackball::OnMouseButtonRelease(const Event& event)
-{
-	if (nullptr == camera) return;
-
-	if (event.mouseButtonEvent.button == 0)
-	{
-		isLButtonPressed = false;
-	}
-	else if (event.mouseButtonEvent.button == 1)
-	{
-		isRButtonPressed = false;
-	}
-	else if (event.mouseButtonEvent.button == 2)
-	{
-		isMButtonPressed = false;
-	}
-}
-
-void CameraManipulatorTrackball::OnMouseWheel(const Event& event)
+void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 {
 	if (nullptr == camera) return;
 
@@ -456,11 +220,11 @@ void CameraManipulatorTrackball::OnMouseWheel(const Event& event)
 		{
 			f32 fovy = perspectiveCamera->GetFOVY() * RAD2DEG;
 
-			if (0 > event.mouseWheelEvent.yoffset)
+			if (0 > event.yoffset)
 			{
 				fovy += 1.0f;
 			}
-			else if (0 < event.mouseWheelEvent.yoffset)
+			else if (0 < event.yoffset)
 			{
 				fovy -= 1.0f;
 			}
@@ -473,11 +237,11 @@ void CameraManipulatorTrackball::OnMouseWheel(const Event& event)
 	}
 	else
 	{
-		if (0 > event.mouseWheelEvent.yoffset)
+		if (0 > event.yoffset)
 		{
 			radius *= 1.1f;
 		}
-		else if (0 < event.mouseWheelEvent.yoffset)
+		else if (0 < event.yoffset)
 		{
 			radius *= 0.9f;
 		}
@@ -490,9 +254,9 @@ void CameraManipulatorTrackball::OnMouseWheel(const Event& event)
 	}
 }
 
-void CameraManipulatorTrackball::OnKeyPress(const Event& event)
+void CameraManipulatorTrackball::OnKey(const KeyEvent& event)
 {
-	pressedKeys.insert(event.keyEvent.keyCode);
+	pressedKeys.insert(event.keyCode);
 
 	if (nullptr == camera) return;
 
@@ -504,36 +268,31 @@ void CameraManipulatorTrackball::OnKeyPress(const Event& event)
 
 	float moveStep = 0.2f;
 
-	if (event.keyEvent.keyCode == GLFW_KEY_W)
+	if (event.keyCode == GLFW_KEY_W)
 	{
 		eye += viewDir * moveStep;
 		target += viewDir * moveStep;
 	}
-	else if (event.keyEvent.keyCode == GLFW_KEY_S)
+	else if (event.keyCode == GLFW_KEY_S)
 	{
 		eye -= viewDir * moveStep;
 		target -= viewDir * moveStep;
 	}
-	else if (event.keyEvent.keyCode == GLFW_KEY_A)
-	{
-		eye -= right * moveStep;
-		target -= right * moveStep;
-	}
-	else if (event.keyEvent.keyCode == GLFW_KEY_D)
+	else if (event.keyCode == GLFW_KEY_A)
 	{
 		eye += right * moveStep;
 		target += right * moveStep;
 	}
-	else if (event.keyEvent.keyCode == GLFW_KEY_R)
+	else if (event.keyCode == GLFW_KEY_D)
+	{
+		eye -= right * moveStep;
+		target -= right * moveStep;
+	}
+	else if (event.keyCode == GLFW_KEY_R)
 	{
 		camera->Reset();
 	}
 
 	camera->SetEye(eye);
 	camera->SetTarget(target);
-}
-
-void CameraManipulatorTrackball::OnKeyRelease(const Event& event)
-{
-	pressedKeys.erase(event.keyEvent.keyCode);
 }

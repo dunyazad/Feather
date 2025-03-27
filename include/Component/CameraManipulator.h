@@ -24,14 +24,14 @@ public:
 	CameraManipulatorOrbit();
 	~CameraManipulatorOrbit();
 	
-	virtual void OnEvent(const Event& event) override;
+	//virtual void OnEvent(const Event& event) override;
 
-	void OnMousePosition(const Event& event);
-	void OnMouseButtonPress(const Event& event);
-	void OnMouseButtonRelease(const Event& event);
-	void OnMouseWheel(const Event& event);
-	void OnKeyPress(const Event& event);
-	void OnKeyRelease(const Event& event);
+	//void OnMousePosition(const Event& event);
+	//void OnMouseButtonPress(const Event& event);
+	//void OnMouseButtonRelease(const Event& event);
+	//void OnMouseWheel(const Event& event);
+	//void OnKeyPress(const Event& event);
+	//void OnKeyRelease(const Event& event);
 
 	inline f32 GetAzimuth() { return azimuth; }
 	inline void SetAzimuth(f32 azimuth) { this->azimuth = azimuth; }
@@ -69,8 +69,6 @@ public:
 	CameraManipulatorTrackball();
 	virtual ~CameraManipulatorTrackball();
 
-	void OnEvent(const Event& event) override;
-
 	inline f32 GetRadius() { return radius; }
 	inline void SetRadius(f32 radius) { this->radius = radius; }
 	inline f32 GetMouseSensitivity() { return mouseSensitivity; }
@@ -79,12 +77,10 @@ public:
 	inline void SetMouseWheelSensitivity(f32 mouseWheelSensitivity) { this->mouseWheelSensitivity = mouseWheelSensitivity; }
 
 private:
-	void OnMousePosition(const Event& event);
-	void OnMouseButtonPress(const Event& event);
-	void OnMouseButtonRelease(const Event& event);
-	void OnMouseWheel(const Event& event);
-	void OnKeyPress(const Event& event);
-	void OnKeyRelease(const Event& event);
+	void OnMousePosition(const MousePositionEvent& event);
+	void OnMouseButton(const MouseButtonEvent& event);
+	void OnMouseWheel(const MouseWheelEvent& event);
+	void OnKey(const KeyEvent& event);
 
 	float lastMousePositionX = 0.0f;
 	float lastMousePositionY = 0.0f;

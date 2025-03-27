@@ -101,63 +101,39 @@ namespace Time
 
 
 
-enum class EventType
-{
-	None,
-	FrameBufferResize,
-	KeyPress,
-	KeyRelease,
-	MousePosition,
-	MouseButtonPress,
-	MouseButtonRelease,
-	MouseWheel,
-	NumberOfEventTypes
-};
-
-struct FrameBufferResizeParameters
+struct FrameBufferResizeEvent
 {
 	i32 width;
 	i32 height;
 };
 
-struct KeyEventParameters
+struct KeyEvent
 {
 	i32 keyCode;
 	i32 scanCode;
+	i32 action;
 	i32 mods;
 };
 
-struct MousePositionEventParameters
+struct MousePositionEvent
 {
 	f64 xpos;
 	f64 ypos;
 };
 
-struct MouseButtonEventParameters
+struct MouseButtonEvent
 {
 	i32 button;
+	i32 action;
 	i32 mods;
 	f64 xpos;
 	f64 ypos;
 };
 
-struct MouseWheelEventParameters
+struct MouseWheelEvent
 {
 	f64 xoffset;
 	f64 yoffset;
-};
-
-struct Event
-{
-	EventType type;
-	union
-	{
-		KeyEventParameters keyEvent;
-		MousePositionEventParameters mousePositionEvent;
-		MouseButtonEventParameters mouseButtonEvent;
-		FrameBufferResizeParameters frameBufferResizeEvent;
-		MouseWheelEventParameters mouseWheelEvent;
-	};
 };
 
 class FeatherObject
@@ -169,16 +145,16 @@ public:
 	static void RegisterClass(type_index baseType, type_index derivedType);
 	static unordered_set<type_index> GetAllSubclasses(type_index baseType);
 
-	virtual void OnEvent(const Event& event);
-	virtual void SubscribeEvent(EventType eventType);
-	virtual void AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler);
+	//virtual void OnEvent(const Event& event);
+	//virtual void SubscribeEvent(EventType eventType);
+	//virtual void AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler);
 
 	inline const string& GetName() const { return name; }
 	inline void SetName(const string& name) { this->name = name; }
 
 protected:
 	string name = "";
-	map<EventType, vector<function<void(const Event&, FeatherObject*)>>> eventHandlers;
+	//map<EventType, vector<function<void(const Event&, FeatherObject*)>>> eventHandlers;
 
 private:
 	static unordered_map<type_index, unordered_set<type_index>> subclass_map;

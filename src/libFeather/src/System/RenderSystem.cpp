@@ -29,17 +29,34 @@ void RenderSystem::Terminate()
 
 void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
 {
-    auto cameras = Feather.GetInstances<PerspectiveCamera>();
-    if (cameras.empty())
+    MiniMath::M4 viewMatrix;
+    MiniMath::M4 perspectiveMatrix;
+    MiniMath::V3 eye;
+
+    auto& registry = Feather.GetRegistry();
+    auto entites = registry.view<PerspectiveCamera>();
+    for (auto& entity : entites)
     {
-        alog("No camera !!!\n");
-        return;
+        auto& camera = entites.get<PerspectiveCamera>(entity);
+
+        camera.Update(frameNo, timeDelta);
+
+        viewMatrix = camera.GetViewMatrix();
+        perspectiveMatrix = camera.GetProjectionMatrix();
+        eye = camera.GetEye();
     }
 
-    for (auto& camera : cameras)
-    {
-        camera->Update(frameNo, timeDelta);
-    }
+    //auto cameras = Feather.GetInstances<PerspectiveCamera>();
+    //if (cameras.empty())
+    //{
+    //    alog("No camera !!!\n");
+    //    return;
+    //}
+
+    //for (auto& camera : cameras)
+    //{
+    //    camera->Update(frameNo, timeDelta);
+    //}
 
     map<Shader*, vector<Renderable*>> shaderMapping;
     auto renderables = Feather.GetInstances<Renderable>();
@@ -69,15 +86,18 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         }
         {
             auto index = shader->GetUniformLocation("view");
-            shader->UniformM4(index, (*cameras.begin())->GetViewMatrix());
+            //shader->UniformM4(index, (*cameras.begin())->GetViewMatrix());
+            shader->UniformM4(index, viewMatrix);
         }
         {
             auto index = shader->GetUniformLocation("projection");
-            shader->UniformM4(index, (*cameras.begin())->GetProjectionMatrix());
+            //shader->UniformM4(index, (*cameras.begin())->GetProjectionMatrix());
+            shader->UniformM4(index, perspectiveMatrix);
         }
         {
             auto index = shader->GetUniformLocation("cameraPos");
-            shader->UniformV3(index, (*cameras.begin())->GetEye());
+            //shader->UniformV3(index, (*cameras.begin())->GetEye());
+            shader->UniformV3(index, eye);
         }
 
         for (auto& renderable : renderables)

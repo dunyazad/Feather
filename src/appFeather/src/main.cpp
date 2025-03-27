@@ -15,14 +15,14 @@ int main(int argc, char** argv)
 
 	Feather.AddOnInitializeCallback([&]() {
 		{
-			auto appMain = Feather.CreateInstance<Entity>("AppMain");
-			auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
-			appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_ESCAPE == event.keyEvent.keyCode)
-				{
-					glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
-				}
-				});
+			//auto appMain = Feather.CreateInstance<Entity>("AppMain");
+			//auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
+			//appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
+			//	if (GLFW_KEY_ESCAPE == event.keyEvent.keyCode)
+			//	{
+			//		glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
+			//	}
+			//	});
 		}
 		{
 			auto camera = Feather.CreateInstance<Entity>("Camera");
@@ -324,23 +324,23 @@ int main(int argc, char** argv)
 
 			renderable->EnableInstancing(alp.GetPoints().size());
 
-			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_M == event.keyEvent.keyCode)
-				{
-					auto renderable = dynamic_cast<Renderable*>(object);
-					renderable->NextDrawingMode();
-				}
-				else if (GLFW_KEY_1 == event.keyEvent.keyCode)
-				{
-					auto renderable = dynamic_cast<Renderable*>(object);
-					renderable->SetActiveShaderIndex(0);
-				}
-				else if (GLFW_KEY_2 == event.keyEvent.keyCode)
-				{
-					auto renderable = dynamic_cast<Renderable*>(object);
-					renderable->SetActiveShaderIndex(1);
-				}
-				});
+			//renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
+			//	if (GLFW_KEY_M == event.keyEvent.keyCode)
+			//	{
+			//		auto renderable = dynamic_cast<Renderable*>(object);
+			//		renderable->NextDrawingMode();
+			//	}
+			//	else if (GLFW_KEY_1 == event.keyEvent.keyCode)
+			//	{
+			//		auto renderable = dynamic_cast<Renderable*>(object);
+			//		renderable->SetActiveShaderIndex(0);
+			//	}
+			//	else if (GLFW_KEY_2 == event.keyEvent.keyCode)
+			//	{
+			//		auto renderable = dynamic_cast<Renderable*>(object);
+			//		renderable->SetActiveShaderIndex(1);
+			//	}
+			//	});
 		}
 		
 		});

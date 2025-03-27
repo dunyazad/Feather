@@ -92,6 +92,9 @@ public:
 	inline void AddOnRenderCallback(function<void(f32)> callback) { onRenderCallbacks.push_back(callback); }
 	inline void AddOnTerminateCallback(function<void()> callback) { onTerminateCallbacks.push_back(callback); }
 
+	inline entt::registry& GetRegistry() { return registry; }
+	inline entt::dispatcher& GetDispatcher() { return dispatcher; }
+
 private:
 	static libFeather* s_instance;
 
@@ -108,4 +111,7 @@ private:
 	vector<function<void(f32)>> onUpdateCallbacks;
 	vector<function<void(f32)>> onRenderCallbacks;
 	vector<function<void()>> onTerminateCallbacks;
+
+	entt::registry registry;
+	entt::dispatcher dispatcher;
 };
