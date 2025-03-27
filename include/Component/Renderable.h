@@ -216,6 +216,7 @@ public:
 	inline void ToggleVisible() { visible = !visible; }
 
 	inline Shader* GetActiveShader() const { if (shaders.empty()) return nullptr; else return shaders[activeShaderIndex]; }
+	inline ui32 GetActiveShaderIndex() { return activeShaderIndex; }
 	inline void SetActiveShaderIndex(ui32 index) { activeShaderIndex = index; }
 	inline const vector<Shader*>& GetShaders() const { return shaders; }
 	inline void AddShader(Shader* shader) { shaders.push_back(shader); }

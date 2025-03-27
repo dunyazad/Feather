@@ -432,7 +432,7 @@ std::vector<unsigned int> cuMain(const std::vector<float3>& host_points, float3 
 	cudaMemcpy(d_points, host_points.data(), sizeof(float) * host_points.size() * 3, cudaMemcpyHostToDevice);
 
 	unsigned int numberOfPoints = host_points.size();
-	dim3 volumeDimensions(400, 400, 400);
+	dim3 volumeDimensions(200, 300, 400);
 	unsigned int numberOfVoxels = volumeDimensions.x * volumeDimensions.y * volumeDimensions.z;
 	float voxelSize = 0.1f;
 	//float3 volumeCenter = make_float3(3.9904f, -15.8357f, -7.2774f);
@@ -460,31 +460,36 @@ std::vector<unsigned int> cuMain(const std::vector<float3>& host_points, float3 
 
 	cudaDeviceSynchronize();
 
-	ClearVoxels(d_voxels, numberOfVoxels, volumeDimensions, voxelSize, volumeMin, volumeCenter);
+	for (size_t i = 0; i < 10; i++)
+	{
+		cudaMemset(numberOfOccupiedVoxelIndices, 0, sizeof(unsigned int));
+		cudaMemset(numberOfOccupiedPointIndices, 0, sizeof(unsigned int));
 
-	OccupyVoxels(
-		d_points,
-		numberOfPoints,
-		d_voxels,
-		numberOfVoxels,
-		volumeDimensions,
-		voxelSize,
-		volumeMin,
-		volumeCenter,
-		occupiedVoxelIndices,
-		numberOfOccupiedVoxelIndices,
-		occupiedPointIndices,
-		numberOfOccupiedPointIndices);
+		ClearVoxels(d_voxels, numberOfVoxels, volumeDimensions, voxelSize, volumeMin, volumeCenter);
 
-	unsigned int h_numberOfOccupiedVoxelIndices = 0;
-	cudaMemcpy(&h_numberOfOccupiedVoxelIndices, numberOfOccupiedVoxelIndices, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+		OccupyVoxels(
+			d_points,
+			numberOfPoints,
+			d_voxels,
+			numberOfVoxels,
+			volumeDimensions,
+			voxelSize,
+			volumeMin,
+			volumeCenter,
+			occupiedVoxelIndices,
+			numberOfOccupiedVoxelIndices,
+			occupiedPointIndices,
+			numberOfOccupiedPointIndices);
 
-	nvtxRangePushA("CCL");
+		unsigned int h_numberOfOccupiedVoxelIndices = 0;
+		cudaMemcpy(&h_numberOfOccupiedVoxelIndices, numberOfOccupiedVoxelIndices, sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
-	ConnectedComponentLabeling(d_voxels, occupiedVoxelIndices, h_numberOfOccupiedVoxelIndices, volumeDimensions);
+		nvtxRangePushA("CCL");
 
-	nvtxRangePop();
+		ConnectedComponentLabeling(d_voxels, occupiedVoxelIndices, h_numberOfOccupiedVoxelIndices, volumeDimensions);
 
+		nvtxRangePop();
+	}
 	VisualizeVoxels(
 		d_voxels,
 		numberOfVoxels,

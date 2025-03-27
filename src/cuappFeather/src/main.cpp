@@ -266,10 +266,10 @@ int main(int argc, char** argv)
 		{
 			auto t = Time::Now();
 
-			if (false == alp.Deserialize("../../res/3D/ZeroCrossingPoints.alp"))
+			if (false == alp.Deserialize("../../res/3D/Compound_Partial.alp"))
 			{
 				PLYFormat ply;
-				ply.Deserialize("../../res/3D/ZeroCrossingPoints.ply");
+				ply.Deserialize("../../res/3D/Compound_Partial.ply");
 				//ply.SwapAxisYZ();
 
 				vector<Point> points;
@@ -301,7 +301,7 @@ int main(int argc, char** argv)
 				alog("PLY %d points loaded\n", points.size());
 
 				alp.AddPoints(points);
-				alp.Serialize("../../res/3D/ZeroCrossingPoints.alp");
+				alp.Serialize("../../res/3D/Compound_Partial.alp");
 			}
 
 			t = Time::End(t, "Loading Teeth");
@@ -417,6 +417,114 @@ int main(int argc, char** argv)
 					renderable->SetInstanceColor(i, MiniMath::V4(r, g, b, 1.0f));
 					//}
 				}
+			}
+
+			/*
+			{ // AABB
+				auto m = alp.GetAABBMin();
+				float x = get<0>(m);
+				float y = get<1>(m);
+				float z = get<2>(m);
+				auto M = alp.GetAABBMax();
+				float X = get<0>(M);
+				float Y = get<1>(M);
+				float Z = get<2>(M);
+
+				auto entity = Feather.CreateInstance<Entity>("AABB");
+				auto shader = Feather.CreateInstance<Shader>();
+				shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
+				auto renderable = Feather.CreateInstance<Renderable>();
+				renderable->Initialize(Renderable::GeometryMode::Lines);
+				renderable->AddShader(shader);
+
+				renderable->AddVertex({ x, y, z }); renderable->AddColor({1.0f, 0.0f, 0.0f, 1.0f});
+				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+
+				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+
+				renderable->AddVertex({ x, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+			}
+			*/
+
+			{ // Cache Area
+				auto [cx, cy, cz] = alp.GetAABBCenter();
+
+				float x = cx + (-10.0f);
+				float y = cy + (-15.0f);
+				float z = cz + (-20.0f);
+				float X = cx + (10.0f);
+				float Y = cy + (15.0f);
+				float Z = cz + (20.0f);
+
+				auto entity = Feather.CreateInstance<Entity>("AABB");
+				auto shader = Feather.CreateInstance<Shader>();
+				shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
+				auto renderable = Feather.CreateInstance<Renderable>();
+				renderable->Initialize(Renderable::GeometryMode::Lines);
+				renderable->AddShader(shader);
+
+				renderable->AddVertex({ x, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+
+				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+
+				renderable->AddVertex({ x, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
 			}
 		}
 #pragma endregion
