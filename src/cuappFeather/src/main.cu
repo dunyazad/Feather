@@ -257,12 +257,11 @@ namespace Clustering
 		unsigned int gridVoxels = (totalVoxels + blockSize - 1) / blockSize;
 		unsigned int gridOccupied = (numberOfOccupiedVoxelIndices + blockSize - 1) / blockSize;
 
-		// Block-local flood fill Á¦°ÅµÊ
-
 		Kernel_InterBlockMerge << <gridOccupied, blockSize >> > (d_voxels, occupiedVoxelIndices, numberOfOccupiedVoxelIndices, volumeDimensions);
 		cudaDeviceSynchronize();
 
 		Kernel_CompressLabels << <gridVoxels, blockSize >> > (d_voxels, totalVoxels);
+		cudaDeviceSynchronize();
 	}
 
 __global__ void Kernel_GetLabels(
