@@ -253,3 +253,8 @@ private:
 
 	ui32 numberOfInstances = 1;
 };
+
+class DebuggingRenderable : public RegisterDerivation<DebuggingRenderable, Renderable>
+{
+
+};

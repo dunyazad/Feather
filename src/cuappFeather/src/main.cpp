@@ -304,10 +304,10 @@ int main(int argc, char** argv)
 				alp.Serialize("../../res/3D/Compound_Partial.alp");
 			}
 
-			t = Time::End(t, "Loading Teeth");
+			t = Time::End(t, "Loading Compound");
 
-			auto entity = Feather.CreateInstance<Entity>("Box");
-			auto renderable = Feather.CreateInstance<Renderable>();
+			auto entity = Feather.CreateInstance<Entity>("Points");
+			auto renderable = Feather.CreateInstance<Renderable>("Points");
 			renderable->Initialize(Renderable::GeometryMode::Triangles);
 			{
 				auto shader = Feather.CreateInstance<Shader>();
@@ -362,7 +362,7 @@ int main(int argc, char** argv)
 
 			renderable->EnableInstancing(alp.GetPoints().size());
 
-			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
+			renderable->AddEventHandler(EventType::KeyPress, [renderable, &alp](const Event& event, FeatherObject* object) {
 				if (GLFW_KEY_M == event.keyEvent.keyCode)
 				{
 					auto renderable = dynamic_cast<Renderable*>(object);
@@ -385,6 +385,14 @@ int main(int argc, char** argv)
 					auto [x, y, z] = alp.GetAABBCenter();
 					camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
 					camera->SetTarget({ x,y,z });
+				}
+				});
+			renderable->AddEventHandler(EventType::MouseButtonRelease, [renderable](const Event& event, FeatherObject* object) {
+				if (GLFW_MOUSE_BUTTON_1 == event.mouseButtonEvent.button)
+				{
+					auto camera = Feather.GetFirstInstance<PerspectiveCamera>();
+					auto viewMatrix = camera->GetViewMatrix();
+					//viewMatrix.at(0, 3)
 				}
 				});
 			
