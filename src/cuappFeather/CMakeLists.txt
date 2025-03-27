@@ -54,6 +54,7 @@ target_include_directories(cuappFeather PRIVATE
     # #"External/nanovdb"
     # ${VTK_INCLUDE_DIRS}
     ${CUDAToolkit_INCLUDE_DIRS}
+    ${entt_SOURCE_DIR}/single_include
 )
 
 target_include_directories(cuappFeather_cuda_objects PRIVATE
@@ -73,6 +74,7 @@ target_include_directories(cuappFeather_cuda_objects PRIVATE
     # #"External/nanovdb"
     # ${VTK_INCLUDE_DIRS}
     ${CUDAToolkit_INCLUDE_DIRS}
+    ${entt_SOURCE_DIR}/single_include
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

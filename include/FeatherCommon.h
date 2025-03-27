@@ -36,6 +36,8 @@ using namespace std;
 
 #include <omp.h>
 
+#include <entt/entt.hpp>
+
 #define WIN32_LEAN_AND_MEAN
 #define NO_MINMAX
 #define NO_BYTE
@@ -52,6 +54,7 @@ using namespace std;
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "implot.h"
+
 
 #define Feather libFeather::GetStaticInstance()
 
