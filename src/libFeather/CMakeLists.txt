@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(libFeather)
 
+set(CMAKE_FLAGS "${CMAKE_FLAGS} -Xcompiler=/wd4819")
+
 # Set module path for custom cmake files
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -13,7 +15,6 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/FeatherCommon.h
     ${CMAKE_SOURCE_DIR}/include/Feather.h
 
-    ${CMAKE_SOURCE_DIR}/include/Entity.h
     ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/File.h
     ${CMAKE_SOURCE_DIR}/include/MiniMath.h
@@ -24,7 +25,6 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/Components.h
-    ${CMAKE_SOURCE_DIR}/include/Component/ComponentBase.h
     ${CMAKE_SOURCE_DIR}/include/Component/Camera.h
     ${CMAKE_SOURCE_DIR}/include/Component/CameraManipulator.h
     ${CMAKE_SOURCE_DIR}/include/Component/EventCallback.h
@@ -33,7 +33,6 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Component/Transform.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/GUIComponents.h
-    ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/GUIComponentBase.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/StatusPanel.h
 
     ${CMAKE_SOURCE_DIR}/include/System/Systems.h
@@ -44,7 +43,6 @@ set(source_list
 
     src/Feather.cpp
     src/FeatherCommon.cpp
-    src/Entity.cpp
     src/MiniMath.cpp
     src/FeatherWindow.cpp
     src/File.cpp
@@ -53,14 +51,12 @@ set(source_list
     src/AsyncLoader.cpp
     src/GeometryBuilder.cpp
     
-    src/Component/ComponentBase.cpp
     src/Component/Camera.cpp
     src/Component/CameraManipulator.cpp
     src/Component/Renderable.cpp
     src/Component/Shader.cpp
     src/Component/Transform.cpp
 
-    src/Component/GUIComponent/GUIComponentBase.cpp
     src/Component/GUIComponent/StatusPanel.cpp
 
     src/System/EventSystem.cpp

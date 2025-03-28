@@ -207,9 +207,10 @@ void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 {
 	if (nullptr == camera) return;
 
+	auto perspectiveCamera = dynamic_cast<PerspectiveCamera*>(camera);
+
 	if (0 != pressedKeys.count(GLFW_KEY_LEFT_SHIFT) || 0 != pressedKeys.count(GLFW_KEY_RIGHT_SHIFT))
 	{
-		auto perspectiveCamera = dynamic_cast<PerspectiveCamera*>(camera);
 		if (nullptr != perspectiveCamera)
 		{
 			f32 fovy = perspectiveCamera->GetFOVY() * RAD2DEG;
@@ -238,6 +239,16 @@ void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 		else if (0 < event.yoffset)
 		{
 			radius *= 0.9f;
+		}
+
+		if (radius < perspectiveCamera->GetNear())
+		{
+			radius = perspectiveCamera->GetNear();
+		}
+
+		if (radius > perspectiveCamera->GetFar())
+		{
+			radius = perspectiveCamera->GetFar();
 		}
 
 		auto eye = camera->GetEye();

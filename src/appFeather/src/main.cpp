@@ -27,24 +27,24 @@ int main(int argc, char** argv)
 
 #pragma region Camera
 		{
-			entt::entity cam = Feather.GetRegistry().create();
+			Entity cam = Feather.GetRegistry().create();
 			auto& pcam = Feather.GetRegistry().emplace<PerspectiveCamera>(cam);
 			auto& pcamMan = Feather.GetRegistry().emplace<CameraManipulatorTrackball>(cam);
 			pcamMan.SetCamera(&pcam);
 
-			Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(cam, cam, [](entt::entity entity, const KeyEvent& event) {
+			Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(cam, cam, [](Entity entity, const KeyEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnKey(event);
 				});
 
-			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(cam, cam, [](entt::entity entity, const MousePositionEvent& event) {
+			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(cam, cam, [](Entity entity, const MousePositionEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMousePosition(event);
 				});
 
-			Feather.GetRegistry().emplace<EventCallback<MouseButtonEvent>>(cam, cam, [](entt::entity entity, const MouseButtonEvent& event) {
+			Feather.GetRegistry().emplace<EventCallback<MouseButtonEvent>>(cam, cam, [](Entity entity, const MouseButtonEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseButton(event);
 				});
 
-			Feather.GetRegistry().emplace<EventCallback<MouseWheelEvent>>(cam, cam, [](entt::entity entity, const MouseWheelEvent& event) {
+			Feather.GetRegistry().emplace<EventCallback<MouseWheelEvent>>(cam, cam, [](Entity entity, const MouseWheelEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseWheel(event);
 				});
 		}
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 			auto gui = Feather.GetRegistry().create();
 			auto statusPanel = Feather.GetRegistry().emplace<StatusPanel>(gui);
 
-			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(gui, gui, [](entt::entity entity, const MousePositionEvent& event) {
+			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(gui, gui, [](Entity entity, const MousePositionEvent& event) {
 				auto& component = Feather.GetRegistry().get<StatusPanel>(entity);
 				component.mouseX = event.xpos;
 				component.mouseY = event.ypos;

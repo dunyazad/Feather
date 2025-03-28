@@ -2,8 +2,6 @@
 
 #include <FeatherCommon.h>
 
-#include <Component/ComponentBase.h>
-
 struct ProjectionInfoOrthogonal
 {
 	f32 left, right, bottom, top, zNear, zFar;

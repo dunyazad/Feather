@@ -1,6 +1,6 @@
 #pragma once
 
-#include<Component/GUIComponent/GUIComponentBase.h>
+#include <FeatherCommon.h>
 
 class StatusPanel
 {

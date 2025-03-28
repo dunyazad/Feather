@@ -10,6 +10,5 @@
 #include <Monitor.h>
 #include <Serialization.hpp>
 
-#include <Entity.h>
 #include <System/Systems.h>
 #include <Component/Components.h>

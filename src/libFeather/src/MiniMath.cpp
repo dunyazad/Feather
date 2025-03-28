@@ -4,35 +4,35 @@
 
 namespace MiniMath
 {
-	float clamp(float f, float minf, float maxf)
+	f32 clamp(f32 f, f32 minf, f32 maxf)
 	{
 		return std::min(std::max(f, minf), maxf);
 	}
 
-	float Trimax(float a, float b, float c) {
+	f32 Trimax(f32 a, f32 b, f32 c) {
 		return std::max(std::max(a, b), c);
 	}
 
-	float Trimin(float a, float b, float c) {
+	f32 Trimin(f32 a, f32 b, f32 c) {
 		return std::min(std::min(a, b), c);
 	}
 
 	V2::V2()
 		: x(0.0f), y(0.0f) {}
-	V2::V2(int ix, int iy)
+	V2::V2(i32 ix, i32 iy)
 		: x(ix), y(iy) {}
-	V2::V2(float fx, float fy)
+	V2::V2(f32 fx, f32 fy)
 		: x(fx), y(fy) {}
 	V2::V2(double dx, double dy)
 		: x(dx), y(dy) {}
-	V2::V2(float* fs)
+	V2::V2(f32* fs)
 		: x(fs[0]), y(fs[1]) {}
 
 	V2::V2(const char* c)
 	{
 		std::string code(c);
 		std::istringstream iss(code);
-		float value;
+		f32 value;
 		iss >> std::noskipws >> value;
 
 		if (iss.eof() && !iss.fail())
@@ -45,7 +45,7 @@ namespace MiniMath
 
 			if (code == "nan")
 			{
-				x = y = std::numeric_limits<float>::quiet_NaN();
+				x = y = std::numeric_limits<f32>::quiet_NaN();
 			}
 			else if (code == "zero")
 			{
@@ -62,21 +62,24 @@ namespace MiniMath
 		}
 	}
 
+	V2::V2(const f2& v)
+		: x(v.x), y(v.y) {}
+
 	V3::V3()
 		: x(0.0f), y(0.0f), z(0.0f) {}
-	V3::V3(int ix, int iy, int iz)
+	V3::V3(i32 ix, i32 iy, i32 iz)
 		: x(ix), y(iy), z(iz) {}
-	V3::V3(float fx, float fy, float fz)
+	V3::V3(f32 fx, f32 fy, f32 fz)
 		: x(fx), y(fy), z(fz) {}
 	V3::V3(double dx, double dy, double dz)
 		: x(dx), y(dy), z(dz) {}
-	V3::V3(float* fs)
+	V3::V3(f32* fs)
 		: x(fs[0]), y(fs[1]), z(fs[2]) {}
 	V3::V3(const char* c)
 	{
 		std::string code(c);
 		std::istringstream iss(code);
-		float value;
+		f32 value;
 		iss >> std::noskipws >> value;
 
 		if (iss.eof() && !iss.fail())
@@ -89,7 +92,7 @@ namespace MiniMath
 
 			if (code == "nan")
 			{
-				x = y = z = std::numeric_limits<float>::quiet_NaN();
+				x = y = z = std::numeric_limits<f32>::quiet_NaN();
 			}
 			else if (code == "zero")
 			{
@@ -174,35 +177,37 @@ namespace MiniMath
 			}
 		}
 	}
+	
+	V3::V3(const f3& v)
+		: x(v.x), y(v.y), z(v.z) {}
 
-
-	const V3& V3::operator += (float scalar) { x += scalar; y += scalar; z += scalar; return *this; }
-	const V3& V3::operator -= (float scalar) { x -= scalar; y -= scalar; z -= scalar; return *this; }
-	const V3& V3::operator *= (float scalar) { x *= scalar; y *= scalar; z *= scalar; return *this; }
-	const V3& V3::operator /= (float scalar) { x /= scalar; y /= scalar; z /= scalar; return *this; }
+	const V3& V3::operator += (f32 scalar) { x += scalar; y += scalar; z += scalar; return *this; }
+	const V3& V3::operator -= (f32 scalar) { x -= scalar; y -= scalar; z -= scalar; return *this; }
+	const V3& V3::operator *= (f32 scalar) { x *= scalar; y *= scalar; z *= scalar; return *this; }
+	const V3& V3::operator /= (f32 scalar) { x /= scalar; y /= scalar; z /= scalar; return *this; }
 
 	const V3& V3::operator += (const V3& other) { x += other.x; y += other.y; z += other.z; return *this; }
 	const V3& V3::operator -= (const V3& other) { x -= other.x; y -= other.y; z -= other.z; return *this; }
 
-	float V3::operator[](int index) { return *(&this->x + index); }
+	f32 V3::operator[](i32 index) { return *(&this->x + index); }
 
 	V3 operator - (const V3& v) { return { -v.x, -v.y, -v.z }; }
-	V3 operator + (const V3& v, float scalar) { return { v.x + scalar, v.y + scalar, v.z + scalar }; }
-	V3 operator + (float scalar, const V3& v) { return { v.x + scalar, v.y + scalar, v.z + scalar }; }
-	V3 operator - (const V3& v, float scalar) { return { v.x - scalar, v.y - scalar, v.z - scalar }; }
-	V3 operator - (float scalar, const V3& v) { return { v.x - scalar, v.y - scalar, v.z - scalar }; }
-	V3 operator * (const V3& v, float scalar) { return { v.x * scalar, v.y * scalar, v.z * scalar }; }
-	V3 operator * (float scalar, const V3& v) { return { v.x * scalar, v.y * scalar, v.z * scalar }; }
-	V3 operator / (const V3& v, float scalar) { return { v.x / scalar, v.y / scalar, v.z / scalar }; }
-	V3 operator / (float scalar, const V3& v) { return { v.x / scalar, v.y / scalar, v.z / scalar }; }
+	V3 operator + (const V3& v, f32 scalar) { return { v.x + scalar, v.y + scalar, v.z + scalar }; }
+	V3 operator + (f32 scalar, const V3& v) { return { v.x + scalar, v.y + scalar, v.z + scalar }; }
+	V3 operator - (const V3& v, f32 scalar) { return { v.x - scalar, v.y - scalar, v.z - scalar }; }
+	V3 operator - (f32 scalar, const V3& v) { return { v.x - scalar, v.y - scalar, v.z - scalar }; }
+	V3 operator * (const V3& v, f32 scalar) { return { v.x * scalar, v.y * scalar, v.z * scalar }; }
+	V3 operator * (f32 scalar, const V3& v) { return { v.x * scalar, v.y * scalar, v.z * scalar }; }
+	V3 operator / (const V3& v, f32 scalar) { return { v.x / scalar, v.y / scalar, v.z / scalar }; }
+	V3 operator / (f32 scalar, const V3& v) { return { v.x / scalar, v.y / scalar, v.z / scalar }; }
 
 	V3 operator + (const V3& a, const V3& b) { return { a.x + b.x, a.y + b.y, a.z + b.z }; }
 	V3 operator - (const V3& a, const V3& b) { return { a.x - b.x, a.y - b.y, a.z - b.z }; }
 
-	float magnitude(const V3& v) { return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z); }
+	f32 magnitude(const V3& v) { return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z); }
 	V3 normalize(const V3& v)
 	{
-		float mag = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+		f32 mag = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 		if (mag != 0.0f)
 		{
 			return { v.x / mag, v.y / mag, v.z / mag };
@@ -210,15 +215,15 @@ namespace MiniMath
 		return v;
 	}
 
-	float dot(const V3& a, const V3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+	f32 dot(const V3& a, const V3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 	V3 cross(const V3& a, const V3& b) { return { a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x }; }
 
-	float distance(const V3& a, const V3& b)
+	f32 distance(const V3& a, const V3& b)
 	{
 		return sqrtf((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y) + (b.z - a.z) * (b.z - a.z));
 	}
 
-	float angle(const V3& a, const V3& b)
+	f32 angle(const V3& a, const V3& b)
 	{
 		return acosf(clamp(dot(a, b), -1.0f, 1.0f));
 	}
@@ -250,7 +255,7 @@ namespace MiniMath
 
 	void calculateCovarianceMatrix(const std::vector<V3>& vectors, V3& eigenvalues, V3& eigenvector1, V3& eigenvector2, V3& eigenvector3)
 	{
-		int n = vectors.size();
+		i32 n = vectors.size();
 
 		for (const V3& vec : vectors)
 		{
@@ -284,15 +289,15 @@ namespace MiniMath
 
 	// ---- V4 (4D Vector) ----
 	V4::V4() : x(0.0f), y(0.0f), z(0.0f), w(1.0f) {}
-	V4::V4(float scalar) : x(scalar), y(scalar), z(scalar), w(scalar) {}
-	V4::V4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
-	V4::V4(float* array) : x(array[0]), y(array[1]), z(array[2]), w(array[3]) {}
+	V4::V4(f32 scalar) : x(scalar), y(scalar), z(scalar), w(scalar) {}
+	V4::V4(f32 x, f32 y, f32 z, f32 w) : x(x), y(y), z(z), w(w) {}
+	V4::V4(f32* array) : x(array[0]), y(array[1]), z(array[2]), w(array[3]) {}
 
 	V4::V4(const char* str)
 	{
 		std::string code(str);
 		std::istringstream iss(code);
-		float value;
+		f32 value;
 		iss >> std::noskipws >> value;
 
 		if (iss.eof() && !iss.fail())
@@ -305,7 +310,7 @@ namespace MiniMath
 
 			if (code == "nan")
 			{
-				x = y = z = w = std::numeric_limits<float>::quiet_NaN();
+				x = y = z = w = std::numeric_limits<f32>::quiet_NaN();
 			}
 			else if (code == "zero")
 			{
@@ -322,24 +327,27 @@ namespace MiniMath
 		}
 	}
 
+	V4::V4(const f4& v)
+		: x(v.x), y(v.y), z(v.z), w(v.w) {}
+
 	const V4& V4::operator+=(const V4& other) { x += other.x; y += other.y; z += other.z; w += other.w; return *this; }
 	const V4& V4::operator-=(const V4& other) { x -= other.x; y -= other.y; z -= other.z; w -= other.w; return *this; }
-	const V4& V4::operator*=(float scalar) { x *= scalar; y *= scalar; z *= scalar; w *= scalar; return *this; }
-	const V4& V4::operator/=(float scalar) { x /= scalar; y /= scalar; z /= scalar; w /= scalar; return *this; }
+	const V4& V4::operator*=(f32 scalar) { x *= scalar; y *= scalar; z *= scalar; w *= scalar; return *this; }
+	const V4& V4::operator/=(f32 scalar) { x /= scalar; y /= scalar; z /= scalar; w /= scalar; return *this; }
 
-	float V4::operator[](int index) const { return *(&this->x + index); }
-	float& V4::operator[](int index) { return *(&this->x + index); }
+	f32 V4::operator[](i32 index) const { return *(&this->x + index); }
+	f32& V4::operator[](i32 index) { return *(&this->x + index); }
 
-	float V4::magnitude() const { return std::sqrt(x * x + y * y + z * z + w * w); }
+	f32 V4::magnitude() const { return std::sqrt(x * x + y * y + z * z + w * w); }
 
 	V4 V4::normalize() const
 	{
-		float mag = magnitude();
-		if (mag < std::numeric_limits<float>::epsilon()) return { 0.0f, 0.0f, 0.0f, 0.0f };
+		f32 mag = magnitude();
+		if (mag < std::numeric_limits<f32>::epsilon()) return { 0.0f, 0.0f, 0.0f, 0.0f };
 		return { x / mag, y / mag, z / mag, w / mag };
 	}
 
-	float V4::dot(const V4& other) const { return x * other.x + y * other.y + z * other.z + w * other.w; }
+	f32 V4::dot(const V4& other) const { return x * other.x + y * other.y + z * other.z + w * other.w; }
 
 	// Static Methods
 	V4 V4::zero() { return { 0.0f, 0.0f, 0.0f, 0.0f }; }
@@ -352,20 +360,20 @@ namespace MiniMath
 	// Operator Overloads
 	V4 operator+(const V4& a, const V4& b) { return { a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w }; }
 	V4 operator-(const V4& a, const V4& b) { return { a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w }; }
-	V4 operator*(const V4& v, float scalar) { return { v.x * scalar, v.y * scalar, v.z * scalar, v.w * scalar }; }
-	V4 operator*(float scalar, const V4& v) { return { v.x * scalar, v.y * scalar, v.z * scalar, v.w * scalar }; }
-	V4 operator/(const V4& v, float scalar) { return { v.x / scalar, v.y / scalar, v.z / scalar, v.w / scalar }; }
+	V4 operator*(const V4& v, f32 scalar) { return { v.x * scalar, v.y * scalar, v.z * scalar, v.w * scalar }; }
+	V4 operator*(f32 scalar, const V4& v) { return { v.x * scalar, v.y * scalar, v.z * scalar, v.w * scalar }; }
+	V4 operator/(const V4& v, f32 scalar) { return { v.x / scalar, v.y / scalar, v.z / scalar, v.w / scalar }; }
 
 	std::ostream& operator<<(std::ostream& os, const V4& v) { return os << "(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")"; }
 
 
-	Quaternion::Quaternion(float scalar, float i, float j, float k)
+	Quaternion::Quaternion(f32 scalar, f32 i, f32 j, f32 k)
 		: w(scalar), x(i), y(j), z(k) {}
 
-	Quaternion::Quaternion(float radian, const V3& axis)
+	Quaternion::Quaternion(f32 radian, const V3& axis)
 	{
-		float halfAngle = radian * 0.5f;
-		float sinHalfAngle = sinf(halfAngle);
+		f32 halfAngle = radian * 0.5f;
+		f32 sinHalfAngle = sinf(halfAngle);
 		w = cosf(halfAngle);
 		x = axis.x * sinHalfAngle;
 		y = axis.y * sinHalfAngle;
@@ -386,10 +394,10 @@ namespace MiniMath
 
 	Quaternion operator*(const Quaternion& q1, const Quaternion& q2)
 	{
-		float w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
-		float x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
-		float y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
-		float z = q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w;
+		f32 w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
+		f32 x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
+		f32 y = q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x;
+		f32 z = q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w;
 
 		return Quaternion(w, x, y, z);
 	}
@@ -408,7 +416,7 @@ namespace MiniMath
 		V3 v0n = normalize(v0);
 		V3 v1n = normalize(v1);
 
-		float dotProduct = dot(v0n, v1n);
+		f32 dotProduct = dot(v0n, v1n);
 
 		if (dotProduct > 0.9999f) {
 			// Vectors are nearly identical
@@ -422,20 +430,20 @@ namespace MiniMath
 		}
 
 		V3 axis = normalize(cross(v0n, v1n));
-		float angle = std::acos(dotProduct);
+		f32 angle = std::acos(dotProduct);
 
-		float w = std::cos(angle / 2);
-		float s = std::sin(angle / 2);
+		f32 w = std::cos(angle / 2);
+		f32 s = std::sin(angle / 2);
 
 		return { w, axis.x * s, axis.y * s, axis.z * s };
 	}
 
 	// ---- M3 (3x3 Matrix) ----
 	M3::M3() { *this = identity(); }
-	M3::M3(float diagonal) { *this = identity(); for (int i = 0; i < 3; i++) m[i][i] = diagonal; }
-	M3::M3(float m00, float m01, float m02,
-		float m10, float m11, float m12,
-		float m20, float m21, float m22)
+	M3::M3(f32 diagonal) { *this = identity(); for (i32 i = 0; i < 3; i++) m[i][i] = diagonal; }
+	M3::M3(f32 m00, f32 m01, f32 m02,
+		f32 m10, f32 m11, f32 m12,
+		f32 m20, f32 m21, f32 m22)
 	{
 		m[0][0] = m00; m[0][1] = m01; m[0][2] = m02;
 		m[1][0] = m10; m[1][1] = m11; m[1][2] = m12;
@@ -445,8 +453,8 @@ namespace MiniMath
 	M3 M3::operator+(const M3& other) const
 	{
 		M3 result;
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
+		for (i32 i = 0; i < 3; i++)
+			for (i32 j = 0; j < 3; j++)
 				result.m[i][j] = m[i][j] + other.m[i][j];
 		return result;
 	}
@@ -454,17 +462,17 @@ namespace MiniMath
 	M3 M3::operator-(const M3& other) const
 	{
 		M3 result;
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
+		for (i32 i = 0; i < 3; i++)
+			for (i32 j = 0; j < 3; j++)
 				result.m[i][j] = m[i][j] - other.m[i][j];
 		return result;
 	}
 
-	M3 M3::operator*(float scalar) const
+	M3 M3::operator*(f32 scalar) const
 	{
 		M3 result;
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
+		for (i32 i = 0; i < 3; i++)
+			for (i32 j = 0; j < 3; j++)
 				result.m[i][j] = m[i][j] * scalar;
 		return result;
 	}
@@ -472,8 +480,8 @@ namespace MiniMath
 	M3 M3::operator*(const M3& other) const
 	{
 		M3 result;
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
+		for (i32 i = 0; i < 3; i++)
+			for (i32 j = 0; j < 3; j++)
 				result.m[i][j] = m[i][0] * other.m[0][j] +
 				m[i][1] * other.m[1][j] +
 				m[i][2] * other.m[2][j];
@@ -496,7 +504,7 @@ namespace MiniMath
 			m[0][2], m[1][2], m[2][2]);
 	}
 
-	float M3::determinant() const
+	f32 M3::determinant() const
 	{
 		return
 			m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
@@ -506,14 +514,14 @@ namespace MiniMath
 
 	M3 M3::inverse() const
 	{
-		float det = determinant();
-		if (std::fabs(det) < std::numeric_limits<float>::epsilon())
+		f32 det = determinant();
+		if (std::fabs(det) < std::numeric_limits<f32>::epsilon())
 		{
 			std::cerr << "Matrix is singular and cannot be inverted!" << std::endl;
 			return M3();  // Return identity as a fallback
 		}
 
-		float invDet = 1.0f / det;
+		f32 invDet = 1.0f / det;
 
 		M3 inv;
 		inv.m[0][0] = (m[1][1] * m[2][2] - m[1][2] * m[2][1]) * invDet;
@@ -531,7 +539,7 @@ namespace MiniMath
 		return inv;
 	}
 
-	float M3::at(int row, int column)
+	f32 M3::at(i32 row, i32 column)
 	{
 		return m[row][column];
 	}
@@ -552,11 +560,11 @@ namespace MiniMath
 
 	// ---- M4 (4x4 Matrix) ----
 	M4::M4() { *this = identity(); }
-	M4::M4(float diagonal) { *this = identity(); for (int i = 0; i < 4; i++) m[i][i] = diagonal; }
-	M4::M4(float m00, float m01, float m02, float m03,
-		float m10, float m11, float m12, float m13,
-		float m20, float m21, float m22, float m23,
-		float m30, float m31, float m32, float m33)
+	M4::M4(f32 diagonal) { *this = identity(); for (i32 i = 0; i < 4; i++) m[i][i] = diagonal; }
+	M4::M4(f32 m00, f32 m01, f32 m02, f32 m03,
+		f32 m10, f32 m11, f32 m12, f32 m13,
+		f32 m20, f32 m21, f32 m22, f32 m23,
+		f32 m30, f32 m31, f32 m32, f32 m33)
 	{
 		m[0][0] = m00; m[0][1] = m01; m[0][2] = m02; m[0][3] = m03;
 		m[1][0] = m10; m[1][1] = m11; m[1][2] = m12; m[1][3] = m13;
@@ -567,8 +575,8 @@ namespace MiniMath
 	M4 M4::operator+(const M4& other) const
 	{
 		M4 result;
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
+		for (i32 i = 0; i < 4; i++)
+			for (i32 j = 0; j < 4; j++)
 				result.m[i][j] = m[i][j] + other.m[i][j];
 		return result;
 	}
@@ -576,17 +584,17 @@ namespace MiniMath
 	M4 M4::operator-(const M4& other) const
 	{
 		M4 result;
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
+		for (i32 i = 0; i < 4; i++)
+			for (i32 j = 0; j < 4; j++)
 				result.m[i][j] = m[i][j] - other.m[i][j];
 		return result;
 	}
 
-	M4 M4::operator*(float scalar) const
+	M4 M4::operator*(f32 scalar) const
 	{
 		M4 result;
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
+		for (i32 i = 0; i < 4; i++)
+			for (i32 j = 0; j < 4; j++)
 				result.m[i][j] = m[i][j] * scalar;
 		return result;
 	}
@@ -594,9 +602,9 @@ namespace MiniMath
 	M4 M4::operator*(const M4& other) const
 	{
 		M4 result;
-		for (int i = 0; i < 4; i++)
+		for (i32 i = 0; i < 4; i++)
 		{
-			for (int j = 0; j < 4; j++)
+			for (i32 j = 0; j < 4; j++)
 			{
 				result.m[i][j] = m[i][0] * other.m[0][j] +
 					m[i][1] * other.m[1][j] +
@@ -617,11 +625,11 @@ namespace MiniMath
 		);
 	}
 
-	V3 M4::transformPoint(const V3& point) const
+	V3 M4::transformPoi32(const V3& poi32) const
 	{
-		float x = point.x * m[0][0] + point.y * m[1][0] + point.z * m[2][0] + m[3][0];
-		float y = point.x * m[0][1] + point.y * m[1][1] + point.z * m[2][1] + m[3][1];
-		float z = point.x * m[0][2] + point.y * m[1][2] + point.z * m[2][2] + m[3][2];
+		f32 x = poi32.x * m[0][0] + poi32.y * m[1][0] + poi32.z * m[2][0] + m[3][0];
+		f32 y = poi32.x * m[0][1] + poi32.y * m[1][1] + poi32.z * m[2][1] + m[3][1];
+		f32 z = poi32.x * m[0][2] + poi32.y * m[1][2] + poi32.z * m[2][2] + m[3][2];
 		return { x, y, z };
 	}
 
@@ -637,15 +645,15 @@ namespace MiniMath
 	M4 M4::transpose() const
 	{
 		M4 result;
-		for (int i = 0; i < 4; i++)
-			for (int j = 0; j < 4; j++)
+		for (i32 i = 0; i < 4; i++)
+			for (i32 j = 0; j < 4; j++)
 				result.m[i][j] = m[j][i];
 		return result;
 	}
 
-	float M4::determinant() const
+	f32 M4::determinant() const
 	{
-		float det =
+		f32 det =
 			m[0][3] * m[1][2] * m[2][1] * m[3][0] - m[0][2] * m[1][3] * m[2][1] * m[3][0] -
 			m[0][3] * m[1][1] * m[2][2] * m[3][0] + m[0][1] * m[1][3] * m[2][2] * m[3][0] +
 			m[0][2] * m[1][1] * m[2][3] * m[3][0] - m[0][1] * m[1][2] * m[2][3] * m[3][0] -
@@ -665,15 +673,15 @@ namespace MiniMath
 	M4 M4::inverse() const
 	{
 		M4 inv;
-		float det = determinant();
+		f32 det = determinant();
 
-		if (std::fabs(det) < std::numeric_limits<float>::epsilon())
+		if (std::fabs(det) < std::numeric_limits<f32>::epsilon())
 		{
 			std::cerr << "Matrix is singular and cannot be inverted!" << std::endl;
 			return M4();  // Return identity as a fallback
 		}
 
-		float invDet = 1.0f / det;
+		f32 invDet = 1.0f / det;
 
 		inv.m[0][0] = (m[1][1] * m[2][2] * m[3][3] + m[1][2] * m[2][3] * m[3][1] + m[1][3] * m[2][1] * m[3][2] -
 			m[1][3] * m[2][2] * m[3][1] - m[1][2] * m[2][1] * m[3][3] - m[1][1] * m[2][3] * m[3][2]) * invDet;
@@ -690,7 +698,7 @@ namespace MiniMath
 		return inv;
 	}
 
-	float M4::at(int row, int column)
+	f32 M4::at(i32 row, i32 column)
 	{
 		return m[row][column];
 	}
@@ -735,10 +743,10 @@ namespace MiniMath
 
 		// Test axis a00
 		V3 a00 = { 0.0f, -f0.z, f0.y };
-		float p0 = v0.x * a00.x + v0.y * a00.y + v0.z * a00.z;
-		float p1 = v1.x * a00.x + v1.y * a00.y + v1.z * a00.z;
-		float p2 = v2.x * a00.x + v2.y * a00.y + v2.z * a00.z;
-		float r = extents.y * std::fabs(f0.z) + extents.z * std::fabs(f0.y);
+		f32 p0 = v0.x * a00.x + v0.y * a00.y + v0.z * a00.z;
+		f32 p1 = v1.x * a00.x + v1.y * a00.y + v1.z * a00.z;
+		f32 p2 = v2.x * a00.x + v2.y * a00.y + v2.z * a00.z;
+		f32 r = extents.y * std::fabs(f0.z) + extents.z * std::fabs(f0.y);
 		if (std::max(-Trimax(p0, p1, p2), Trimin(p0, p1, p2)) > r + FLT_EPSILON)
 			return false;
 
@@ -848,12 +856,12 @@ namespace MiniMath
 		//// region Test separating axis corresponding to triangle face normal (category 2)
 
 		V3 plane_normal = { f0.y * f1.z - f0.z * f1.y, f0.z * f1.x - f0.x * f1.z, f0.x * f1.y - f0.y * f1.x };
-		float plane_distance = std::fabs(plane_normal.x * v0.x + plane_normal.y * v0.y + plane_normal.z * v0.z);
+		f32 plane_distance = std::fabs(plane_normal.x * v0.x + plane_normal.y * v0.y + plane_normal.z * v0.z);
 
-		// Compute the projection interval radius of b onto L(t) = b.c + t * p.n
+		// Compute the projection i32erval radius of b onto L(t) = b.c + t * p.n
 		r = extents.x * std::fabs(plane_normal.x) + extents.y * std::fabs(plane_normal.y) + extents.z * std::fabs(plane_normal.z);
 
-		// Intersection occurs when plane distance falls within [-r,+r] interval
+		// Intersection occurs when plane distance falls within [-r,+r] i32erval
 		if (plane_distance > r + FLT_EPSILON)
 			return false;
 
@@ -866,7 +874,7 @@ namespace MiniMath
 	{
 		auto ld = l1 - l0;
 
-		float denominator = dot(ld, planeNormal);
+		f32 denominator = dot(ld, planeNormal);
 
 		if (denominator == 0.0f) {
 			std::cout << "The line is parallel to the plane." << std::endl;

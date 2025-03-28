@@ -1,6 +1,5 @@
 #include <Feather.h>
 
-#include <Entity.h>
 #include <MiniMath.h>
 #include <Monitor.h>
 #include <FeatherWindow.h>
@@ -80,6 +79,72 @@ void libFeather::Run()
 
         frameNo++;
         lastTime = now;
+    }
+}
+
+Entity libFeather::CreateEntity(const string& name)
+{
+    auto it = nameEntityMapping.find(name);
+    if (it == nameEntityMapping.end())
+    {
+        auto entity = registry.create();
+        nameEntityMapping[name] = entity;
+        entityNameMapping[entity] = name;
+        return entity;
+    }
+    else
+    {
+        return (*it).second;
+    }
+}
+
+Entity libFeather::GetEntity(const string& name)
+{
+    auto it = nameEntityMapping.find(name);
+    if (it != nameEntityMapping.end())
+    {
+        return (*it).second;
+    }
+    else
+    {
+        return InvalidEntity;
+    }
+}
+
+const string& libFeather::GetEntityName(Entity entity)
+{
+    auto it = entityNameMapping.find(entity);
+    if (it != entityNameMapping.end())
+    {
+        return (*it).second;
+    }
+    else
+    {
+        return EmptyString;
+    }
+}
+
+void libFeather::RemoveEntity(const string& name)
+{
+    auto it = nameEntityMapping.find(name);
+    if (it != nameEntityMapping.end())
+    {
+        auto entity = (*it).second;
+        registry.destroy(entity);
+        nameEntityMapping.erase(it);
+        entityNameMapping.erase(entity);
+    }
+}
+
+void libFeather::RemoveEntity(Entity entity)
+{
+    auto it = entityNameMapping.find(entity);
+    if (it != entityNameMapping.end())
+    {
+        auto name = (*it).second;
+        registry.destroy((*it).first);
+        nameEntityMapping.erase(name);
+        entityNameMapping.erase(it);
     }
 }
 

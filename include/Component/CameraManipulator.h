@@ -1,7 +1,6 @@
 #pragma once
 
 #include <FeatherCommon.h>
-#include <Component/ComponentBase.h>
 
 class CameraBase;
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include<Component/ComponentBase.h>
 #include<Component/Camera.h>
 #include<Component/CameraManipulator.h>
 #include<Component/EventCallback.h>

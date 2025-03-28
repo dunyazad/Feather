@@ -5,83 +5,87 @@
 #include <string>
 #include <vector>
 
+#include <TypeDefinitions.h>
+
 namespace MiniMath
 {
-	const float PI = 3.14159265359f;
+	const f32 PI = 3.14159265359f;
 
-#define IntNAN std::numeric_limits<int>::quiet_NaN()
-#define RealNAN std::numeric_limits<float>::quiet_NaN()
-#define IntInfinity std::numeric_limits<int>::max()
+#define i32NAN std::numeric_limits<i32>::quiet_NaN()
+#define RealNAN std::numeric_limits<f32>::quiet_NaN()
+#define i32Infinity std::numeric_limits<i32>::max()
 
 #define DEG2RAD (MiniMath::PI / 180.0f)
 #define RAD2DEG (180.0f / MiniMath::PI)
 
-	const float Epsilon = 0.000001f;
+	const f32 Epsilon = 0.000001f;
 
-	float clamp(float f, float minf, float maxf);
+	f32 clamp(f32 f, f32 minf, f32 maxf);
 
-	float Trimax(float a, float b, float c);
+	f32 Trimax(f32 a, f32 b, f32 c);
 
-	float Trimin(float a, float b, float c);
+	f32 Trimin(f32 a, f32 b, f32 c);
 
 	struct V2
 	{
-		float x = 0.0f;
-		float y = 0.0f;
+		f32 x = 0.0f;
+		f32 y = 0.0f;
 
 		V2();
-		V2(int, int);
-		V2(float, float);
+		V2(i32, i32);
+		V2(f32, f32);
 		V2(double, double);
-		V2(float*);
+		V2(f32*);
 		V2(const char*);
+		V2(const f2&);
 	};
 
 	struct V3
 	{
-		float x = 0.0f;
-		float y = 0.0f;
-		float z = 0.0f;
+		f32 x = 0.0f;
+		f32 y = 0.0f;
+		f32 z = 0.0f;
 
 		V3();
-		V3(int, int, int);
-		V3(float, float, float);
+		V3(i32, i32, i32);
+		V3(f32, f32, f32);
 		V3(double, double, double);
-		V3(float*);
+		V3(f32*);
 		V3(const char* c);
+		V3(const f3&);
 
-		const V3& operator += (float);
-		const V3& operator -= (float);
-		const V3& operator *= (float);
-		const V3& operator /= (float);
+		const V3& operator += (f32);
+		const V3& operator -= (f32);
+		const V3& operator *= (f32);
+		const V3& operator /= (f32);
 
 		const V3& operator += (const V3&);
 		const V3& operator -= (const V3&);
 
-		float operator[](int);
+		f32 operator[](i32);
 	};
 
 	inline std::ostream& operator<<(std::ostream& os, const V3& v) { return os << "(" << v.x << ", " << v.y << ", " << v.z << ")"; }
 
 	V3 operator - (const V3&);
-	V3 operator + (const V3&, float);
-	V3 operator + (float, const V3&);
-	V3 operator - (const V3&, float);
-	V3 operator - (float, const V3&);
-	V3 operator * (const V3&, float);
-	V3 operator * (float, const V3&);
-	V3 operator / (const V3&, float);
-	V3 operator / (float, const V3&);
+	V3 operator + (const V3&, f32);
+	V3 operator + (f32, const V3&);
+	V3 operator - (const V3&, f32);
+	V3 operator - (f32, const V3&);
+	V3 operator * (const V3&, f32);
+	V3 operator * (f32, const V3&);
+	V3 operator / (const V3&, f32);
+	V3 operator / (f32, const V3&);
 
 	V3 operator + (const V3&, const V3&);
 	V3 operator - (const V3&, const V3&);
 
-	float magnitude(const V3&);
+	f32 magnitude(const V3&);
 	V3 normalize(const V3&);
-	float dot(const V3&, const V3&);
+	f32 dot(const V3&, const V3&);
 	V3 cross(const V3&, const V3&);
-	float distance(const V3&, const V3&);
-	float angle(const V3&, const V3&);
+	f32 distance(const V3&, const V3&);
+	f32 angle(const V3&, const V3&);
 
 	V3 calculateMean(const std::vector<V3>& vectors);
 	void centerData(std::vector<V3>& vectors, const V3& mean);
@@ -89,28 +93,29 @@ namespace MiniMath
 
 	struct V4
 	{
-		float x = 0.0f;
-		float y = 0.0f;
-		float z = 0.0f;
-		float w = 1.0f; // Homogeneous coordinate (default to 1 for positions)
+		f32 x = 0.0f;
+		f32 y = 0.0f;
+		f32 z = 0.0f;
+		f32 w = 1.0f; // Homogeneous coordinate (default to 1 for positions)
 
 		V4();
-		V4(float scalar);
-		V4(float x, float y, float z, float w = 1.0f);
-		V4(float* array);
+		V4(f32 scalar);
+		V4(f32 x, f32 y, f32 z, f32 w = 1.0f);
+		V4(f32* array);
 		V4(const char* str);
+		V4(const f4&);
 
 		const V4& operator+=(const V4& other);
 		const V4& operator-=(const V4& other);
-		const V4& operator*=(float scalar);
-		const V4& operator/=(float scalar);
+		const V4& operator*=(f32 scalar);
+		const V4& operator/=(f32 scalar);
 
-		float operator[](int index) const;
-		float& operator[](int index);
+		f32 operator[](i32 index) const;
+		f32& operator[](i32 index);
 
-		float magnitude() const;
+		f32 magnitude() const;
 		V4 normalize() const;
-		float dot(const V4& other) const;
+		f32 dot(const V4& other) const;
 
 		static V4 zero();
 		static V4 one();
@@ -123,20 +128,20 @@ namespace MiniMath
 	// Overloaded Operators
 	V4 operator+(const V4& a, const V4& b);
 	V4 operator-(const V4& a, const V4& b);
-	V4 operator*(const V4& v, float scalar);
-	V4 operator*(float scalar, const V4& v);
-	V4 operator/(const V4& v, float scalar);
+	V4 operator*(const V4& v, f32 scalar);
+	V4 operator*(f32 scalar, const V4& v);
+	V4 operator/(const V4& v, f32 scalar);
 	std::ostream& operator<<(std::ostream& os, const V4& v);
 
 	struct Quaternion
 	{
-		float w = 1.0f;
-		float x = 0.0f;
-		float y = 0.0f;
-		float z = 0.0f;
+		f32 w = 1.0f;
+		f32 x = 0.0f;
+		f32 y = 0.0f;
+		f32 z = 0.0f;
 
-		Quaternion(float, float, float, float);
-		Quaternion(float, const V3&);
+		Quaternion(f32, f32, f32, f32);
+		Quaternion(f32, const V3&);
 
 		static Quaternion identity();
 		static Quaternion zero();
@@ -151,25 +156,25 @@ namespace MiniMath
 
 	struct M3
 	{
-		float m[3][3];
+		f32 m[3][3];
 
 		M3();
-		M3(float diagonal);
-		M3(float m00, float m01, float m02,
-			float m10, float m11, float m12,
-			float m20, float m21, float m22);
+		M3(f32 diagonal);
+		M3(f32 m00, f32 m01, f32 m02,
+			f32 m10, f32 m11, f32 m12,
+			f32 m20, f32 m21, f32 m22);
 
 		M3 operator+(const M3& other) const;
 		M3 operator-(const M3& other) const;
-		M3 operator*(float scalar) const;
+		M3 operator*(f32 scalar) const;
 		M3 operator*(const M3& other) const;
 		V3 operator*(const V3& vec) const;
 
 		M3 transpose() const;
-		float determinant() const;
+		f32 determinant() const;
 		M3 inverse() const;
 
-		float at(int row, int column);
+		f32 at(i32 row, i32 column);
 
 		static M3 identity();
 		static M3 zero();
@@ -177,29 +182,29 @@ namespace MiniMath
 
 	struct M4
 	{
-		float m[4][4];
+		f32 m[4][4];
 
 		M4();
-		M4(float diagonal);
-		M4(float m00, float m01, float m02, float m03,
-			float m10, float m11, float m12, float m13,
-			float m20, float m21, float m22, float m23,
-			float m30, float m31, float m32, float m33);
+		M4(f32 diagonal);
+		M4(f32 m00, f32 m01, f32 m02, f32 m03,
+			f32 m10, f32 m11, f32 m12, f32 m13,
+			f32 m20, f32 m21, f32 m22, f32 m23,
+			f32 m30, f32 m31, f32 m32, f32 m33);
 
 		M4 operator+(const M4& other) const;
 		M4 operator-(const M4& other) const;
-		M4 operator*(float scalar) const;
+		M4 operator*(f32 scalar) const;
 		M4 operator*(const M4& other) const;
 		V4 operator*(const V4& vec) const;
 		
-		V3 transformPoint(const V3& point) const;
+		V3 transformPoi32(const V3& poi32) const;
 		V3 transformVector(const V3& vector) const;
 
 		M4 transpose() const;
-		float determinant() const;
+		f32 determinant() const;
 		M4 inverse() const;
 
-		float at(int row, int column);
+		f32 at(i32 row, i32 column);
 
 		static M4 identity();
 		static M4 zero();
@@ -222,16 +227,16 @@ namespace MiniMath
 
 		AABB() {}
 		AABB(const V3& min, const V3& max) { SetMixMax(min, max); }
-		AABB(const std::vector<V3>& points)
+		AABB(const std::vector<V3>& poi32s)
 		{
-			for (auto& p : points)
+			for (auto& p : poi32s)
 			{
 				Expand(p);
 			}
 		}
 
-		inline const V3& GetMinPoint() const { return xyz; }
-		inline const V3& GetMaxPoint() const { return XYZ; }
+		inline const V3& GetMinPoi32() const { return xyz; }
+		inline const V3& GetMaxPoi32() const { return XYZ; }
 		inline const V3& GetCenter() const { return center; }
 		inline const V3& GetExtents() const { return extents; }
 
@@ -253,14 +258,14 @@ namespace MiniMath
 		inline void SetXYz(const V3& XYz) { this->XYz = XYz; }
 		inline void SetXYZ(const V3& XYZ) { this->XYZ = XYZ; }
 
-		inline void SetMixMax(const V3& minPoint, const V3& maxPoint)
+		inline void SetMixMax(const V3& minPoi32, const V3& maxPoi32)
 		{
-			xyz = minPoint;
-			XYZ = maxPoint;
+			xyz = minPoi32;
+			XYZ = maxPoi32;
 			update();
 		}
 
-		inline void Expand(float scale)
+		inline void Expand(f32 scale)
 		{
 			auto length = magnitude(XYZ - center);
 			auto dir = normalize(XYZ - center);
@@ -268,7 +273,7 @@ namespace MiniMath
 			Expand(xyz + -dir * scale);
 		}
 
-		inline void Expand(float x, float y, float z)
+		inline void Expand(f32 x, f32 y, f32 z)
 		{
 			if (x < xyz.x) { xyz.x = x; }
 			if (y < xyz.y) { xyz.y = y; }
@@ -294,23 +299,23 @@ namespace MiniMath
 			update();
 		}
 
-		inline void Expand(const std::vector<V3>& points)
+		inline void Expand(const std::vector<V3>& poi32s)
 		{
-			for (auto& p : points)
+			for (auto& p : poi32s)
 			{
 				Expand(p);
 			}
 		}
 
-		inline void ExpandZ(float distance)
+		inline void ExpandZ(f32 distance)
 		{
 			xyz.z -= distance;
 			XYZ.z += distance;
 		}
 
-		inline float GetXLength() const { return XYZ.x - xyz.x; }
-		inline float GetYLength() const { return XYZ.y - xyz.y; }
-		inline float GetZLength() const { return XYZ.z - xyz.z; }
+		inline f32 GetXLength() const { return XYZ.x - xyz.x; }
+		inline f32 GetYLength() const { return XYZ.y - xyz.y; }
+		inline f32 GetZLength() const { return XYZ.z - xyz.z; }
 
 		inline bool Contains(const V3& p) const
 		{
@@ -354,9 +359,9 @@ namespace MiniMath
 			XYz.x = XYZ.x; XYz.y = XYZ.y; XYz.z = xyz.z;
 			XyZ.x = XYZ.x; XyZ.y = xyz.y; XyZ.z = XYZ.z;
 
-			center.x = (xyz.x + XYZ.x) * float(0.5);
-			center.y = (xyz.y + XYZ.y) * float(0.5);
-			center.z = (xyz.z + XYZ.z) * float(0.5);
+			center.x = (xyz.x + XYZ.x) * f32(0.5);
+			center.y = (xyz.y + XYZ.y) * f32(0.5);
+			center.z = (xyz.z + XYZ.z) * f32(0.5);
 			extents.x = XYZ.x - center.x;
 			extents.y = XYZ.y - center.y;
 			extents.z = XYZ.z - center.z;

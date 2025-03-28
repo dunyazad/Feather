@@ -2,8 +2,6 @@
 
 #include <FeatherCommon.h>
 
-#include <Component/ComponentBase.h>
-
 class Transform
 {
 public:
@@ -18,5 +16,5 @@ public:
 
 private:
 	Transform* parent = nullptr;
-	map<ComponentID, Transform*> children;
+	set<Transform*> children;
 };

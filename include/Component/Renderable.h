@@ -2,8 +2,6 @@
 
 #include <FeatherCommon.h>
 
-#include <Component/ComponentBase.h>
-
 class Shader;
 
 template<typename T>

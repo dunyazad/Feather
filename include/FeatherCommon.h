@@ -36,7 +36,17 @@ using namespace std;
 
 #include <omp.h>
 
+
+
 #include <entt/entt.hpp>
+
+using Entity = entt::entity;
+#define InvalidEntity ((Entity)ui32_max);
+
+using Registry = entt::registry;
+using Dispatcher = entt::dispatcher;
+
+const string EmptyString = "";
 
 #define WIN32_LEAN_AND_MEAN
 #define NO_MINMAX
