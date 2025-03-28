@@ -181,29 +181,6 @@ namespace Clustering
 		}
 	}
 
-	__global__ void Kernel_BlockLocalFloodFill(Voxel* voxels, dim3 volumeDims) {
-		__shared__ unsigned int sharedLabels[256];
-
-		unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
-		if (tid >= volumeDims.x * volumeDims.y * volumeDims.z) return;
-
-		Voxel voxel = voxels[tid];
-		if (voxel.position.x == FLT_MAX) return;
-
-		sharedLabels[threadIdx.x] = tid;
-		__syncthreads();
-
-		if (threadIdx.x > 0 && threadIdx.x < blockDim.x - 1) {
-			if (sharedLabels[threadIdx.x - 1] != UINT_MAX)
-				sharedLabels[threadIdx.x] = min(sharedLabels[threadIdx.x], sharedLabels[threadIdx.x - 1]);
-			if (sharedLabels[threadIdx.x + 1] != UINT_MAX)
-				sharedLabels[threadIdx.x] = min(sharedLabels[threadIdx.x], sharedLabels[threadIdx.x + 1]);
-		}
-
-		__syncthreads();
-		voxels[tid].label = sharedLabels[threadIdx.x];
-	}
-
 	__global__ void Kernel_InterBlockMerge(
 		Voxel* voxels,
 		uint3* occupiedIndices,
@@ -489,12 +466,12 @@ std::vector<unsigned int> cuMain(const std::vector<float3>& host_points, float3 
 
 		nvtxRangePop();
 	}
-	VisualizeVoxels(
-		d_voxels,
-		numberOfVoxels,
-		volumeDimensions,
-		voxelSize,
-		volumeMin);
+	//VisualizeVoxels(
+	//	d_voxels,
+	//	numberOfVoxels,
+	//	volumeDimensions,
+	//	voxelSize,
+	//	volumeMin);
 
 	std::vector<unsigned int> result = GetLabels(
 		d_points,

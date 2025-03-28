@@ -283,19 +283,29 @@ int main(int argc, char** argv)
 
 					if (false == ply.GetColors().empty())
 					{
-						auto cx = ply.GetColors()[i * 3];
-						auto cy = ply.GetColors()[i * 3 + 1];
-						auto cz = ply.GetColors()[i * 3 + 2];
+						if (ply.UseAlpha())
+						{
+							auto cx = ply.GetColors()[i * 4];
+							auto cy = ply.GetColors()[i * 4 + 1];
+							auto cz = ply.GetColors()[i * 4 + 2];
+							auto ca = ply.GetColors()[i * 4 + 3];
 
-						points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
+							points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
+						}
+						else
+						{
+							auto cx = ply.GetColors()[i * 3];
+							auto cy = ply.GetColors()[i * 3 + 1];
+							auto cz = ply.GetColors()[i * 3 + 2];
+
+							points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
+						}
 					}
 					else
 					{
 						points.push_back({ {px, py, pz}, {nx, ny, nz}, {1.0f, 1.0f, 1.0f} });
 					}
-
 				}
-
 				alog("PLY %d points loaded\n", points.size());
 
 				alp.AddPoints(points);
@@ -404,15 +414,15 @@ int main(int argc, char** argv)
 			};
 
 			auto [x, y, z] = alp.GetAABBCenter();
-			auto pointIndices = cuMain(host_points, make_float3(x,y,z));
-			for (size_t i = 0; i < pointIndices.size(); i++)
+			auto pointLabels = cuMain(host_points, make_float3(x,y,z));
+			for (size_t i = 0; i < pointLabels.size(); i++)
 			{
-				auto index = pointIndices[i];
-				if (index != -1)
+				auto label = pointLabels[i];
+				if (label != -1)
 				{
-					float r = hashToFloat(index * 3 + 0);
-					float g = hashToFloat(index * 3 + 1);
-					float b = hashToFloat(index * 3 + 2);
+					float r = hashToFloat(label * 3 + 0);
+					float g = hashToFloat(label * 3 + 1);
+					float b = hashToFloat(label * 3 + 2);
 
 					//if (index == 0)
 					//{
@@ -423,6 +433,9 @@ int main(int argc, char** argv)
 					renderable->SetInstanceColor(i, MiniMath::V4(r, g, b, 1.0f));
 					//}
 				}
+
+				//auto& p = alp.GetPoints()[i];
+				//renderable->SetInstanceColor(i, MiniMath::V4(p.color.x, p.color.y, p.color.z, 1.0f));
 			}
 
 			/*
