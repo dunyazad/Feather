@@ -32,18 +32,20 @@ void EventSystem::Terminate()
 
 void EventSystem::Update(ui32 frameNo, f32 timeDelta)
 {
+	auto& dispatcher = Feather.GetDispatcher();
+	dispatcher.update();
 }
 
 void EventSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	auto& dispatcher = Feather.GetDispatcher();
-	dispatcher.trigger<KeyEvent>({ key, scancode, action, mods });
+	dispatcher.enqueue<KeyEvent>({ key, scancode, action, mods });
 }
 
 void EventSystem::MousePositionCallback(GLFWwindow* window, f64 xpos, f64 ypos)
 {
 	auto& dispatcher = Feather.GetDispatcher();
-	dispatcher.trigger<MousePositionEvent>({ xpos, ypos });
+	dispatcher.enqueue<MousePositionEvent>({ xpos, ypos });
 
 	lastMousePositionX = xpos;
 	lastMousePositionY = ypos;
@@ -52,11 +54,11 @@ void EventSystem::MousePositionCallback(GLFWwindow* window, f64 xpos, f64 ypos)
 void EventSystem::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
 	auto& dispatcher = Feather.GetDispatcher();
-	dispatcher.trigger<MouseButtonEvent>({ button, action, mods, lastMousePositionX, lastMousePositionY });
+	dispatcher.enqueue<MouseButtonEvent>({ button, action, mods, lastMousePositionX, lastMousePositionY });
 }
 
 void EventSystem::MouseWheelCallback(GLFWwindow* window, f64 xoffset, f64 yoffset)
 {
 	auto& dispatcher = Feather.GetDispatcher();
-	dispatcher.trigger<MouseWheelEvent>({ xoffset, yoffset });
+	dispatcher.enqueue<MouseWheelEvent>({ xoffset, yoffset });
 }

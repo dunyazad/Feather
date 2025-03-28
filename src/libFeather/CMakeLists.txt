@@ -26,6 +26,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Component/ComponentBase.h
     ${CMAKE_SOURCE_DIR}/include/Component/Camera.h
     ${CMAKE_SOURCE_DIR}/include/Component/CameraManipulator.h
+    ${CMAKE_SOURCE_DIR}/include/Component/EventCallback.h
     ${CMAKE_SOURCE_DIR}/include/Component/Renderable.h
     ${CMAKE_SOURCE_DIR}/include/Component/Shader.h
     ${CMAKE_SOURCE_DIR}/include/Component/Transform.h

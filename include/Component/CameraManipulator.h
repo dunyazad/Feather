@@ -76,12 +76,12 @@ public:
 	inline f32 GetMouseWheelSensitivity() { return mouseWheelSensitivity; }
 	inline void SetMouseWheelSensitivity(f32 mouseWheelSensitivity) { this->mouseWheelSensitivity = mouseWheelSensitivity; }
 
-private:
 	void OnMousePosition(const MousePositionEvent& event);
 	void OnMouseButton(const MouseButtonEvent& event);
 	void OnMouseWheel(const MouseWheelEvent& event);
 	void OnKey(const KeyEvent& event);
 
+private:
 	float lastMousePositionX = 0.0f;
 	float lastMousePositionY = 0.0f;
 
