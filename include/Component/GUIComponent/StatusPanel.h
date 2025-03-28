@@ -9,7 +9,7 @@ public:
 	~StatusPanel();
 
 	virtual void Render() override;
-private:
+//private:
     const ui32 historySize = 50;
 
     vector<f32> fpsHistory;

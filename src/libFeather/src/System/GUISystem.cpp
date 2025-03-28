@@ -47,10 +47,11 @@ void GUISystem::Update(ui32 frameNo, f32 timeDelta)
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    auto components = Feather.GetInstances<GUIComponentBase>();
-    for (auto& component : components)
+    auto entities = Feather.GetRegistry().view<StatusPanel>();
+    for (auto& entity : entities)
     {
-        component->Render();
+        auto component = Feather.GetRegistry().get<StatusPanel>(entity);
+        component.Render();
     }
 
     ShowUIPanel();

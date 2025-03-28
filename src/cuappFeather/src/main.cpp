@@ -31,46 +31,56 @@ int main(int argc, char** argv)
 	ALPFormat<Point> alp;
 
 	Feather.AddOnInitializeCallback([&]() {
+#pragma region AppMain
 		{
 			auto& registry = Feather.GetRegistry();
 			auto appMain = registry.create();
 			Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(appMain, appMain, [](entt::entity entity, const KeyEvent& event) {
-					if (GLFW_KEY_ESCAPE == event.keyCode)
-					{
-						glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
-					}
+				if (GLFW_KEY_ESCAPE == event.keyCode)
+				{
+					glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
+				}
 				});
 		}
+#pragma endregion
+
+#pragma region Camera
 		{
 			entt::entity cam = Feather.GetRegistry().create();
 			auto& pcam = Feather.GetRegistry().emplace<PerspectiveCamera>(cam);
 			auto& pcamMan = Feather.GetRegistry().emplace<CameraManipulatorTrackball>(cam);
 			pcamMan.SetCamera(&pcam);
 
-			//Feather.GetDispatcher().sink<KeyEvent>().connect<&CameraManipulatorTrackball::OnKey>(*this);
-			//Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(cam, cam, &CameraManipulatorTrackball::OnKey);
-
 			Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(cam, cam, [](entt::entity entity, const KeyEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnKey(event);
-			});
+				});
 
 			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(cam, cam, [](entt::entity entity, const MousePositionEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMousePosition(event);
-			});
+				});
 
 			Feather.GetRegistry().emplace<EventCallback<MouseButtonEvent>>(cam, cam, [](entt::entity entity, const MouseButtonEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseButton(event);
-			});
+				});
 
 			Feather.GetRegistry().emplace<EventCallback<MouseWheelEvent>>(cam, cam, [](entt::entity entity, const MouseWheelEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseWheel(event);
-			});
+				});
 		}
+#pragma endregion
 
+#pragma region Status Panel
 		{
-			auto gui = Feather.CreateInstance<Entity>("GUI");
-			auto statusPanel = Feather.CreateInstance<StatusPanel>();
+			auto gui = Feather.GetRegistry().create();
+			auto statusPanel = Feather.GetRegistry().emplace<StatusPanel>(gui);
+
+			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(gui, gui, [](entt::entity entity, const MousePositionEvent& event) {
+				auto& component = Feather.GetRegistry().get<StatusPanel>(entity);
+				component.mouseX = event.xpos;
+				component.mouseY = event.ypos;
+				});
 		}
+#pragma endregion
 
 		//#define RENDER_TRIANGLE
 #ifdef RENDER_TRIANGLE
