@@ -124,10 +124,6 @@ CameraManipulatorTrackball::CameraManipulatorTrackball()
 	isMButtonPressed(false),
 	isRButtonPressed(false)
 {
-	//Feather.GetDispatcher().sink<KeyEvent>().connect<&CameraManipulatorTrackball::OnKey>(*this);
-	//Feather.GetDispatcher().sink<MousePositionEvent>().connect<&CameraManipulatorTrackball::OnMousePosition>(*this);
-	//Feather.GetDispatcher().sink<MouseButtonEvent>().connect<&CameraManipulatorTrackball::OnMouseButton>(*this);
-	//Feather.GetDispatcher().sink<MouseWheelEvent>().connect<&CameraManipulatorTrackball::OnMouseWheel>(*this);
 }
 
 CameraManipulatorTrackball::~CameraManipulatorTrackball() {}

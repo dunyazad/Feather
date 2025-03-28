@@ -363,8 +363,6 @@ int main(int argc, char** argv)
 			renderable.AddColors(colors);
 			renderable.AddUVs(uvs);
 
-			//PLYFormat tempPLY;
-
 			vector<float3> host_points;
 
 			for (auto& p : alp.GetPoints())
@@ -384,17 +382,43 @@ int main(int argc, char** argv)
 				model = MiniMath::translate(model, p.position);
 				renderable.AddInstanceTransform(model);
 
-				//tempPLY.AddPoint(p.position.x, p.position.y, p.position.z);
-				//tempPLY.AddNormal(p.normal.x, p.normal.y, p.normal.z);
-				//tempPLY.AddColor(p.color.x, p.color.y, p.color.z);
-
 				host_points.push_back(make_float3(p.position.x, p.position.y, p.position.z));
 			}
-			//tempPLY.Serialize("../../res/3D/Teeth_temp.ply");
 
 			alog("ALP %d points loaded\n", alp.GetPoints().size());
 
 			renderable.EnableInstancing(alp.GetPoints().size());
+			auto [x, y, z] = alp.GetAABBCenter();
+			f32 cx = x;
+			f32 cy = y;
+			f32 cz = z;
+
+			Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(entity, entity, [cx,cy,cz](entt::entity entity, const KeyEvent& event) {
+				auto& renderable = Feather.GetRegistry().get<Renderable>(entity);
+				if (GLFW_KEY_M == event.keyCode)
+				{
+					renderable.NextDrawingMode();
+				}
+				else if (GLFW_KEY_1 == event.keyCode)
+				{
+					renderable.SetActiveShaderIndex(0);
+				}
+				else if (GLFW_KEY_2 == event.keyCode)
+				{
+					renderable.SetActiveShaderIndex(1);
+				}
+				else if (GLFW_KEY_R == event.keyCode)
+				{
+					auto entities = Feather.GetRegistry().view<CameraManipulatorTrackball>();
+					for (auto& entity : entities)
+					{
+						auto cameraManipulator = Feather.GetRegistry().get<CameraManipulatorTrackball>(entity);
+						auto camera = cameraManipulator.GetCamera();
+						camera->SetEye({ cx,cy,cz + cameraManipulator.GetRadius() });
+						camera->SetTarget({ cx,cy,cz });
+					}
+				}
+				});
 
 			//renderable->AddEventHandler(EventType::KeyPress, [renderable, &alp](const Event& event, FeatherObject* object) {
 			//	if (GLFW_KEY_M == event.keyEvent.keyCode)
@@ -439,7 +463,6 @@ int main(int argc, char** argv)
 				return (seed & 0xFFFFFF) / static_cast<float>(0xFFFFFF);
 			};
 
-			auto [x, y, z] = alp.GetAABBCenter();
 			auto pointLabels = cuMain(host_points, make_float3(x,y,z));
 			for (size_t i = 0; i < pointLabels.size(); i++)
 			{

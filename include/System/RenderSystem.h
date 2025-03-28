@@ -4,6 +4,7 @@
 
 class FeatherWindow;
 class Shader;
+class CameraBase;
 
 class RenderSystem
 {
@@ -17,6 +18,7 @@ public:
 
 private:
 	FeatherWindow* window = nullptr;
+	CameraBase* activeCamera = nullptr;
 
 	f32 fontSize = 18.0f;
 	bool needFontReload = false;

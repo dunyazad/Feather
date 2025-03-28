@@ -72,7 +72,6 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
             auto index = shader->GetUniformLocation("view");
             if (-1 != index)
             {
-                //shader->UniformM4(index, (*cameras.begin())->GetViewMatrix());
                 shader->UniformM4(index, viewMatrix);
             }
         }
@@ -80,7 +79,6 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
             auto index = shader->GetUniformLocation("projection");
             if (-1 != index)
             {
-                //shader->UniformM4(index, (*cameras.begin())->GetProjectionMatrix());
                 shader->UniformM4(index, perspectiveMatrix);
             }
         }
@@ -88,7 +86,6 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
             auto index = shader->GetUniformLocation("cameraPos");
             if (-1 != index)
             {
-                //shader->UniformV3(index, (*cameras.begin())->GetEye());
                 shader->UniformV3(index, eye);
             }
         }

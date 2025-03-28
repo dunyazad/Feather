@@ -86,7 +86,7 @@ public:
 	void OnMouseWheel(const MouseWheelEvent& event);
 	void OnKey(const KeyEvent& event);
 
-	inline CameraBase* SetCamera() const { return camera; }
+	inline CameraBase* GetCamera() const { return camera; }
 	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
 
 private:
