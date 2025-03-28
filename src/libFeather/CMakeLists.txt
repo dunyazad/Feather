@@ -38,7 +38,6 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/System/Systems.h
     ${CMAKE_SOURCE_DIR}/include/System/EventSystem.h
     ${CMAKE_SOURCE_DIR}/include/System/GUISystem.h
-    ${CMAKE_SOURCE_DIR}/include/System/InputSystem.h
     ${CMAKE_SOURCE_DIR}/include/System/ImmediateModeRenderSystem.h
     ${CMAKE_SOURCE_DIR}/include/System/RenderSystem.h
     ${CMAKE_SOURCE_DIR}/include/System/SystemBase.h
@@ -66,7 +65,6 @@ set(source_list
 
     src/System/EventSystem.cpp
     src/System/GUISystem.cpp
-    src/System/InputSystem.cpp
     src/System/ImmediateModeRenderSystem.cpp
     src/System/RenderSystem.cpp
     src/System/SystemBase.cpp

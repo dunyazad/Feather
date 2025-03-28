@@ -1,7 +1,6 @@
 #include <libFeather.h>
 
 #include <System/GUISystem.h>
-#include <System/InputSystem.h>
 #include <System/ImmediateModeRenderSystem.h>
 #include <System/RenderSystem.h>
 

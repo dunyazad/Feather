@@ -19,7 +19,6 @@ void libFeather::Initialize(ui32 width, ui32 height)
     featherWindow->Initialize(width, height);
     
     CreateInstance<EventSystem>("EventSystem", featherWindow)->Initialize();
-    CreateInstance<InputSystem>("InputSystem", featherWindow)->Initialize();
     CreateInstance<RenderSystem>("RenderSystem", featherWindow)->Initialize();
     CreateInstance<ImmediateModeRenderSystem>("ImmediateModeRenderSystem", featherWindow)->Initialize();
     CreateInstance<GUISystem>("GUISystem", featherWindow)->Initialize();
@@ -79,9 +78,6 @@ void libFeather::Run()
 
         auto eventSystem = GetFirstInstance<EventSystem>();
         if (nullptr != eventSystem) eventSystem->Update(frameNo, timeDelta);
-
-        auto inputSystem = GetFirstInstance<InputSystem>();
-        if (nullptr != inputSystem) inputSystem->Update(frameNo, timeDelta);
 
         auto renderSystem = GetFirstInstance<RenderSystem>();
         if (nullptr != renderSystem) renderSystem->Update(frameNo, timeDelta);
