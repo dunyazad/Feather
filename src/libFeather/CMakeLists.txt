@@ -9,6 +9,7 @@ include(Dependencies)
 
 set(source_list
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
+    ${CMAKE_SOURCE_DIR}/include/TypeDefinitions.h
     ${CMAKE_SOURCE_DIR}/include/FeatherCommon.h
     ${CMAKE_SOURCE_DIR}/include/Feather.h
 
@@ -40,7 +41,6 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/System/GUISystem.h
     ${CMAKE_SOURCE_DIR}/include/System/ImmediateModeRenderSystem.h
     ${CMAKE_SOURCE_DIR}/include/System/RenderSystem.h
-    ${CMAKE_SOURCE_DIR}/include/System/SystemBase.h
 
     src/Feather.cpp
     src/FeatherCommon.cpp
@@ -67,7 +67,6 @@ set(source_list
     src/System/GUISystem.cpp
     src/System/ImmediateModeRenderSystem.cpp
     src/System/RenderSystem.cpp
-    src/System/SystemBase.cpp
 
     ${CMAKE_SOURCE_DIR}/res/Shaders/Default.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Default.fs

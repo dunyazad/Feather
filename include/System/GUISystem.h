@@ -1,16 +1,18 @@
 #pragma once
 
-#include <System/SystemBase.h>
+#include <FeatherCommon.h>
 
-class GUISystem : public RegisterDerivation<GUISystem, SystemBase>
+class FeatherWindow;
+
+class GUISystem
 {
 public:
 	GUISystem(FeatherWindow* window);
 	~GUISystem();
 
-	virtual void Initialize() override;
-	virtual void Terminate() override;
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
+	virtual void Initialize();
+	virtual void Terminate();
+	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	void ReloadFont(float newFontSize);
 
@@ -22,6 +24,8 @@ public:
 	inline void SetFontSize(float size) { fontSize = size; }
 
 private:
+	FeatherWindow* window = nullptr;
+
 	float fontSize = 20.0f;
 	bool needFontReload = true;
 };

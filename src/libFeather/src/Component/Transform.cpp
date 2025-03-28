@@ -1,7 +1,6 @@
 #include <Component/Transform.h>
 
 Transform::Transform()
-	: RegisterDerivation<Transform, ComponentBase>()
 {
 }
 

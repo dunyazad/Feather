@@ -1,7 +1,6 @@
 #include<Component/GUIComponent/StatusPanel.h>
 
 StatusPanel::StatusPanel()
-	: RegisterDerivation<StatusPanel, GUIComponentBase>(), fpsHistory(historySize, 60.0f)
 {
 	//AddEventHandler(EventType::MousePosition, [&](const Event& event, FeatherObject* object) {
  //       mouseX = (ui32)event.mousePositionEvent.xpos;
@@ -77,8 +76,11 @@ void StatusPanel::Render()
         ToggleButton("V-Sync", &vSync);
         ImGui::Text("FPS: %.1f", fps);
 
-        // Graph (Mini FPS history)
-        ImGui::PlotLines("##FPSGraph", fpsHistory.data(), historySize, historyOffset, nullptr, 0.0f, 120.0f, ImVec2(300, 80));
+        if (false == fpsHistory.empty())
+        {
+            // Graph (Mini FPS history)
+            ImGui::PlotLines("##FPSGraph", fpsHistory.data(), historySize, historyOffset, nullptr, 0.0f, 120.0f, ImVec2(300, 80));
+        }
 
         ImGui::Text("mouse : %4d, %4d", mouseX, mouseY);
     }

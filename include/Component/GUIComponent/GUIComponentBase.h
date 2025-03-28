@@ -3,7 +3,7 @@
 #include <FeatherCommon.h>
 #include <Component/ComponentBase.h>
 
-class GUIComponentBase : public RegisterDerivation<GUIComponentBase, ComponentBase>
+class GUIComponentBase
 {
 public:
 	GUIComponentBase();

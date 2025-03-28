@@ -2,16 +2,16 @@
 
 #include <FeatherCommon.h>
 #include <File.h>
-#include <Component/ComponentBase.h>
 
-class Shader : public RegisterDerivation<Shader, ComponentBase>
+class Shader
 {
 public:
 	Shader();
 	virtual ~Shader();
 
     void Initialize(const File& vsFile, const File& fsFile);
-    void Initialize(const string& vs, const string& fs);
+    void Initialize(const File& vsFile, const File& gsFile, const File& fsFile);
+    void Initialize(const string& vs, const string& gs, const string& fs);
     void Terminate();
 
     void CheckShaderCompileErrors(GLuint shader, const std::string& type);
@@ -24,4 +24,8 @@ public:
 
 private:
     GLuint shaderProgram = UINT_MAX;
+
+    string vertexShaderFileName;
+    string geometryShaderFileName;
+    string fragmentShaderFileName;
 };

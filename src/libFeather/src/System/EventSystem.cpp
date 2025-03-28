@@ -9,7 +9,7 @@ f64 EventSystem::lastMousePositionX = 0.0f;
 f64 EventSystem::lastMousePositionY = 0.0f;
 
 EventSystem::EventSystem(FeatherWindow* window)
-	: RegisterDerivation<EventSystem, SystemBase>(window)
+	: window(window)
 {
 	s_instances.push_back(this);
 }

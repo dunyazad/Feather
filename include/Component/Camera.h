@@ -14,7 +14,7 @@ struct ProjectionInfoPerspective
 	f32 fovy, aspectRatio, zNear, zFar;
 };
 
-class CameraBase : public RegisterDerivation<CameraBase, ComponentBase>
+class CameraBase
 {
 public:
 	enum ProjectionMode { Perspective, Orghogonal };
@@ -59,13 +59,13 @@ protected:
 	i32 cameraHistoryIndex = 0;
 };
 
-class PerspectiveCamera : public RegisterDerivation<PerspectiveCamera, CameraBase>
+class PerspectiveCamera : public CameraBase
 {
 public:
 	PerspectiveCamera();
 	virtual ~PerspectiveCamera();
 
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
+	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	inline f32 GetFOVY() { return fovy; }
 	inline f32 GetAspectRatio() { return aspectRatio; }
@@ -84,13 +84,13 @@ protected:
 	f32 zFar = 1000.0f;
 };
 
-class OrthogonalCamera : public RegisterDerivation<OrthogonalCamera, CameraBase>
+class OrthogonalCamera : public CameraBase
 {
 public:
 	OrthogonalCamera();
 	virtual ~OrthogonalCamera();
 
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
+	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 protected:
 	f32 left = -1.0f;

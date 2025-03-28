@@ -128,7 +128,7 @@ protected:
 	vector<T> datas;
 };
 
-class Renderable : public RegisterDerivation<Renderable, ComponentBase>
+class Renderable
 {
 public:
 	enum GeometryMode
@@ -254,7 +254,7 @@ private:
 	ui32 numberOfInstances = 1;
 };
 
-class DebuggingRenderable : public RegisterDerivation<DebuggingRenderable, Renderable>
+class DebuggingRenderable
 {
 
 };

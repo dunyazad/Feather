@@ -4,12 +4,10 @@
 #include <Feather.h>
 
 CameraManipulatorBase::CameraManipulatorBase()
-	: RegisterDerivation<CameraManipulatorBase, ComponentBase>()
 {
 }
 
 CameraManipulatorOrbit::CameraManipulatorOrbit()
-	: RegisterDerivation<CameraManipulatorOrbit, CameraManipulatorBase>()
 {
 }
 
@@ -119,8 +117,7 @@ CameraManipulatorOrbit::~CameraManipulatorOrbit()
 //}
 
 CameraManipulatorTrackball::CameraManipulatorTrackball()
-	: RegisterDerivation<CameraManipulatorTrackball, CameraManipulatorBase>(),
-	radius(10.0f),
+	: radius(10.0f),
 	mouseSensitivity(0.005f),
 	mousePanningSensitivity(0.01f),
 	isLButtonPressed(false),

@@ -1,18 +1,18 @@
 #pragma once
 
-#include <System/SystemBase.h>
+#include <FeatherCommon.h>
 
-class EventReceiver;
+class FeatherWindow;
 
-class EventSystem : public RegisterDerivation<EventSystem, SystemBase>
+class EventSystem
 {
 public:
 	EventSystem(FeatherWindow* window);
 	~EventSystem();
 
-	virtual void Initialize() override;
-	virtual void Terminate() override;
-	virtual void Update(ui32 frameNo, f32 timeDelta) override;
+	virtual void Initialize();
+	virtual void Terminate();
+	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	//void SubscribeEvent(EventType eventType, FeatherObject* eventReceiver);
 	//void UnsubscribeEvent(EventType eventType, FeatherObject* eventReceiver);
@@ -21,6 +21,8 @@ public:
 
 private:
 	static vector<EventSystem*> s_instances;
+	FeatherWindow* window = nullptr;
+
 	//unordered_map<EventType, set<FeatherObject*>> eventReceivers;
 
 	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);

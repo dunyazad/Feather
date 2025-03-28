@@ -4,7 +4,7 @@
 
 class ComponentBase;
 
-class Entity : public RegisterDerivation<Entity, FeatherObject>
+class Entity
 {
 public:
 	Entity();

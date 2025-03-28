@@ -55,27 +55,9 @@ using namespace std;
 #include "backends/imgui_impl_opengl3.h"
 #include "implot.h"
 
-
 #define Feather libFeather::GetStaticInstance()
 
-typedef char i8;
-typedef short i16;
-typedef int i32;
-typedef long i64;
-
-typedef unsigned char ui8;
-typedef unsigned short ui16;
-typedef unsigned int ui32;
-typedef unsigned long ui64;
-
-typedef float f32;
-typedef double f64;
-
-typedef ui32 EntityID;
-typedef ui32 ComponentID;
-
-#define f32_max (FLT_MAX)
-#define f32_min (-FLT_MAX)
+#include <TypeDefinitions.h>
 
 #include <MiniMath.h>
 
@@ -95,81 +77,3 @@ namespace Time
 
 #define alog(...) printf("\033[38;5;1m\033[48;5;15m(^(OO)^) /V/\033[0m\t" __VA_ARGS__)
 #define alogt(tag, ...) printf("\033[38;5;1m\033[48;5;15m [%d] (^(OO)^) /V/\033[0m\t" tag, __VA_ARGS__)
-
-
-
-
-
-
-struct FrameBufferResizeEvent
-{
-	i32 width;
-	i32 height;
-};
-
-struct KeyEvent
-{
-	i32 keyCode;
-	i32 scanCode;
-	i32 action;
-	i32 mods;
-};
-
-struct MousePositionEvent
-{
-	f64 xpos;
-	f64 ypos;
-};
-
-struct MouseButtonEvent
-{
-	i32 button;
-	i32 action;
-	i32 mods;
-	f64 xpos;
-	f64 ypos;
-};
-
-struct MouseWheelEvent
-{
-	f64 xoffset;
-	f64 yoffset;
-};
-
-class FeatherObject
-{
-public:
-	virtual ~FeatherObject() = default;
-
-	static unordered_map<type_index, unordered_set<type_index>>& GetSubclassMap();
-	static void RegisterClass(type_index baseType, type_index derivedType);
-	static unordered_set<type_index> GetAllSubclasses(type_index baseType);
-
-	//virtual void OnEvent(const Event& event);
-	//virtual void SubscribeEvent(EventType eventType);
-	//virtual void AddEventHandler(EventType eventType, function<void(const Event&, FeatherObject*)> handler);
-
-	inline const string& GetName() const { return name; }
-	inline void SetName(const string& name) { this->name = name; }
-
-protected:
-	string name = "";
-	//map<EventType, vector<function<void(const Event&, FeatherObject*)>>> eventHandlers;
-
-private:
-	static unordered_map<type_index, unordered_set<type_index>> subclass_map;
-};
-
-template <typename Derived, typename Base>
-class RegisterDerivation : public Base
-{
-public:
-	template <typename... Args>
-	RegisterDerivation(Args&&... args) : Base(std::forward<Args>(args)...)
-	{
-		static bool registered = []() {
-			FeatherObject::RegisterClass(typeid(Base), typeid(Derived));
-			return true;
-		}();
-	}
-};

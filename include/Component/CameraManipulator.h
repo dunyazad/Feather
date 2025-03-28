@@ -5,7 +5,7 @@
 
 class CameraBase;
 
-class CameraManipulatorBase : public RegisterDerivation<CameraManipulatorBase, ComponentBase>
+class CameraManipulatorBase
 {
 public:
 	CameraManipulatorBase();
@@ -18,7 +18,7 @@ protected:
 	CameraBase* camera = nullptr;
 };
 
-class CameraManipulatorOrbit : public RegisterDerivation<CameraManipulatorOrbit, CameraManipulatorBase>
+class CameraManipulatorOrbit
 {
 public:
 	CameraManipulatorOrbit();
@@ -44,7 +44,12 @@ public:
 	inline f32 GetMouseWheelSensitivity() { return mouseWheelSensitivity; }
 	inline void SetMouseWheelSensitivity(f32 mouseWheelSensitivity) { this->mouseWheelSensitivity = mouseWheelSensitivity; }
 
+	inline CameraBase* SetCamera() const { return camera; }
+	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
+
 protected:
+	CameraBase* camera = nullptr;
+
 	set<i32> pressedKeys;
 
 	f64 lastMousePositionX = UINT32_MAX;
@@ -63,7 +68,7 @@ protected:
 };
 
 
-class CameraManipulatorTrackball : public RegisterDerivation<CameraManipulatorTrackball, CameraManipulatorBase>
+class CameraManipulatorTrackball
 {
 public:
 	CameraManipulatorTrackball();
@@ -81,7 +86,12 @@ public:
 	void OnMouseWheel(const MouseWheelEvent& event);
 	void OnKey(const KeyEvent& event);
 
+	inline CameraBase* SetCamera() const { return camera; }
+	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
+
 private:
+	CameraBase* camera = nullptr;
+
 	float lastMousePositionX = 0.0f;
 	float lastMousePositionY = 0.0f;
 

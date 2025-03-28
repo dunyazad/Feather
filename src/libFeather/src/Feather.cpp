@@ -8,8 +8,6 @@
 #include <Component/Shader.h>
 #include <System/Systems.h>
 
-unordered_map<type_index, vector<FeatherObject*>> libFeather::s_instanceMap;
-
 libFeather::libFeather() {}
 libFeather::~libFeather() {}
 
@@ -17,36 +15,33 @@ void libFeather::Initialize(ui32 width, ui32 height)
 {
     featherWindow = new FeatherWindow();
     featherWindow->Initialize(width, height);
-    
-    CreateInstance<EventSystem>("EventSystem", featherWindow)->Initialize();
-    CreateInstance<RenderSystem>("RenderSystem", featherWindow)->Initialize();
-    CreateInstance<ImmediateModeRenderSystem>("ImmediateModeRenderSystem", featherWindow)->Initialize();
-    CreateInstance<GUISystem>("GUISystem", featherWindow)->Initialize();
+
+    eventSystem = new EventSystem(featherWindow);
+    eventSystem->Initialize();
+    renderSystem = new RenderSystem(featherWindow);
+    renderSystem->Initialize();
+    immediateModeRenderSystem = new ImmediateModeRenderSystem(featherWindow);
+    immediateModeRenderSystem->Initialize();
+    guiSystem = new GUISystem(featherWindow);
+    guiSystem->Initialize();
 
     /////////glfwSwapInterval(0);  // Disable V-Sync
 }
 
 void libFeather::Terminate()
 {
-    for (auto& instance : objectInstances)
+    for (auto& [name, shader] : shaders)
     {
-        if (nullptr != instance)
-        {
-            delete instance;
-        }
+        if (nullptr != shader) delete shader;
     }
-    objectInstances.clear();
+    shaders.clear();
 
-    for (auto& pair : s_instanceMap)
-    {
-        pair.second.clear();
-    }
-    s_instanceMap.clear();
+    if (nullptr != eventSystem) delete eventSystem;
+    if (nullptr != renderSystem) delete renderSystem;
+    if (nullptr != immediateModeRenderSystem) delete immediateModeRenderSystem;
+    if (nullptr != guiSystem) delete guiSystem;
 
-    if (nullptr != featherWindow)
-    {
-        delete featherWindow;
-    }
+    if (nullptr != featherWindow) delete featherWindow;
 }
 
 void libFeather::Run()
@@ -76,17 +71,10 @@ void libFeather::Run()
 
         glfwPollEvents();
 
-        auto eventSystem = GetFirstInstance<EventSystem>();
-        if (nullptr != eventSystem) eventSystem->Update(frameNo, timeDelta);
-
-        auto renderSystem = GetFirstInstance<RenderSystem>();
-        if (nullptr != renderSystem) renderSystem->Update(frameNo, timeDelta);
-
-        auto immediateModeRenderSystem = GetFirstInstance<ImmediateModeRenderSystem>();
-        if (nullptr != immediateModeRenderSystem) immediateModeRenderSystem->Update(frameNo, timeDelta);
-
-        auto guiSystem = GetFirstInstance<GUISystem>();
-        if (nullptr != guiSystem) guiSystem->Update(frameNo, timeDelta);
+        eventSystem->Update(frameNo, timeDelta);
+        renderSystem->Update(frameNo, timeDelta);
+        immediateModeRenderSystem->Update(frameNo, timeDelta);
+        guiSystem->Update(frameNo, timeDelta);
 
         glfwSwapBuffers(glfwGetCurrentContext());
 
@@ -95,17 +83,32 @@ void libFeather::Run()
     }
 }
 
-unordered_map<type_index, vector<FeatherObject*>>& libFeather::GetInstanceMap()
+Shader* libFeather::CreateShader(const string& name, const File& vsFile, const File& gsFile, const File& fsFile)
 {
-    return s_instanceMap;
+    if (0 != shaders.count(name)) return shaders[name];
+    else
+    {
+        auto shader = new Shader();
+        shader->Initialize(vsFile, gsFile, fsFile);
+        shaders[name] = shader;
+        return shader;
+    }
 }
 
-set<FeatherObject*> libFeather::GetAllInstances()
+Shader* libFeather::CreateShader(const string& name, const File& vsFile, const File& fsFile)
 {
-    set<FeatherObject*> allInstances;
-    for (const auto& [type, instances] : s_instanceMap)
+    if (0 != shaders.count(name)) return shaders[name];
+    else
     {
-        allInstances.insert(instances.begin(), instances.end());
+        auto shader = new Shader();
+        shader->Initialize(vsFile, fsFile);
+        shaders[name] = shader;
+        return shader;
     }
-    return allInstances;
+}
+
+Shader* libFeather::GetShader(const string& name)
+{
+    if (0 != shaders.count(name)) return shaders[name];
+    else return nullptr;
 }

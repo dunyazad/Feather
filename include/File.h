@@ -48,6 +48,7 @@ public:
 	fstream& operator >> (string& data);
 	//fstream& operator >> (char* data);
 
+	inline const string& GetFileName() const { return m_fileName; }
 	inline int GetFileLength() const { return m_fileLength; }
 
 private:

@@ -2,13 +2,13 @@
 
 #include<Component/GUIComponent/GUIComponentBase.h>
 
-class StatusPanel : public RegisterDerivation<StatusPanel, GUIComponentBase>
+class StatusPanel
 {
 public:
 	StatusPanel();
 	~StatusPanel();
 
-	virtual void Render() override;
+	virtual void Render();
 //private:
     const ui32 historySize = 50;
 

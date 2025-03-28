@@ -3,7 +3,7 @@
 #include <Component/Components.h>
 
 RenderSystem::RenderSystem(FeatherWindow* window)
-    : RegisterDerivation<RenderSystem, SystemBase>(window)
+    : window(window)
 {
 }
 
@@ -17,14 +17,6 @@ void RenderSystem::Initialize()
 
 void RenderSystem::Terminate()
 {
-    for (auto& s : shaders)
-    {
-        if (nullptr != s)
-        {
-            delete s;
-        }
-    }
-    shaders.clear();
 }
 
 void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
@@ -46,24 +38,13 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         eye = camera.GetEye();
     }
 
-    //auto cameras = Feather.GetInstances<PerspectiveCamera>();
-    //if (cameras.empty())
-    //{
-    //    alog("No camera !!!\n");
-    //    return;
-    //}
-
-    //for (auto& camera : cameras)
-    //{
-    //    camera->Update(frameNo, timeDelta);
-    //}
-
     map<Shader*, vector<Renderable*>> shaderMapping;
-    auto renderables = Feather.GetInstances<Renderable>();
-    for (auto& renderable : renderables)
+    auto entities = Feather.GetRegistry().view<Renderable>();
+    for (auto& entity : entities)
     {
-        auto shader = renderable->GetActiveShader();
-        shaderMapping[shader].push_back(renderable);
+        auto& renderable = Feather.GetRegistry().get<Renderable>(entity);
+        auto shader = renderable.GetActiveShader();
+        shaderMapping[shader].push_back(&renderable);
     }
 
     //glEnable(GL_DEPTH_TEST);
@@ -82,22 +63,34 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         shader->Use();
         {
             auto index = shader->GetUniformLocation("model");
-            shader->UniformM4(index, MiniMath::M4::identity());
+            if (-1 != index)
+            {
+                shader->UniformM4(index, MiniMath::M4::identity());
+            }
         }
         {
             auto index = shader->GetUniformLocation("view");
-            //shader->UniformM4(index, (*cameras.begin())->GetViewMatrix());
-            shader->UniformM4(index, viewMatrix);
+            if (-1 != index)
+            {
+                //shader->UniformM4(index, (*cameras.begin())->GetViewMatrix());
+                shader->UniformM4(index, viewMatrix);
+            }
         }
         {
             auto index = shader->GetUniformLocation("projection");
-            //shader->UniformM4(index, (*cameras.begin())->GetProjectionMatrix());
-            shader->UniformM4(index, perspectiveMatrix);
+            if (-1 != index)
+            {
+                //shader->UniformM4(index, (*cameras.begin())->GetProjectionMatrix());
+                shader->UniformM4(index, perspectiveMatrix);
+            }
         }
         {
             auto index = shader->GetUniformLocation("cameraPos");
-            //shader->UniformV3(index, (*cameras.begin())->GetEye());
-            shader->UniformV3(index, eye);
+            if (-1 != index)
+            {
+                //shader->UniformV3(index, (*cameras.begin())->GetEye());
+                shader->UniformV3(index, eye);
+            }
         }
 
         for (auto& renderable : renderables)

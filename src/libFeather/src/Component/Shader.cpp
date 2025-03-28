@@ -1,7 +1,6 @@
 #include <Component/Shader.h>
 
 Shader::Shader()
-    : RegisterDerivation<Shader, ComponentBase>()
 {
 }
 
@@ -19,10 +18,23 @@ void Shader::Initialize(const File& vsFile, const File& fsFile)
     string fs(fsFile.GetFileLength() + 1, 0);
     fsFile.Read(fs.data(), fsFile.GetFileLength());
 
-    Initialize(vs, fs);
+    Initialize(vs, "", fs);
 }
 
-void Shader::Initialize(const string& vs, const string& fs)
+void Shader::Initialize(const File& vsFile, const File& gsFile, const File& fsFile)
+{
+    if (0 == vsFile.GetFileLength() || 0 == fsFile.GetFileLength()) return;
+
+    string vs(vsFile.GetFileLength() + 1, 0);
+    vsFile.Read(vs.data(), vsFile.GetFileLength());
+
+    string fs(fsFile.GetFileLength() + 1, 0);
+    fsFile.Read(fs.data(), fsFile.GetFileLength());
+
+    Initialize(vs, gsFile.GetFileName(), fs);
+}
+
+void Shader::Initialize(const string& vs, const string& gs, const string& fs)
 {
     if (vs.empty() || fs.empty()) return;
 
@@ -31,6 +43,16 @@ void Shader::Initialize(const string& vs, const string& fs)
     glShaderSource(vertexShader, 1, &vsSource, nullptr);
     glCompileShader(vertexShader);
     CheckShaderCompileErrors(vertexShader, "VERTEX");
+
+    GLuint geometryShader;
+    if (false == gs.empty())
+    {
+        geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+        const GLchar* gsSource = gs.c_str();
+        glShaderSource(geometryShader, 1, &gsSource, nullptr);
+        glCompileShader(geometryShader);
+        CheckShaderCompileErrors(geometryShader, "GEOMETRY");
+    }
 
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     const GLchar* fsSource = fs.c_str();
@@ -45,6 +67,10 @@ void Shader::Initialize(const string& vs, const string& fs)
     CheckShaderCompileErrors(shaderProgram, "PROGRAM");
 
     glDeleteShader(vertexShader);
+    if (false == gs.empty())
+    {
+        glDeleteShader(geometryShader);
+    }
     glDeleteShader(fragmentShader);
 }
 

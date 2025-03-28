@@ -341,28 +341,27 @@ int main(int argc, char** argv)
 
 			t = Time::End(t, "Loading Compound");
 
-			auto entity = Feather.CreateInstance<Entity>("Points");
-			auto renderable = Feather.CreateInstance<Renderable>("Points");
-			renderable->Initialize(Renderable::GeometryMode::Triangles);
+			auto entity = Feather.GetRegistry().create();
+			auto& renderable = Feather.GetRegistry().emplace<Renderable>(entity);
+
+			renderable.Initialize(Renderable::GeometryMode::Triangles);
 			{
-				auto shader = Feather.CreateInstance<Shader>();
-				shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
-				renderable->AddShader(shader);
+				auto shader = Feather.CreateShader("Instancing", File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
+				renderable.AddShader(shader);
 			}
 			{
-				auto shader = Feather.CreateInstance<Shader>();
-				shader->Initialize(File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
-				renderable->AddShader(shader);
-				renderable->SetActiveShaderIndex(1);
+				auto shader = Feather.CreateShader("InstancingWithoutNormal", File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
+				renderable.AddShader(shader);
 			}
+			renderable.SetActiveShaderIndex(1);
 
 			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.05f, 6, 6);
 			//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
-			renderable->AddIndices(indices);
-			renderable->AddVertices(vertices);
-			renderable->AddNormals(normals);
-			renderable->AddColors(colors);
-			renderable->AddUVs(uvs);
+			renderable.AddIndices(indices);
+			renderable.AddVertices(vertices);
+			renderable.AddNormals(normals);
+			renderable.AddColors(colors);
+			renderable.AddUVs(uvs);
 
 			//PLYFormat tempPLY;
 
@@ -375,15 +374,15 @@ int main(int argc, char** argv)
 				auto b = p.color.z;
 				auto a = 1.f;
 
-				renderable->AddInstanceColor(MiniMath::V4(r, g, b, a));
-				renderable->AddInstanceNormal(p.normal);
+				renderable.AddInstanceColor(MiniMath::V4(r, g, b, a));
+				renderable.AddInstanceNormal(p.normal);
 
 				MiniMath::M4 model = MiniMath::M4::identity();
 				model.m[0][0] = 1.5f;
 				model.m[1][1] = 1.5f;
 				model.m[2][2] = 1.5f;
 				model = MiniMath::translate(model, p.position);
-				renderable->AddInstanceTransform(model);
+				renderable.AddInstanceTransform(model);
 
 				//tempPLY.AddPoint(p.position.x, p.position.y, p.position.z);
 				//tempPLY.AddNormal(p.normal.x, p.normal.y, p.normal.z);
@@ -395,7 +394,7 @@ int main(int argc, char** argv)
 
 			alog("ALP %d points loaded\n", alp.GetPoints().size());
 
-			renderable->EnableInstancing(alp.GetPoints().size());
+			renderable.EnableInstancing(alp.GetPoints().size());
 
 			//renderable->AddEventHandler(EventType::KeyPress, [renderable, &alp](const Event& event, FeatherObject* object) {
 			//	if (GLFW_KEY_M == event.keyEvent.keyCode)
@@ -457,7 +456,7 @@ int main(int argc, char** argv)
 					//}
 					//else
 					//{
-					renderable->SetInstanceColor(i, MiniMath::V4(r, g, b, 1.0f));
+					renderable.SetInstanceColor(i, MiniMath::V4(r, g, b, 1.0f));
 					//}
 				}
 
@@ -530,47 +529,47 @@ int main(int argc, char** argv)
 				float Y = cy + (15.0f);
 				float Z = cz + (20.0f);
 
-				auto entity = Feather.CreateInstance<Entity>("AABB");
-				auto shader = Feather.CreateInstance<Shader>();
-				shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
-				auto renderable = Feather.CreateInstance<Renderable>();
-				renderable->Initialize(Renderable::GeometryMode::Lines);
-				renderable->AddShader(shader);
+				auto entity = Feather.GetRegistry().create();
+				auto& renderable = Feather.GetRegistry().emplace<Renderable>(entity);
 
-				renderable->AddVertex({ x, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				auto shader = Feather.CreateShader("Line", File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
+				renderable.AddShader(shader);
+				renderable.Initialize(Renderable::GeometryMode::Lines);
 
-				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
 
-				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, Y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
 
-				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ x, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, Y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, Y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
 
-
-				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-
-				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-
-				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-
-				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, Y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
 
 
-				renderable->AddVertex({ x, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ x, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ X, y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ X, y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ X, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ X, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ x, Y, z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-				renderable->AddVertex({ x, Y, Z }); renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable.AddVertex({ X, y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, Y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable.AddVertex({ X, Y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, Y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+				renderable.AddVertex({ x, Y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+
+
+				renderable.AddVertex({ x, y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, Y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ X, Y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, Y, z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+				renderable.AddVertex({ x, Y, Z }); renderable.AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
 			}
 		}
 #pragma endregion

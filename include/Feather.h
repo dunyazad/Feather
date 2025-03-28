@@ -1,15 +1,16 @@
 #pragma once
 
 #include <FeatherCommon.h>
+#include <File.h>
+
+class EventSystem;
+class RenderSystem;
+class ImmediateModeRenderSystem;
+class GUISystem;
 
 class Entity;
 class FeatherWindow;
-class SystemBase;
-class ComponentBase;
-class CameraBase;
-class Transform;
-class PerspectiveCamera;
-class OrthogonalCamera;
+class Shader;
 
 class libFeather
 {
@@ -25,66 +26,6 @@ public:
 
 	void Run();
 
-	template<typename T>
-	set<T*> GetInstances()
-	{
-		return GetInstancesOfType<T>(typeid(T));
-	}
-
-	template<typename T>
-	T* GetFirstInstance()
-	{
-		auto instances = GetInstancesOfType<T>(typeid(T));
-		if (instances.empty()) return nullptr;
-		else return *instances.begin();
-	}
-
-	template <typename T, typename... Args>
-	T* CreateInstance(const string& name = "", Args&&... args)
-	{
-		auto instance = new T(forward<Args>(args)...);
-		instance->SetName(name);
-		objectInstances.push_back(instance);
-		s_instanceMap[typeid(T)].push_back(instance);
-		return instance;
-	}
-
-	static unordered_map<type_index, vector<FeatherObject*>>& GetInstanceMap();
-	static set<FeatherObject*> GetAllInstances();
-
-	template<typename T>
-	static set<T*> GetInstancesOfType(type_index baseType)
-	{
-		set<T*> instances;
-
-		if (s_instanceMap.find(baseType) != s_instanceMap.end())
-		{
-			for (auto obj : s_instanceMap[baseType])
-			{
-				if (auto castedObj = dynamic_cast<T*>(obj))
-				{
-					instances.insert(castedObj);
-				}
-			}
-		}
-
-		for (const auto& subclass : FeatherObject::GetAllSubclasses(baseType))
-		{
-			if (s_instanceMap.find(subclass) != s_instanceMap.end())
-			{
-				for (auto obj : s_instanceMap[subclass])
-				{
-					if (auto castedObj = dynamic_cast<T*>(obj))
-					{
-						instances.insert(castedObj);
-					}
-				}
-			}
-		}
-
-		return instances;
-	}
-
 	inline FeatherWindow* GetFeatherWindow() const { return featherWindow; }
 
 	inline void AddOnInitializeCallback(function<void()> callback) { onInitializeCallbacks.push_back(callback); }
@@ -95,6 +36,15 @@ public:
 	inline entt::registry& GetRegistry() { return registry; }
 	inline entt::dispatcher& GetDispatcher() { return dispatcher; }
 
+	EventSystem* GetEventSystem() { return eventSystem; }
+	RenderSystem* GetRenderSystem() { return renderSystem; }
+	ImmediateModeRenderSystem* GetImmediateModeRenderSystem() { return immediateModeRenderSystem; }
+	GUISystem* GetGUISystem() { return guiSystem; }
+
+	Shader* CreateShader(const string& name, const File& vsFile, const File& gsFile, const File& fsFile);
+	Shader* CreateShader(const string& name, const File& vsFile, const File& fsFile);
+	Shader* GetShader(const string& name);
+
 private:
 	static libFeather* s_instance;
 
@@ -103,10 +53,6 @@ private:
 
 	FeatherWindow* featherWindow = nullptr;
 
-	static unordered_map<type_index, vector<FeatherObject*>> s_instanceMap;
-
-	vector<FeatherObject*> objectInstances;
-
 	vector<function<void()>> onInitializeCallbacks;
 	vector<function<void(f32)>> onUpdateCallbacks;
 	vector<function<void(f32)>> onRenderCallbacks;
@@ -114,4 +60,11 @@ private:
 
 	entt::registry registry;
 	entt::dispatcher dispatcher;
+
+	unordered_map<string, Shader*> shaders;
+
+	EventSystem*                  eventSystem;
+	RenderSystem*                 renderSystem;
+	ImmediateModeRenderSystem*    immediateModeRenderSystem;
+	GUISystem*                    guiSystem;
 };

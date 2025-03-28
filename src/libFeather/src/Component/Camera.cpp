@@ -3,7 +3,6 @@
 #include <FeatherWindow.h>
 
 CameraBase::CameraBase()
-	: RegisterDerivation<CameraBase, ComponentBase>()
 {
     PushCameraHistory();
 }
@@ -102,7 +101,6 @@ void CameraBase::Reset()
 }
 
 PerspectiveCamera::PerspectiveCamera()
-    : RegisterDerivation<PerspectiveCamera, CameraBase>()
 {
     auto window = Feather.GetFeatherWindow();
 
@@ -161,7 +159,6 @@ void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
 }
 
 OrthogonalCamera::OrthogonalCamera()
-	: RegisterDerivation<OrthogonalCamera, CameraBase>()
 {
 }
 

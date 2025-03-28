@@ -24,21 +24,44 @@ int main(int argc, char** argv)
 			//	}
 			//	});
 		}
+
+#pragma region Camera
 		{
-			auto camera = Feather.CreateInstance<Entity>("Camera");
-			auto perspectiveCamera = Feather.CreateInstance<PerspectiveCamera>();
+			entt::entity cam = Feather.GetRegistry().create();
+			auto& pcam = Feather.GetRegistry().emplace<PerspectiveCamera>(cam);
+			auto& pcamMan = Feather.GetRegistry().emplace<CameraManipulatorTrackball>(cam);
+			pcamMan.SetCamera(&pcam);
 
-			//auto cameraManipulator = Feather.CreateInstance<CameraManipulatorOrbit>();
-			//cameraManipulator->SetCamera(perspectiveCamera);
+			Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(cam, cam, [](entt::entity entity, const KeyEvent& event) {
+				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnKey(event);
+				});
 
-			auto cameraManipulator = Feather.CreateInstance<CameraManipulatorTrackball>();
-			cameraManipulator->SetCamera(perspectiveCamera);
+			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(cam, cam, [](entt::entity entity, const MousePositionEvent& event) {
+				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMousePosition(event);
+				});
+
+			Feather.GetRegistry().emplace<EventCallback<MouseButtonEvent>>(cam, cam, [](entt::entity entity, const MouseButtonEvent& event) {
+				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseButton(event);
+				});
+
+			Feather.GetRegistry().emplace<EventCallback<MouseWheelEvent>>(cam, cam, [](entt::entity entity, const MouseWheelEvent& event) {
+				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseWheel(event);
+				});
 		}
+#pragma endregion
 
+#pragma region Status Panel
 		{
-			auto gui = Feather.CreateInstance<Entity>("GUI");
-			auto statusPanel = Feather.CreateInstance<StatusPanel>();
+			auto gui = Feather.GetRegistry().create();
+			auto statusPanel = Feather.GetRegistry().emplace<StatusPanel>(gui);
+
+			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(gui, gui, [](entt::entity entity, const MousePositionEvent& event) {
+				auto& component = Feather.GetRegistry().get<StatusPanel>(entity);
+				component.mouseX = event.xpos;
+				component.mouseY = event.ypos;
+				});
 		}
+#pragma endregion
 
 //#define RENDER_TRIANGLE
 #ifdef RENDER_TRIANGLE
@@ -281,68 +304,67 @@ int main(int argc, char** argv)
 				alp.Serialize("../../res/3D/Teeth_Full.alp");
 			}
 
-			auto entity = Feather.CreateInstance<Entity>("Box");
-			auto renderable = Feather.CreateInstance<Renderable>();
-			renderable->Initialize(Renderable::GeometryMode::Triangles);
 			{
-				auto shader = Feather.CreateInstance<Shader>();
-				shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
-				renderable->AddShader(shader);
+				auto entity = Feather.GetRegistry().create();
+				auto& renderable = Feather.GetRegistry().emplace<Renderable>(entity);
+				renderable.Initialize(Renderable::GeometryMode::Triangles);
+				{
+					auto shader = Feather.CreateShader("Instancing", File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
+					renderable.AddShader(shader);
+				}
+				{
+					auto shader = Feather.CreateShader("InstancingWithoutNormal", File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
+					renderable.AddShader(shader);
+				}
+				renderable.SetActiveShaderIndex(1);
+
+				auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.05f, 6, 6);
+				//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
+				renderable.AddIndices(indices);
+				renderable.AddVertices(vertices);
+				renderable.AddNormals(normals);
+				renderable.AddColors(colors);
+				renderable.AddUVs(uvs);
+
+				for (auto& p : alp.GetPoints())
+				{
+					auto r = p.color.x;
+					auto g = p.color.y;
+					auto b = p.color.z;
+					auto a = 1.f;
+
+					renderable.AddInstanceColor(MiniMath::V4(r, g, b, a));
+					renderable.AddInstanceNormal(p.normal);
+
+					MiniMath::M4 model = MiniMath::M4::identity();
+					model.m[0][0] = 1.5f;
+					model.m[1][1] = 1.5f;
+					model.m[2][2] = 1.5f;
+					model = MiniMath::translate(model, p.position);
+					renderable.AddInstanceTransform(model);
+				}
+
+				renderable.EnableInstancing(alp.GetPoints().size());
+
+				//renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
+				//	if (GLFW_KEY_M == event.keyEvent.keyCode)
+				//	{
+				//		auto renderable = dynamic_cast<Renderable*>(object);
+				//		renderable->NextDrawingMode();
+				//	}
+				//	else if (GLFW_KEY_1 == event.keyEvent.keyCode)
+				//	{
+				//		auto renderable = dynamic_cast<Renderable*>(object);
+				//		renderable->SetActiveShaderIndex(0);
+				//	}
+				//	else if (GLFW_KEY_2 == event.keyEvent.keyCode)
+				//	{
+				//		auto renderable = dynamic_cast<Renderable*>(object);
+				//		renderable->SetActiveShaderIndex(1);
+				//	}
+				//	});
 			}
-			{
-				auto shader = Feather.CreateInstance<Shader>();
-				shader->Initialize(File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
-				renderable->AddShader(shader);
-				renderable->SetActiveShaderIndex(1);
-			}
-
-			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.05f, 6, 6);
-			//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
-			renderable->AddIndices(indices);
-			renderable->AddVertices(vertices);
-			renderable->AddNormals(normals);
-			renderable->AddColors(colors);
-			renderable->AddUVs(uvs);
-
-			for (auto& p : alp.GetPoints())
-			{
-				auto r = p.color.x;
-				auto g = p.color.y;
-				auto b = p.color.z;
-				auto a = 1.f;
-
-				renderable->AddInstanceColor(MiniMath::V4(r, g, b, a));
-				renderable->AddInstanceNormal(p.normal);
-
-				MiniMath::M4 model = MiniMath::M4::identity();
-				model.m[0][0] = 1.5f;
-				model.m[1][1] = 1.5f;
-				model.m[2][2] = 1.5f;
-				model = MiniMath::translate(model, p.position);
-				renderable->AddInstanceTransform(model);
-			}
-
-			renderable->EnableInstancing(alp.GetPoints().size());
-
-			//renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-			//	if (GLFW_KEY_M == event.keyEvent.keyCode)
-			//	{
-			//		auto renderable = dynamic_cast<Renderable*>(object);
-			//		renderable->NextDrawingMode();
-			//	}
-			//	else if (GLFW_KEY_1 == event.keyEvent.keyCode)
-			//	{
-			//		auto renderable = dynamic_cast<Renderable*>(object);
-			//		renderable->SetActiveShaderIndex(0);
-			//	}
-			//	else if (GLFW_KEY_2 == event.keyEvent.keyCode)
-			//	{
-			//		auto renderable = dynamic_cast<Renderable*>(object);
-			//		renderable->SetActiveShaderIndex(1);
-			//	}
-			//	});
 		}
-		
 		});
 
 	Feather.Run();
