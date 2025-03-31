@@ -294,6 +294,11 @@ void Renderable::AddInstanceTransform(const MiniMath::M4& transform)
 	instanceTransforms.AddData(transform);
 }
 
+const MiniMath::V4& Renderable::GetInstanceColor(ui32 bufferIndex) const
+{
+	return instanceColors.at(bufferIndex);
+}
+
 void Renderable::SetInstanceColor(ui32 bufferIndex, const MiniMath::V4& color)
 {
 	needToUpdate = true;
@@ -301,11 +306,21 @@ void Renderable::SetInstanceColor(ui32 bufferIndex, const MiniMath::V4& color)
 	instanceColors.SetData(bufferIndex, color);
 }
 
+const MiniMath::V3& Renderable::GetInstanceNormal(ui32 bufferIndex) const
+{
+	return instanceNormals.at(bufferIndex);
+}
+
 void Renderable::SetInstanceNormal(ui32 bufferIndex, const MiniMath::V3& normal)
 {
 	needToUpdate = true;
 
 	instanceNormals.SetData(bufferIndex, normal);
+}
+
+const MiniMath::M4& Renderable::GetInstanceTransform(ui32 bufferIndex) const
+{
+	return instanceTransforms.at(bufferIndex);
 }
 
 void Renderable::SetInstanceTransform(ui32 bufferIndex, const MiniMath::M4& transform)

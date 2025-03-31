@@ -204,7 +204,8 @@ namespace MiniMath
 		f32 determinant() const;
 		M4 inverse() const;
 
-		f32 at(i32 row, i32 column);
+		f32& at(i32 row, i32 column);
+		const f32& at(i32 row, i32 column) const;
 
 		static M4 identity();
 		static M4 zero();

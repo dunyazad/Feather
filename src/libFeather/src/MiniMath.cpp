@@ -698,7 +698,12 @@ namespace MiniMath
 		return inv;
 	}
 
-	f32 M4::at(i32 row, i32 column)
+	f32& M4::at(i32 row, i32 column)
+	{
+		return m[row][column];
+	}
+
+	const f32& M4::at(i32 row, i32 column) const
 	{
 		return m[row][column];
 	}

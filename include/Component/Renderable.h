@@ -112,6 +112,8 @@ public:
 
 	inline ui64 size() { return datas.size(); }
 	inline bool empty() { return datas.empty(); }
+	inline T& at(ui32 index) { return datas.at(index); }
+	inline const T& at(ui32 index) const { return datas.at(index); }
 	inline bool IsUseInstancing() { return useInstancing; }
 	inline void SetUseInstancing(bool use) { useInstancing = use; }
 
@@ -178,8 +180,11 @@ public:
 	void AddInstanceNormal(const MiniMath::V3& normal);
 	void AddInstanceTransform(const MiniMath::M4& transform);
 
+	const MiniMath::V4& GetInstanceColor(ui32 bufferIndex) const;
 	void SetInstanceColor(ui32 bufferIndex, const MiniMath::V4& color);
+	const MiniMath::V3& GetInstanceNormal(ui32 bufferIndex) const;
 	void SetInstanceNormal(ui32 bufferIndex, const MiniMath::V3& normal);
+	const MiniMath::M4& GetInstanceTransform(ui32 bufferIndex) const;
 	void SetInstanceTransform(ui32 bufferIndex, const MiniMath::M4& transform);
 
 	void AddIndices(const vector<ui32>& indices);
@@ -250,9 +255,4 @@ private:
 	GraphicsBuffer<MiniMath::V3> instanceNormals;
 
 	ui32 numberOfInstances = 1;
-};
-
-class DebuggingRenderable
-{
-
 };
