@@ -36,8 +36,6 @@ using namespace std;
 
 #include <omp.h>
 
-
-
 #include <entt/entt.hpp>
 
 using Entity = entt::entity;
@@ -70,9 +68,6 @@ const string EmptyString = "";
 #include <TypeDefinitions.h>
 
 #include <MiniMath.h>
-
-#include <cuda_runtime.h>
-#include <device_launch_parameters.h>
 
 namespace Time
 {

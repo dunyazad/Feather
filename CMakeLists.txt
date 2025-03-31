@@ -22,11 +22,11 @@ include(Dependencies)
 
 add_subdirectory(src/libFeather)
 add_subdirectory(src/appFeather)
-add_subdirectory(src/cuappFeather)
+#add_subdirectory(src/cuappFeather)
 
 if(MSVC)
     # /bigobj 옵션 추가 (컴파일러 오류 방지)
     target_compile_options(libFeather PRIVATE /bigobj)
     target_compile_options(appFeather PRIVATE /bigobj)
-    target_compile_options(cuappFeather PRIVATE /bigobj)
+    # target_compile_options(cuappFeather PRIVATE /bigobj)
 endif()
