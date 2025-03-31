@@ -196,7 +196,7 @@ namespace MiniMath
 		M4 operator*(f32 scalar) const;
 		M4 operator*(const M4& other) const;
 		V4 operator*(const V4& vec) const;
-		
+
 		V3 transformPoi32(const V3& poi32) const;
 		V3 transformVector(const V3& vector) const;
 
@@ -371,5 +371,88 @@ namespace MiniMath
 		bool IntersectsTriangle(const V3& tp0, const V3& tp1, const V3& tp2);
 	};
 
+	struct Frustum
+	{
+		V4 planes[6]; // left, right, bottom, top, near, far
+
+		// ViewProjection = Projection * View
+		static Frustum FromMatrix(const M4& viewProjection)
+		{
+			Frustum frustum;
+
+			const M4& m = viewProjection;
+
+			// Left plane
+			frustum.planes[0] = V4(
+				m.m[0][3] + m.m[0][0],
+				m.m[1][3] + m.m[1][0],
+				m.m[2][3] + m.m[2][0],
+				m.m[3][3] + m.m[3][0]
+			);
+			// Right
+			frustum.planes[1] = V4(
+				m.m[0][3] - m.m[0][0],
+				m.m[1][3] - m.m[1][0],
+				m.m[2][3] - m.m[2][0],
+				m.m[3][3] - m.m[3][0]
+			);
+			// Bottom
+			frustum.planes[2] = V4(
+				m.m[0][3] + m.m[0][1],
+				m.m[1][3] + m.m[1][1],
+				m.m[2][3] + m.m[2][1],
+				m.m[3][3] + m.m[3][1]
+			);
+			// Top
+			frustum.planes[3] = V4(
+				m.m[0][3] - m.m[0][1],
+				m.m[1][3] - m.m[1][1],
+				m.m[2][3] - m.m[2][1],
+				m.m[3][3] - m.m[3][1]
+			);
+			// Near
+			frustum.planes[4] = V4(
+				m.m[0][3] + m.m[0][2],
+				m.m[1][3] + m.m[1][2],
+				m.m[2][3] + m.m[2][2],
+				m.m[3][3] + m.m[3][2]
+			);
+			// Far
+			frustum.planes[5] = V4(
+				m.m[0][3] - m.m[0][2],
+				m.m[1][3] - m.m[1][2],
+				m.m[2][3] - m.m[2][2],
+				m.m[3][3] - m.m[3][2]
+			);
+
+			// Normalize planes
+			for (int i = 0; i < 6; ++i)
+			{
+				V3 normal(frustum.planes[i].x, frustum.planes[i].y, frustum.planes[i].z);
+				f32 length = magnitude(normal);
+				if (length > Epsilon)
+				{
+					frustum.planes[i].x /= length;
+					frustum.planes[i].y /= length;
+					frustum.planes[i].z /= length;
+					frustum.planes[i].w /= length;
+				}
+			}
+			return frustum;
+		}
+
+		// 포인트가 프러스텀 안에 있는지 확인
+		inline bool Contains(const V3& p) const
+		{
+			for (int i = 0; i < 6; ++i)
+			{
+				const V4& plane = planes[i];
+				if (dot(V3(plane.x, plane.y, plane.z), p) + plane.w < 0)
+					return false;
+			}
+			return true;
+		}
+
+	};
 	V3 LinePlaneIntersection(const V3& l0, const V3& l1, const V3& planePosition, const V3& planeNormal);
 }
