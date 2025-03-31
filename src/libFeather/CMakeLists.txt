@@ -10,6 +10,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(Dependencies)
 
 set(source_list
+    ${Feather_SOURCE_DIR}/External/glad/src/glad.c
+
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
     ${CMAKE_SOURCE_DIR}/include/TypeDefinitions.h
     ${CMAKE_SOURCE_DIR}/include/FeatherCommon.h
@@ -112,10 +114,9 @@ source_group("Source Files\\imgui\\implot" FILES
 
 # Include directories
 target_include_directories(libFeather PUBLIC
+    ${Feather_SOURCE_DIR}/External/glad/include/
     ${CMAKE_SOURCE_DIR}/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${glad_SOURCE_DIR}/include
-    ${glad_BINARY_DIR}/include
     ${glfw_SOURCE_DIR}/include
     ${imgui_SOURCE_DIR}
     ${implot_SOURCE_DIR}
@@ -128,7 +129,6 @@ target_compile_definitions(libFeather PUBLIC IMGUI_ENABLE_DOCKING IMGUI_DEFINE_M
 # Link dependencies
 target_link_libraries(libFeather
     glfw
-    glad
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
