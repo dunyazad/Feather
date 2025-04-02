@@ -23,13 +23,6 @@ public:
 
 	MiniMath::M4 LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const;
 
-	virtual void PushCameraHistory();
-	virtual void PopCameraHistory();
-	virtual void JumpCameraHistory(i32 index);
-	virtual void JumpToPreviousCameraHistory();
-	virtual void JumpToNextCameraHistory();
-	virtual void Reset();
-
 	inline MiniMath::V3& GetEye() { return eye; }
 	inline MiniMath::V3& GetTarget() { return target; }
 	inline MiniMath::V3& GetUp() { return up; }
@@ -52,9 +45,6 @@ protected:
 	MiniMath::V3 eye = MiniMath::V3(0.0f, 0.0f, 5.0f);
 	MiniMath::V3 target = MiniMath::V3(0.0f, 0.0f, 0.0f);
 	MiniMath::V3 up = MiniMath::V3(0.0f, 1.0f, 0.0f);
-
-	vector<tuple<MiniMath::V3, MiniMath::V3, MiniMath::V3>> cameraHistory;
-	i32 cameraHistoryIndex = 0;
 };
 
 class PerspectiveCamera : public CameraBase
