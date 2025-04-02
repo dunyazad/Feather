@@ -296,6 +296,7 @@ void CameraManipulatorTrackball::OnKey(const KeyEvent& event)
 	else if (event.keyCode == GLFW_KEY_R)
 	{
 		Reset();
+		return;
 	}
 
 	camera->SetEye(eye);
@@ -355,6 +356,8 @@ void CameraManipulatorTrackball::JumpToNextCameraHistory()
 void CameraManipulatorTrackball::Reset()
 {
 	auto [eye, target, up, radius] = cameraHistory.front();
+	this->radius = radius;
+
 	cameraHistory.clear();
 	cameraHistory.push_back({ eye, target, up, radius });
 
