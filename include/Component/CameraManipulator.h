@@ -100,7 +100,7 @@ public:
 	void Reset();
 
 	inline CameraBase* GetCamera() const { return camera; }
-	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
+	inline void SetCamera(CameraBase* camera) { this->camera = camera; PushCameraHistory(); }
 
 private:
 	CameraBase* camera = nullptr;
