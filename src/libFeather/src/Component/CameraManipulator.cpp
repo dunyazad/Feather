@@ -124,7 +124,6 @@ CameraManipulatorTrackball::CameraManipulatorTrackball()
 	isMButtonPressed(false),
 	isRButtonPressed(false)
 {
-	PushCameraHistory();
 }
 
 CameraManipulatorTrackball::~CameraManipulatorTrackball() {}
