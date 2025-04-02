@@ -98,6 +98,7 @@ public:
 	void JumpToPreviousCameraHistory();
 	void JumpToNextCameraHistory();
 	void Reset();
+	void MakeDefault();
 
 	inline CameraBase* GetCamera() const { return camera; }
 	inline void SetCamera(CameraBase* camera) { this->camera = camera; PushCameraHistory(); }

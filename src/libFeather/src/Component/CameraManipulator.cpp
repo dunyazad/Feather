@@ -361,7 +361,21 @@ void CameraManipulatorTrackball::Reset()
 	cameraHistory.clear();
 	cameraHistory.push_back({ eye, target, up, radius });
 
+	cameraHistoryIndex = 0;
+
 	camera->SetEye(eye);
 	camera->SetTarget(target);
 	camera->SetUp(up);
+}
+
+void CameraManipulatorTrackball::MakeDefault()
+{
+	MiniMath::V3 eye = camera->GetEye();
+	MiniMath::V3 target = camera->GetTarget();
+	MiniMath::V3 up = camera->GetUp();
+
+	cameraHistory.clear();
+	cameraHistory.push_back({ eye, target, up, radius });
+
+	cameraHistoryIndex = 0;
 }
