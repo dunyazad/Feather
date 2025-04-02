@@ -10,6 +10,13 @@ public:
 	CameraManipulatorBase();
 	virtual ~CameraManipulatorBase() = default;
 
+	virtual void PushCameraHistory() = 0;
+	virtual void PopCameraHistory() = 0;
+	virtual void JumpCameraHistory(i32 index) = 0;
+	virtual void JumpToPreviousCameraHistory() = 0;
+	virtual void JumpToNextCameraHistory() = 0;
+	virtual void Reset() = 0;
+
 	inline CameraBase* SetCamera() const { return camera; }
 	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
 
@@ -85,6 +92,13 @@ public:
 	void OnMouseWheel(const MouseWheelEvent& event);
 	void OnKey(const KeyEvent& event);
 
+	void PushCameraHistory();
+	void PopCameraHistory();
+	void JumpCameraHistory(i32 index);
+	void JumpToPreviousCameraHistory();
+	void JumpToNextCameraHistory();
+	void Reset();
+
 	inline CameraBase* GetCamera() const { return camera; }
 	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
 
@@ -98,12 +112,20 @@ private:
 	bool isMButtonPressed = false;
 	bool isRButtonPressed = false;
 
-	float radius = 5.0f;
-	float mouseSensitivity = 0.005f;
-	float mousePanningSensitivity = 0.01f;
+	f32 radius = 5.0f;
+	f32 mouseSensitivity = 0.005f;
+	f32 mousePanningSensitivity = 0.01f;
 	f32 mouseWheelSensitivity = 0.5f;
 
 	MiniMath::Quaternion cameraRotation = MiniMath::Quaternion::identity();
 
 	std::unordered_set<int> pressedKeys;
+
+
+
+
+
+
+	vector<tuple<MiniMath::V3, MiniMath::V3, MiniMath::V3, f32>> cameraHistory;
+	i32 cameraHistoryIndex = 0;
 };

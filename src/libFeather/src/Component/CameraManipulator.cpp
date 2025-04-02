@@ -124,6 +124,7 @@ CameraManipulatorTrackball::CameraManipulatorTrackball()
 	isMButtonPressed(false),
 	isRButtonPressed(false)
 {
+	PushCameraHistory();
 }
 
 CameraManipulatorTrackball::~CameraManipulatorTrackball() {}
@@ -295,9 +296,70 @@ void CameraManipulatorTrackball::OnKey(const KeyEvent& event)
 	}
 	else if (event.keyCode == GLFW_KEY_R)
 	{
-		camera->Reset();
+		Reset();
 	}
 
 	camera->SetEye(eye);
 	camera->SetTarget(target);
+}
+
+void CameraManipulatorTrackball::PushCameraHistory()
+{
+	MiniMath::V3 eye = camera->GetEye();
+	MiniMath::V3 target = camera->GetTarget();
+	MiniMath::V3 up = camera->GetUp();
+
+	cameraHistory.push_back({ eye, target, up, radius });
+
+	JumpCameraHistory(cameraHistory.size() - 1);
+}
+
+void CameraManipulatorTrackball::PopCameraHistory()
+{
+	if (1 >= cameraHistory.size()) return;
+
+	cameraHistory.pop_back();
+
+	if (cameraHistoryIndex >= cameraHistory.size())
+	{
+		JumpCameraHistory(cameraHistory.size() - 1);
+	}
+}
+
+void CameraManipulatorTrackball::JumpCameraHistory(i32 index)
+{
+	if (index >= cameraHistory.size()) return;
+
+	cameraHistoryIndex = index;
+
+	auto [eye, target, up, radius] = cameraHistory[cameraHistoryIndex];
+
+	camera->SetEye(eye);
+	camera->SetTarget(target);
+	camera->SetUp(up);
+}
+
+void CameraManipulatorTrackball::JumpToPreviousCameraHistory()
+{
+	if (0 == cameraHistoryIndex) return;
+
+	JumpCameraHistory(cameraHistoryIndex - 1);
+}
+
+void CameraManipulatorTrackball::JumpToNextCameraHistory()
+{
+	if (cameraHistoryIndex >= cameraHistory.size()) return;
+
+	JumpCameraHistory(cameraHistoryIndex + 1);
+}
+
+void CameraManipulatorTrackball::Reset()
+{
+	auto [eye, target, up, radius] = cameraHistory.front();
+	cameraHistory.clear();
+	cameraHistory.push_back({ eye, target, up, radius });
+
+	camera->SetEye(eye);
+	camera->SetTarget(target);
+	camera->SetUp(up);
 }
