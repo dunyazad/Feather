@@ -47,12 +47,26 @@ public:
 	void RemoveEntity(const string& name);
 	void RemoveEntity(Entity entity);
 
+	template<typename T>
+	T& GetComponent(Entity entity)
+	{
+		assert(registry.all_of<T>(entity) && "Entity does not have the requested component.");
+		return registry.get<T>(entity);
+	}
+
 	template<typename T, typename... Args>
 	T & CreateComponent(Entity entity, Args&&... args) {
 		if (registry.all_of<T>(entity)) {
 			return registry.get<T>(entity);
 		}
 		return registry.emplace<T>(entity, std::forward<Args>(args)...);
+	}
+
+	template<typename T>
+	EventCallback<T>& GetEventCallback(Entity entity)
+	{
+		assert(registry.all_of<EventCallback<T>>(entity) && "Entity does not have the requested event callback.");
+		return registry.get<EventCallback<T>>(entity);
 	}
 
 	template<typename T, typename... Args>
