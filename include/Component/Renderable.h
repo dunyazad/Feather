@@ -66,46 +66,49 @@ public:
 
 			glBufferData(bufferTarget, sizeof(T) * datas.size(), datas.data(), bufferUsage);
 
-			if constexpr (is_same_v<T, ui32>) {
-				glVertexAttribIPointer(attributeIndex, 1, GL_UNSIGNED_INT, sizeof(T), (void*)0);
-				if (useInstancing)
-				{
-					glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
-				}
-			}
-			else if constexpr (is_same_v<T, MiniMath::V3>) {
-				glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
-				if (useInstancing)
-				{
-					glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
-				}
-			}
-			else if constexpr (is_same_v<T, MiniMath::V4>) {
-				glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
-				if (useInstancing)
-				{
-					glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
-				}
-			}
-			else if constexpr (is_same_v<T, MiniMath::M4>) {
-				if (useInstancing)
-				{
-					for (int i = 0; i < 4; i++) {
-						glVertexAttribPointer(attributeIndex + i, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)(sizeof(float) * i * 4));
-						glEnableVertexAttribArray(attributeIndex + i);
-						glVertexAttribDivisor(attributeIndex + i, 1); // Set attribute to be per-instance
+			if (ui32_max != attributeIndex)
+			{
+				if constexpr (is_same_v<T, ui32>) {
+					glVertexAttribIPointer(attributeIndex, 1, GL_UNSIGNED_INT, sizeof(T), (void*)0);
+					if (useInstancing)
+					{
+						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else
-				{
-					glVertexAttribPointer(attributeIndex, 16, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+				else if constexpr (is_same_v<T, MiniMath::V3>) {
+					glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+					if (useInstancing)
+					{
+						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
+					}
 				}
-			}
-			else {
-				glVertexAttribPointer(attributeIndex, sizeof(T) / sizeof(float), GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
-			}
+				else if constexpr (is_same_v<T, MiniMath::V4>) {
+					glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+					if (useInstancing)
+					{
+						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
+					}
+				}
+				else if constexpr (is_same_v<T, MiniMath::M4>) {
+					if (useInstancing)
+					{
+						for (int i = 0; i < 4; i++) {
+							glVertexAttribPointer(attributeIndex + i, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)(sizeof(float) * i * 4));
+							glEnableVertexAttribArray(attributeIndex + i);
+							glVertexAttribDivisor(attributeIndex + i, 1); // Set attribute to be per-instance
+						}
+					}
+					else
+					{
+						glVertexAttribPointer(attributeIndex, 16, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+					}
+				}
+				else {
+					glVertexAttribPointer(attributeIndex, sizeof(T) / sizeof(float), GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+				}
 
-			glEnableVertexAttribArray(attributeIndex);
+				glEnableVertexAttribArray(attributeIndex);
+			}
 			needToUpdate = false;
 		}
 	}
