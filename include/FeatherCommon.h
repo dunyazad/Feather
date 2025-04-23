@@ -1,5 +1,7 @@
 #pragma once
 
+#define NOMINMAX
+
 #include <cstdio>
 #include <stdio.h>
 #include <limits.h>
