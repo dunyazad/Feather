@@ -125,6 +125,7 @@ target_include_directories(libFeather PUBLIC
     ${imgui_SOURCE_DIR}
     ${implot_SOURCE_DIR}
     ${entt_SOURCE_DIR}/single_include
+    ${stb_SOURCE_DIR}
 )
 
 # Enable Docking feature for ImGui

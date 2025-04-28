@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FeatherCommon.h>
+#include <File.h>
 
 class Texture
 {
@@ -10,6 +11,8 @@ public:
 
 	void Bind();
 	void Unbind();
+
+	void LoadFile(const File& file);
 
 	void SetTextureData(ui32 width = 1024, ui32 height = 1024, ui8* data = nullptr);
 

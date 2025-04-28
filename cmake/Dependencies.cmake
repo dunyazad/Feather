@@ -45,3 +45,11 @@ FetchContent_Declare(
     GIT_TAG        v3.15.0
 )
 FetchContent_MakeAvailable(entt)
+
+# stb
+FetchContent_Declare(
+    stb
+    GIT_REPOSITORY https://github.com/nothings/stb.git
+    GIT_TAG        master
+)
+FetchContent_MakeAvailable(stb)

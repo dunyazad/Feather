@@ -1,5 +1,8 @@
 #include <Component/Texture.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 Texture::Texture()
 {
 	glGenTextures(1, &textureID);
@@ -29,6 +32,23 @@ void Texture::Bind()
 void Texture::Unbind()
 {
 	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Texture::LoadFile(const File& file)
+{
+	stbi_set_flip_vertically_on_load(true);
+
+	int width, height, channels;
+	unsigned char* imageData = stbi_load(file.GetFileName().c_str(), &width, &height, &channels, 4);
+	if (imageData)
+	{
+		SetTextureData(width, height, imageData);
+		stbi_image_free(imageData);
+	}
+	else
+	{
+		std::cerr << "Failed to load texture file!" << std::endl;
+	}
 }
 
 void Texture::SetTextureData(ui32 width, ui32 height, ui8* data)
