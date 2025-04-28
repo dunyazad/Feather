@@ -13,6 +13,18 @@ int main(int argc, char** argv)
 
 	auto w = Feather.GetFeatherWindow();
 
+#pragma region AppMain
+	{
+		auto appMain = Feather.CreateEntity("AppMain");
+		Feather.CreateEventCallback<KeyEvent>(appMain, [](Entity entity, const KeyEvent& event) {
+			if (GLFW_KEY_ESCAPE == event.keyCode)
+			{
+				glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
+			}
+		});
+	}
+#pragma endregion
+
 	Feather.AddOnInitializeCallback([&]() {
 		{
 			//auto appMain = Feather.CreateInstance<Entity>("AppMain");
@@ -31,6 +43,12 @@ int main(int argc, char** argv)
 			auto& pcam = Feather.GetRegistry().emplace<PerspectiveCamera>(cam);
 			auto& pcamMan = Feather.GetRegistry().emplace<CameraManipulatorTrackball>(cam);
 			pcamMan.SetCamera(&pcam);
+
+			Feather.CreateEventCallback<FrameBufferResizeEvent>(cam, [&pcam](Entity entity, const FrameBufferResizeEvent& event) {
+				auto window = Feather.GetFeatherWindow();
+				auto aspectRatio = (f32)window->GetWidth() / (f32)window->GetHeight();
+				pcam.SetAspectRatio(aspectRatio);
+				});
 
 			Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(cam, cam, [](Entity entity, const KeyEvent& event) {
 				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnKey(event);
