@@ -392,6 +392,15 @@ namespace MiniMath
 
 	Quaternion conjugate(const Quaternion q) { return { q.w, -q.x, -q.y, -q.z }; }
 
+	V3 operator*(const Quaternion q, const V3& v)
+	{
+		auto qv = V3{ q.x, q.y, q.z };
+		auto uv = cross(qv, v);
+		auto uuv = cross(qv, uv);
+
+		return v + ((uv * q.w) + uuv) * 2.0f;
+	}
+
 	Quaternion operator*(const Quaternion& q1, const Quaternion& q2)
 	{
 		f32 w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;

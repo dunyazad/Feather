@@ -74,6 +74,8 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/res/Shaders/InstancingWithoutNormal.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.fs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.fs
 )
 
 # Define the library

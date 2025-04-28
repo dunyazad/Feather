@@ -9,6 +9,44 @@ GeometryBuilder::~GeometryBuilder()
 }
 
 tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
+GeometryBuilder::BuildPlane(f32 width, f32 height, const MiniMath::V3& center, const MiniMath::V3& normal)
+{
+	vector<unsigned int> indices;
+	vector<MiniMath::V3> vertices;
+	vector<MiniMath::V3> normals;
+	vector<MiniMath::V4> colors;
+	vector<MiniMath::V2> uvs;
+
+	f32 halfWidth = width * 0.5f;
+	f32 halfHeight = height * 0.5f;
+
+	auto r = MiniMath::rotation({ 0.0f, 0.0f, 1.0f }, normal);
+	
+	vertices.push_back(center + r * MiniMath::V3(-halfWidth, -halfHeight, 0.0f)); // 0
+	vertices.push_back(center + r * MiniMath::V3( halfWidth, -halfHeight, 0.0f)); // 1
+	vertices.push_back(center + r * MiniMath::V3( halfWidth,  halfHeight, 0.0f)); // 2
+	vertices.push_back(center + r * MiniMath::V3(-halfWidth,  halfHeight, 0.0f)); // 3
+	
+	normals.push_back(normal);
+	
+	colors.push_back(MiniMath::V4(1.0f, 1.0f, 1.0f, 1.0f));
+
+	uvs.push_back(MiniMath::V2(0, 0));
+	uvs.push_back(MiniMath::V2(1, 0));
+	uvs.push_back(MiniMath::V2(1, 1));
+	uvs.push_back(MiniMath::V2(0, 1));
+
+	indices.push_back(0);
+	indices.push_back(1);
+	indices.push_back(2);
+	indices.push_back(2);
+	indices.push_back(3);
+	indices.push_back(0);
+
+	return make_tuple(indices, vertices, normals, colors, uvs);
+}
+
+tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
 GeometryBuilder::BuildBox(const MiniMath::V3& center, const MiniMath::V3& dimension)
 {
 	vector<unsigned int> indices;
