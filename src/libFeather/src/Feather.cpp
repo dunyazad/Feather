@@ -98,7 +98,7 @@ Entity libFeather::CreateEntity(const string& name)
     }
 }
 
-Entity libFeather::GetEntity(const string& name)
+Entity libFeather::GetEntityByName(const string& name)
 {
     auto it = nameEntityMapping.find(name);
     if (it != nameEntityMapping.end())

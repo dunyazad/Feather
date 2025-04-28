@@ -42,24 +42,43 @@ public:
 	GUISystem* GetGUISystem() { return guiSystem; }
 
 	Entity CreateEntity(const string& name);
-	Entity GetEntity(const string& name);
+	Entity GetEntityByName(const string& name);
+	template<typename T>
+	Entity GetEntityByComponent(T* t)
+	{
+		auto view = registry.view<T>();
+
+		for (auto entity : view)
+		{
+			const auto& comp = view.get<T>(entity);
+			if (&comp == t)
+			{
+				return entity;
+			}
+		}
+
+		return InvalidEntity;
+	}
+
 	const string& GetEntityName(Entity entity);
 	void RemoveEntity(const string& name);
 	void RemoveEntity(Entity entity);
 
 	template<typename T>
-	T& GetComponent(Entity entity)
+	T* GetComponent(Entity entity)
 	{
-		assert(registry.all_of<T>(entity) && "Entity does not have the requested component.");
-		return registry.get<T>(entity);
+		if (false == registry.all_of<T>(entity))
+			return nullptr;
+		else
+			return &registry.get<T>(entity);
 	}
 
 	template<typename T, typename... Args>
-	T & CreateComponent(Entity entity, Args&&... args) {
+	T* CreateComponent(Entity entity, Args&&... args) {
 		if (registry.all_of<T>(entity)) {
-			return registry.get<T>(entity);
+			return &registry.get<T>(entity);
 		}
-		return registry.emplace<T>(entity, std::forward<Args>(args)...);
+		return &(registry.emplace<T>(entity, std::forward<Args>(args)...));
 	}
 
 	template<typename T>

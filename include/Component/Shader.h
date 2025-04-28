@@ -23,7 +23,7 @@ public:
     inline void UniformM4(GLint location, const MiniMath::M4& m) { glUniformMatrix4fv(location, 1, GL_FALSE, (float*)m.m); }
 
 private:
-    GLuint shaderProgram = UINT_MAX;
+    GLuint shaderProgram = ui32_max;
 
     string vertexShaderFileName;
     string geometryShaderFileName;

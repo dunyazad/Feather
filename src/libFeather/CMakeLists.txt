@@ -32,6 +32,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Component/EventCallback.h
     ${CMAKE_SOURCE_DIR}/include/Component/Renderable.h
     ${CMAKE_SOURCE_DIR}/include/Component/Shader.h
+    ${CMAKE_SOURCE_DIR}/include/Component/Texture.h
     ${CMAKE_SOURCE_DIR}/include/Component/Transform.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/GUIComponents.h
@@ -57,6 +58,7 @@ set(source_list
     src/Component/CameraManipulator.cpp
     src/Component/Renderable.cpp
     src/Component/Shader.cpp
+    src/Component/Texture.cpp
     src/Component/Transform.cpp
 
     src/Component/GUIComponent/StatusPanel.cpp

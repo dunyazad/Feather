@@ -61,39 +61,74 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         if (nullptr == shader) continue;
 
         shader->Use();
-        {
-            auto index = shader->GetUniformLocation("model");
-            if (-1 != index)
-            {
-                shader->UniformM4(index, MiniMath::M4::identity());
-            }
-        }
-        {
-            auto index = shader->GetUniformLocation("view");
-            if (-1 != index)
-            {
-                shader->UniformM4(index, viewMatrix);
-            }
-        }
-        {
-            auto index = shader->GetUniformLocation("projection");
-            if (-1 != index)
-            {
-                shader->UniformM4(index, perspectiveMatrix);
-            }
-        }
-        {
-            auto index = shader->GetUniformLocation("cameraPos");
-            if (-1 != index)
-            {
-                shader->UniformV3(index, eye);
-            }
-        }
-
+        
         for (auto& renderable : renderables)
         {
             renderable->Update(frameNo, timeDelta);
+
+            auto entity = Feather.GetEntityByComponent<Renderable>(renderable);
+            if (InvalidEntity == entity) continue;
+
+            auto transform = Feather.GetComponent<Transform>(entity);
+            if (nullptr != transform)
+            {
+                auto& transformMatrix = transform->GetTransformMatrix();
+
+                auto index = shader->GetUniformLocation("model");
+                if (-1 != index)
+                {
+                    shader->UniformM4(index, transformMatrix);
+                }
+            }
+            else
+            {
+                auto index = shader->GetUniformLocation("model");
+                if (-1 != index)
+                {
+                    shader->UniformM4(index, MiniMath::M4::identity());
+                }
+            }
+
+            {
+                auto index = shader->GetUniformLocation("view");
+                if (-1 != index)
+                {
+                    shader->UniformM4(index, viewMatrix);
+                }
+            }
+            {
+                auto index = shader->GetUniformLocation("projection");
+                if (-1 != index)
+                {
+                    shader->UniformM4(index, perspectiveMatrix);
+                }
+            }
+            {
+                auto index = shader->GetUniformLocation("cameraPos");
+                if (-1 != index)
+                {
+                    shader->UniformV3(index, eye);
+                }
+            }
+
+            auto texture = Feather.GetComponent<Texture>(entity);
+            if (nullptr != texture)
+            {
+                texture->Bind();
+             
+                auto textureLocation = shader->GetUniformLocation("texture0");
+                if (textureLocation != -1)
+                {
+                    glUniform1i(textureLocation, 0);
+                }
+            }
+
             renderable->Draw();
+
+            if (nullptr != texture)
+            {
+                texture->Unbind();
+            }
         }
     }
 

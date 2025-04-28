@@ -75,6 +75,13 @@ public:
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
+				else if constexpr (is_same_v<T, MiniMath::V2>) {
+					glVertexAttribPointer(attributeIndex, 2, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
+					if (useInstancing)
+					{
+						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
+					}
+				}
 				else if constexpr (is_same_v<T, MiniMath::V3>) {
 					glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 					if (useInstancing)

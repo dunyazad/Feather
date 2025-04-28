@@ -41,7 +41,7 @@ using namespace std;
 #include <entt/entt.hpp>
 
 using Entity = entt::entity;
-#define InvalidEntity ((Entity)ui32_max);
+#define InvalidEntity ((Entity)ui32_max)
 
 using Registry = entt::registry;
 using Dispatcher = entt::dispatcher;

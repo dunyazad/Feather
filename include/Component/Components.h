@@ -5,6 +5,7 @@
 #include<Component/EventCallback.h>
 #include<Component/Renderable.h>
 #include<Component/Shader.h>
+#include<Component/Texture.h>
 #include<Component/Transform.h>
 
 #include<Component/GUIComponent/GUIComponents.h>
