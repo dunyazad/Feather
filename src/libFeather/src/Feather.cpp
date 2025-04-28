@@ -66,6 +66,11 @@ void libFeather::Run()
         auto now = Time::Now();
         auto timeDelta = (f32)(Time::Microseconds(lastTime, now)) / 1000.0f;
 
+        for (auto& callback : onUpdateCallbacks)
+        {
+            callback(timeDelta);
+        }
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glfwPollEvents();

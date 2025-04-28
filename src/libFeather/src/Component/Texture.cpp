@@ -51,6 +51,20 @@ void Texture::LoadFile(const File& file)
 	}
 }
 
+void Texture::AllocTextureData(ui32 width, ui32 height)
+{
+	this->width = width;
+	this->height = height;
+	this->data = new ui8[width * height * 4];
+	memset(this->data, 0, sizeof(ui8) * width * height * 4);
+
+	Bind();
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+	glGenerateMipmap(GL_TEXTURE_2D);
+}
+
 void Texture::SetTextureData(ui32 width, ui32 height, ui8* data)
 {
 	assert(nullptr != data && "data is empty!\n");
