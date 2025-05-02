@@ -23,13 +23,16 @@ public:
 
 	MiniMath::M4 LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const;
 
+	inline bool IsDirty() const { return dirty; }
+	inline void SetDirty(bool isDirty) { dirty = isDirty; }
+
 	inline MiniMath::V3& GetEye() { return eye; }
 	inline MiniMath::V3& GetTarget() { return target; }
 	inline MiniMath::V3& GetUp() { return up; }
 
-	inline void SetEye(const MiniMath::V3& eye) { this->eye = eye; needToUpdate = true; }
-	inline void SetTarget(const MiniMath::V3& target) { this->target = target; needToUpdate = true; }
-	inline void SetUp(const MiniMath::V3& up) { this->up = up; needToUpdate = true; }
+	inline void SetEye(const MiniMath::V3& eye) { this->eye = eye; dirty = true; }
+	inline void SetTarget(const MiniMath::V3& target) { this->target = target; dirty = true; }
+	inline void SetUp(const MiniMath::V3& up) { this->up = up; dirty = true; }
 
 	inline const MiniMath::M4& GetProjectionMatrix() { return projectionMatrix; }
 	inline const MiniMath::M4& GetViewMatrix() { return viewMatrix; }
@@ -37,7 +40,7 @@ public:
 	ProjectionMode projectionMode = Perspective;
 
 protected:
-	bool needToUpdate = true;
+	bool dirty = true;
 
 	MiniMath::M4 projectionMatrix = MiniMath::M4::identity();
 	MiniMath::M4 viewMatrix = MiniMath::M4::identity();
@@ -60,16 +63,16 @@ public:
 	inline f32 GetNear() { return zNear; }
 	inline f32 GetFar() { return zFar; }
 
-	inline void SetFOVY(f32 fovy) { this->fovy = fovy; needToUpdate = true; }
-	inline void SetAspectRatio(f32 aspectRatio) { this->aspectRatio = aspectRatio; needToUpdate = true; }
-	inline void SetNear(f32 zNear) { this->zNear = zNear; needToUpdate = true; }
-	inline void SetFar(f32 zFar) { this->zFar = zFar; needToUpdate = true; }
+	inline void SetFOVY(f32 fovy) { this->fovy = fovy; dirty = true; }
+	inline void SetAspectRatio(f32 aspectRatio) { this->aspectRatio = aspectRatio; dirty = true; }
+	inline void SetNear(f32 zNear) { this->zNear = zNear; dirty = true; }
+	inline void SetFar(f32 zFar) { this->zFar = zFar; dirty = true; }
 
 protected:
 	f32 fovy = 45 * DEG2RAD;
 	f32 aspectRatio = 1.0f;
 	f32 zNear = 0.1f;
-	f32 zFar = 1000.0f;
+	f32 zFar = 10000.0f;
 };
 
 class OrthogonalCamera : public CameraBase
@@ -86,5 +89,5 @@ protected:
 	f32 bottom = -1.0f;
 	f32 top = 1.0f;
 	f32 zNear = 0.1f;
-	f32 zFar = 1000.0f;
+	f32 zFar = 10000.0f;
 };

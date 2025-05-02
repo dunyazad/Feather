@@ -37,7 +37,7 @@ public:
 	{
 		datas.push_back(data);
 
-		needToUpdate = true;
+		dirty = true;
 	}
 
 	void SetData(ui32 bufferIndex, const T& data)
@@ -46,21 +46,21 @@ public:
 
 		datas[bufferIndex] = data;
 
-		needToUpdate = true;
+		dirty = true;
 	}
 
 	void AddData(const T* datas, ui32 numberOfDatas)
 	{
 		this->datas.insert(this->datas.end(), datas, datas + numberOfDatas);
 
-		needToUpdate = true;
+		dirty = true;
 	}
 
 	void Update()
 	{
 		if (datas.empty()) return;
 
-		if (needToUpdate)
+		if (dirty)
 		{
 			Bind();
 
@@ -116,7 +116,7 @@ public:
 
 				glEnableVertexAttribArray(attributeIndex);
 			}
-			needToUpdate = false;
+			dirty = false;
 		}
 	}
 
@@ -133,7 +133,7 @@ protected:
 
 	bool useInstancing = false;
 
-	bool needToUpdate = true;
+	bool dirty = true;
 	GLuint attributeIndex = UINT32_MAX;
 	vector<T> datas;
 };
@@ -244,7 +244,7 @@ public:
 
 private:
 	bool visible = true;
-	bool needToUpdate = true;
+	bool dirty = true;
 
 	ui32 activeShaderIndex = 0;
 	vector<Shader*> shaders;

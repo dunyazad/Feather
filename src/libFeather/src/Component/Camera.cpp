@@ -61,7 +61,7 @@ PerspectiveCamera::~PerspectiveCamera()
 
 void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
 {
-    if (needToUpdate)
+    if (dirty)
     {
         float tanHalfFovy = tanf(fovy * 0.5f);
 
@@ -96,7 +96,7 @@ void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
         viewMatrix.m[2][3] = 0.0f;
         viewMatrix.m[3][3] = 1.0f;
 
-        needToUpdate = false;
+        dirty = false;
     }
 }
 
@@ -110,7 +110,7 @@ OrthogonalCamera::~OrthogonalCamera()
 
 void OrthogonalCamera::Update(ui32 frameNo, f32 timeDelta)
 {
-    if (needToUpdate)
+    if (dirty)
     {
         projectionMatrix.m[0][0] = 2.0f / (right - left);
         projectionMatrix.m[1][1] = 2.0f / (top - bottom);
@@ -144,6 +144,6 @@ void OrthogonalCamera::Update(ui32 frameNo, f32 timeDelta)
         viewMatrix.m[2][3] = 0.0f;
         viewMatrix.m[3][3] = 1.0f;
 
-        needToUpdate = false;
+        dirty = false;
     }
 }

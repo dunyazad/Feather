@@ -46,7 +46,7 @@ void Renderable::EnableInstancing(ui32 numberOfInstances)
 
 void Renderable::Update(ui32 frameNo, f32 timeDelta)
 {
-	if (false == needToUpdate) return;
+	if (false == dirty) return;
 
 	if (UINT_MAX == vao)
 	{
@@ -71,7 +71,7 @@ void Renderable::Update(ui32 frameNo, f32 timeDelta)
 
 	glBindVertexArray(0);
 
-	needToUpdate = false;
+	dirty = false;
 }
 
 void Renderable::Draw()
@@ -191,105 +191,105 @@ void Renderable::Draw()
 
 void Renderable::AddIndex(ui32 index)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	indices.AddData(index);
 }
 
 void Renderable::AddVertex(const MiniMath::V3& vertex)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	vertices.AddData(vertex);
 }
 
 void Renderable::AddNormal(const MiniMath::V3& normal)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	normals.AddData(normal);
 }
 
 void Renderable::AddColor(const MiniMath::V3& color)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	colors3.AddData(color);
 }
 
 void Renderable::AddColor(const MiniMath::V4& color)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	colors4.AddData(color);
 }
 
 void Renderable::AddUV(const MiniMath::V2& uv)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	uvs.AddData(uv);
 }
 
 void Renderable::SetIndex(ui32 bufferIndex, ui32 index)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	indices.SetData(bufferIndex, index);
 }
 
 void Renderable::SetVertex(ui32 bufferIndex, const MiniMath::V3& vertex)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	vertices.SetData(bufferIndex, vertex);
 }
 
 void Renderable::SetNormal(ui32 bufferIndex, const MiniMath::V3& normal)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	normals.SetData(bufferIndex, normal);
 }
 
 void Renderable::SetColor(ui32 bufferIndex, const MiniMath::V3& color)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	colors3.SetData(bufferIndex, color);
 }
 
 void Renderable::SetColor(ui32 bufferIndex, const MiniMath::V4& color)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	colors4.SetData(bufferIndex, color);
 }
 
 void Renderable::SetUV(ui32 bufferIndex, const MiniMath::V2& uv)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	uvs.SetData(bufferIndex, uv);
 }
 
 void Renderable::AddInstanceColor(const MiniMath::V4& color)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	instanceColors.AddData(color);
 }
 
 void Renderable::AddInstanceNormal(const MiniMath::V3& normal)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	instanceNormals.AddData(normal);
 }
 
 void Renderable::AddInstanceTransform(const MiniMath::M4& transform)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	instanceTransforms.AddData(transform);
 }
@@ -301,7 +301,7 @@ const MiniMath::V4& Renderable::GetInstanceColor(ui32 bufferIndex) const
 
 void Renderable::SetInstanceColor(ui32 bufferIndex, const MiniMath::V4& color)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	instanceColors.SetData(bufferIndex, color);
 }
@@ -313,7 +313,7 @@ const MiniMath::V3& Renderable::GetInstanceNormal(ui32 bufferIndex) const
 
 void Renderable::SetInstanceNormal(ui32 bufferIndex, const MiniMath::V3& normal)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	instanceNormals.SetData(bufferIndex, normal);
 }
@@ -325,133 +325,133 @@ const MiniMath::M4& Renderable::GetInstanceTransform(ui32 bufferIndex) const
 
 void Renderable::SetInstanceTransform(ui32 bufferIndex, const MiniMath::M4& transform)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	instanceTransforms.SetData(bufferIndex, transform);
 }
 
 void Renderable::AddIndices(const vector<ui32>& indices)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->indices.AddData(indices.data(), indices.size());
 }
 
 void Renderable::AddIndices(const ui32* indices, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->indices.AddData(indices, numberOfElements);
 }
 
 void Renderable::AddVertices(const vector<MiniMath::V3>& vertices)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->vertices.AddData(vertices.data(), vertices.size());
 }
 
 void Renderable::AddVertices(const MiniMath::V3* vertices, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->vertices.AddData(vertices, numberOfElements);
 }
 
 void Renderable::AddNormals(const vector<MiniMath::V3>& normals)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->normals.AddData(normals.data(), normals.size());
 }
 
 void Renderable::AddNormals(const MiniMath::V3* normals, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->normals.AddData(normals, numberOfElements);
 }
 
 void Renderable::AddColors(const vector<MiniMath::V3>& colors)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->colors3.AddData(colors.data(), colors.size());
 }
 
 void Renderable::AddColors(const MiniMath::V3* colors, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->colors3.AddData(colors, numberOfElements);
 }
 
 void Renderable::AddColors(const vector<MiniMath::V4>& colors)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->colors4.AddData(colors.data(), colors.size());
 }
 
 void Renderable::AddColors(const MiniMath::V4* colors, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->colors4.AddData(colors, numberOfElements);
 }
 
 void Renderable::AddUVs(const vector<MiniMath::V2>& uvs)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->uvs.AddData(uvs.data(), uvs.size());
 }
 
 void Renderable::AddUVs(const MiniMath::V2* uvs, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->uvs.AddData(uvs, numberOfElements);
 }
 
 void Renderable::AddInstanceColors(const vector<MiniMath::V4>& colors)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->instanceColors.AddData(colors.data(), colors.size());
 }
 
 void Renderable::AddInstanceColors(const MiniMath::V4* colors, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->instanceColors.AddData(colors, numberOfElements);
 }
 
 void Renderable::AddInstanceNormals(const vector<MiniMath::V3>& normals)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->instanceNormals.AddData(normals.data(), normals.size());
 }
 
 void Renderable::AddInstanceNormals(const MiniMath::V3* normals, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->instanceNormals.AddData(normals, numberOfElements);
 }
 
 void Renderable::AddInstanceTransforms(const vector<MiniMath::M4>& transforms)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->instanceTransforms.AddData(transforms.data(), transforms.size());
 }
 
 void Renderable::AddInstanceTransforms(const MiniMath::M4* transforms, ui32 numberOfElements)
 {
-	needToUpdate = true;
+	dirty = true;
 
 	this->instanceTransforms.AddData(transforms, numberOfElements);
 }
