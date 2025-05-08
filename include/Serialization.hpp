@@ -1497,3 +1497,98 @@ protected:
 	float aabbMaxY = -FLT_MAX;
 	float aabbMaxZ = -FLT_MAX;
 };
+
+class CSVFormat : public HSerializable
+{
+public:
+
+	virtual bool Serialize(const string& filename)
+	{
+		FILE* fp = nullptr;
+		auto err = fopen_s(&fp, filename.c_str(), "wb");
+		if (0 != err)
+		{
+			printf("[Serialize] File \"%s\" open failed.", filename.c_str());
+			return false;
+		}
+
+		fprintf(fp, "%d\n", (int)points.size() / 3);
+		fprintf(fp, "X, Y, Z\n");
+
+		for (size_t i = 0; i < points.size() / 3; i++)
+		{
+			fprintf(fp, "%.6f, %.6f, %.6f\n", points[i * 3 + 0], points[i * 3 + 1], points[i * 3 + 2]);
+		}
+
+		fclose(fp);
+
+		return true;
+	}
+
+	virtual bool Deserialize(const string& filename)
+	{
+		FILE* fp = nullptr;
+		auto err = fopen_s(&fp, filename.c_str(), "rb");
+		if (0 != err)
+		{
+			printf("[Deserialize] File \"%s\" open failed.", filename.c_str());
+			return false;
+		}
+
+		char buffer[1024];
+		float x, y, z;
+
+		fgets(buffer, sizeof(buffer), fp);
+		memset(buffer, 0, sizeof(char) * 1024);
+
+		while (fgets(buffer, sizeof(buffer), fp)) {
+			if (sscanf(buffer, "%f,%f,%f", &x, &y, &z) == 3) {
+				//printf("x = %.2f, y = %.2f, z = %.2f\n", x, y, z);
+				points.push_back(x);
+				points.push_back(y);
+				points.push_back(z);
+			}
+			else {
+				fprintf(stderr, "Failed to parse line: %s", buffer);
+			}
+		}
+
+		fclose(fp);
+
+		return true;
+	}
+
+	virtual inline void SwapAxisYZ()
+	{
+		if (false == points.empty())
+		{
+			for (size_t i = 0; i < points.size() / 3; i++)
+			{
+				auto temp = points[i * 3 + 1];
+				points[i * 3 + 1] = points[i * 3 + 2];
+				points[i * 3 + 2] = temp;
+			}
+		}
+		//if (false == normals.empty())
+		//{
+		//	for (size_t i = 0; i < normals.size() / 3; i++)
+		//	{
+		//		auto temp = normals[i * 3 + 1];
+		//		normals[i * 3 + 1] = normals[i * 3 + 2];
+		//		normals[i * 3 + 2] = temp;
+		//	}
+		//}
+
+		{
+			float temp = aabbMinY;
+			aabbMinY = aabbMinZ;
+			aabbMinZ = temp;
+		}
+
+		{
+			float temp = aabbMaxY;
+			aabbMaxY = aabbMaxZ;
+			aabbMaxZ = temp;
+		}
+	}
+};
