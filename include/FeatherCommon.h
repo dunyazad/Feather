@@ -82,5 +82,10 @@ namespace Time
     string DateTime();
 }
 
+string Miliseconds(const chrono::steady_clock::time_point beginTime, const char* tag);
+
+#define TS(name) auto time_##name = chrono::high_resolution_clock::now();
+#define TE(name) std::cout << Miliseconds(time_##name, #name) << std::endl;
+
 #define alog(...) printf("\033[38;5;1m\033[48;5;15m(^(OO)^) /V/\033[0m\t" __VA_ARGS__)
 #define alogt(tag, ...) printf("\033[38;5;1m\033[48;5;15m [%d] (^(OO)^) /V/\033[0m\t" tag, __VA_ARGS__)

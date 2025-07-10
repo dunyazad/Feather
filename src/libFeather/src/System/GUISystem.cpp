@@ -69,8 +69,8 @@ void GUISystem::ReloadFont(float newFontSize)
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->Clear();
     io.Fonts->AddFontFromFileTTF("../../res/Fonts/NanumGothic/NanumGothic-Regular.ttf", newFontSize);
-    ImGui_ImplOpenGL3_DestroyFontsTexture();
-    ImGui_ImplOpenGL3_CreateFontsTexture();
+    //ImGui_ImplOpenGL3_DestroyFontsTexture();
+    //ImGui_ImplOpenGL3_CreateFontsTexture();
 }
 
 void GUISystem::ShowGraphPanel()

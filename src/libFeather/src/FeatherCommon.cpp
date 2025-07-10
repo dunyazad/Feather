@@ -40,3 +40,17 @@ namespace Time
         return oss.str();
     }
 }
+
+string Miliseconds(const chrono::steady_clock::time_point beginTime, const char* tag)
+{
+    auto now = chrono::high_resolution_clock::now();
+    auto timeSpan = chrono::duration_cast<chrono::nanoseconds>(now - beginTime).count();
+    stringstream ss;
+    ss << "[[[ ";
+    if (nullptr != tag)
+    {
+        ss << tag << " - ";
+    }
+    ss << (float)timeSpan / 1000000.0 << " ms ]]]";
+    return ss.str();
+}
