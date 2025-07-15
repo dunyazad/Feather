@@ -957,7 +957,7 @@ public:
 
 		if (lineIndices.size() > 0)
 		{
-			ss << "element enge " << lineIndices.size() / 2 << endl;
+			ss << "element edge " << lineIndices.size() / 2 << endl;
 			ss << "property int vertex1" << endl;
 			ss << "property int vertex2" << endl;
 		}
@@ -1024,7 +1024,25 @@ public:
 			if (0 == i % 10000 && i != 0)
 			{
 				auto percent = ((double)i / (double)(points.size() / 3)) * 100.0;
-				printf("[%llu / %llu] %f percent\n", i, points.size(), percent);
+				printf("[Vertices %llu / %llu] %f percent\n", i, points.size(), percent);
+			}
+		}
+
+		if (lineIndices.size() > 0)
+		{
+			for (size_t i = 0; i < lineIndices.size(); i += 2)
+			{
+				auto i0 = lineIndices[i + 0];
+				auto i1 = lineIndices[i + 1];
+
+				//ss << i0 << " " << i1 << std::endl;
+				ss << "2 " << i0 << " " << i1 << endl;
+
+				if (0 == i % 10000 && i != 0)
+				{
+					auto percent = ((double)i / (double)(lineIndices.size())) * 100.0;
+					printf("[Lines %llu / %llu] %f percent\n", i / 2, lineIndices.size() / 2, percent);
+				}
 			}
 		}
 
@@ -1041,7 +1059,7 @@ public:
 				if (0 == i % 10000 && i != 0)
 				{
 					auto percent = ((double)i / (double)(triangleIndices.size() / 3)) * 100.0;
-					printf("[%llu / %llu] %f percent\n", i, triangleIndices.size() / 3, percent);
+					printf("[Triangles %llu / %llu] %f percent\n", i, triangleIndices.size() / 3, percent);
 				}
 			}
 		}

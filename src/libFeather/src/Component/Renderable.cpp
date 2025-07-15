@@ -62,7 +62,7 @@ void Renderable::Update(ui32 frameNo, f32 timeDelta)
 	colors4.Update();
 	uvs.Update();
 
-	if (numberOfInstances > 1)
+	if (numberOfInstances > 0)
 	{
 		instanceColors.Update();
 		instanceNormals.Update();
