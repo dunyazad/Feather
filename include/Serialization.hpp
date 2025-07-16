@@ -1290,6 +1290,13 @@ public:
 
 	virtual inline void AddTriangleIndex(unsigned int index) { triangleIndices.push_back(index); }
 
+	virtual inline void AddFace(unsigned int i0, unsigned int i1, unsigned int i2)
+	{
+		triangleIndices.push_back(i0);
+		triangleIndices.push_back(i1);
+		triangleIndices.push_back(i2);
+	}
+
 	virtual inline void AddColor(float r, float g, float b)
 	{
 		colors.push_back(r);
