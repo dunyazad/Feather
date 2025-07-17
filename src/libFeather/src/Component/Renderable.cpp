@@ -189,6 +189,22 @@ void Renderable::Draw()
 	}
 }
 
+void Renderable::Clear()
+{
+	indices.Clear();
+	vertices.Clear();
+	normals.Clear();
+	colors3.Clear();
+	colors4.Clear();
+	uvs.Clear();
+
+	instanceTransforms.Clear();
+	instanceColors.Clear();
+	instanceNormals.Clear();
+
+	numberOfInstances = 1;
+}
+
 void Renderable::AddIndex(ui32 index)
 {
 	dirty = true;

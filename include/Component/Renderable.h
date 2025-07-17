@@ -31,6 +31,13 @@ public:
 		}
 	}
 
+	void Clear()
+	{
+		datas.clear();
+
+		dirty = true;
+	}
+
 	void Bind() { glBindBuffer(bufferTarget, vbo); }
 
 	void AddData(const T& data)
@@ -171,6 +178,8 @@ public:
 	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	virtual void Draw();
+
+	virtual void Clear();
 
 	void AddIndex(ui32 index);
 	void AddVertex(const MiniMath::V3& vertex);
