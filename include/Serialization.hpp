@@ -477,9 +477,9 @@ public:
 				size_t count, i0, i1, i2;
 				sscanf_s(line, "%llu %llu %llu %llu\n", &count, &i0, &i1, &i2);
 
-				AddIndex(i0);
-				AddIndex(i1);
-				AddIndex(i2);
+				AddIndex((unsigned int)i0);
+				AddIndex((unsigned int)i1);
+				AddIndex((unsigned int)i2);
 			}
 		}
 
@@ -651,9 +651,9 @@ public:
 				size_t i0, i1, i2;
 				sscanf(buffer, "%llu, %llu, %llu\n", &i0, &i1, &i2);
 
-				AddIndex(i0);
-				AddIndex(i1);
-				AddIndex(i2);
+				AddIndex((unsigned int)i0);
+				AddIndex((unsigned int)i1);
+				AddIndex((unsigned int)i2);
 			}
 		}
 
@@ -1168,30 +1168,30 @@ public:
 					{
 						if (elementPropertyNames[i][k] == "x")
 						{
-							x = atof(words[k].c_str());
+							x = (float)atof(words[k].c_str());
 						}
 						else if (elementPropertyNames[i][k] == "y")
 						{
-							y = atof(words[k].c_str());
+							y = (float)atof(words[k].c_str());
 						}
 						else if (elementPropertyNames[i][k] == "z")
 						{
-							z = atof(words[k].c_str());
+							z = (float)atof(words[k].c_str());
 
 							AddPoint(x, y, z);
 						}
 
 						else if (elementPropertyNames[i][k] == "nx")
 						{
-							nx = atof(words[k].c_str());
+							nx = (float)atof(words[k].c_str());
 						}
 						else if (elementPropertyNames[i][k] == "ny")
 						{
-							ny = atof(words[k].c_str());
+							ny = (float)atof(words[k].c_str());
 						}
 						else if (elementPropertyNames[i][k] == "nz")
 						{
-							nz = atof(words[k].c_str());
+							nz = (float)atof(words[k].c_str());
 
 							AddNormal(nx, ny, nz);
 						}
