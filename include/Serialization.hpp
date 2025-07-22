@@ -1256,8 +1256,6 @@ public:
 	inline const vector<unsigned int>& GetLineIndices() const { return lineIndices; }
 	inline const vector<unsigned int>& GetTriangleIndices() const { return triangleIndices; }
 	inline const vector<float>& GetColors() const { return colors; }
-	inline const vector<uint8_t>& GetMaterialIDs() const { return materialIDs; }
-	inline const vector<unsigned short>& GetStartPatchIDs() const { return startPatchIDs; }
 	inline bool UseAlpha() const { return useAlpha; }
 
 	virtual inline void AddUV(float u, float v)
@@ -1331,12 +1329,57 @@ public:
 
 	virtual inline void SetColor(size_t index, float color) { if (index < colors.size() - 1) colors[index] = color; }
 
-	virtual inline void AddMaterialId(uint8_t materialId) {
-		materialIDs.push_back(materialId);
-	}
+	virtual void AddCube(
+		float centerX, float centerY, float centerZ,
+		float normalX, float normalY, float normalZ,
+		float r, float g, float b, float a, float scale)
+	{
+		float half = scale * 0.5f;
 
-	virtual inline void AddStartPatchID(const unsigned short patchID) {
-		startPatchIDs.push_back(patchID);
+		float verts[8][3] = {
+			{centerX - half, centerY - half, centerZ - half}, // 0
+			{centerX + half, centerY - half, centerZ - half}, // 1
+			{centerX + half, centerY + half, centerZ - half}, // 2
+			{centerX - half, centerY + half, centerZ - half}, // 3
+			{centerX - half, centerY - half, centerZ + half}, // 4
+			{centerX + half, centerY - half, centerZ + half}, // 5
+			{centerX + half, centerY + half, centerZ + half}, // 6
+			{centerX - half, centerY + half, centerZ + half}  // 7
+		};
+
+		unsigned int baseIdx = static_cast<unsigned int>(points.size() / 3);
+
+		// 정점, 노말, 컬러 추가
+		for (int i = 0; i < 8; ++i)
+		{
+			AddPoint(verts[i][0], verts[i][1], verts[i][2]);
+			AddNormal(normalX, normalY, normalZ);
+			if (useAlpha)
+				AddColor(r, g, b, a);
+			else
+				AddColor(r, g, b);
+		}
+
+		// 12개 삼각형을 인덱스 배열로 정의
+		static const unsigned int cube_tris[12][3] =
+		{
+			{0, 1, 2}, {0, 2, 3}, // -Z
+			{4, 6, 5}, {4, 7, 6}, // +Z
+			{0, 4, 5}, {0, 5, 1}, // -Y
+			{2, 6, 7}, {2, 7, 3}, // +Y
+			{0, 3, 7}, {0, 7, 4}, // -X
+			{1, 5, 6}, {1, 6, 2}  // +X
+		};
+
+		// AddFace (index는 baseIdx 기준 offset)
+		for (int i = 0; i < 12; ++i)
+		{
+			AddFace(
+				baseIdx + cube_tris[i][0],
+				baseIdx + cube_tris[i][1],
+				baseIdx + cube_tris[i][2]
+			);
+		}
 	}
 
 	virtual inline void SwapAxisYZ()
@@ -1379,8 +1422,6 @@ protected:
 	vector<unsigned int> lineIndices;
 	vector<unsigned int> triangleIndices;
 	vector<float> colors;
-	vector<uint8_t> materialIDs;
-	vector<unsigned short> startPatchIDs;
 	bool useAlpha = false;
 };
 
