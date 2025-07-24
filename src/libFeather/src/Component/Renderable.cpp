@@ -1,4 +1,5 @@
 #include <Component/Renderable.h>
+#include <Component/Shader.h>
 
 Renderable::Renderable()
 {
@@ -6,6 +7,22 @@ Renderable::Renderable()
 
 Renderable::~Renderable()
 {
+	if (vao != UINT32_MAX)
+	{
+		glDeleteVertexArrays(1, &vao);
+		vao = UINT32_MAX;
+	}
+	// Release all buffers (assumes GraphicsBuffer<T> has a .Destroy() or similar)
+	indices.Terminate();
+	vertices.Terminate();
+	normals.Terminate();
+	colors3.Terminate();
+	colors4.Terminate();
+	uvs.Terminate();
+
+	instanceColors.Terminate();
+	instanceNormals.Terminate();
+	instanceTransforms.Terminate();
 }
 
 void Renderable::Initialize(GeometryMode geometryMode)
@@ -74,17 +91,35 @@ void Renderable::Update(ui32 frameNo, f32 timeDelta)
 	dirty = false;
 }
 
-void Renderable::Draw()
+void Renderable::Draw(Shader* shader)
 {
 	if (false == visible) return;
 
 	glBindVertexArray(vao);
 
-	if (Solid == drawingMode || WireFrame == drawingMode)
+	if (Solid == drawingMode || WireFrame == drawingMode || WireFrameSingleColor == drawingMode)
 	{
-		if (WireFrame == drawingMode)
+		if (WireFrame == drawingMode || WireFrameSingleColor == drawingMode)
 		{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+
+		if (WireFrameSingleColor == drawingMode)
+		{
+			{
+				auto index = shader->GetUniformLocation("useSolidColor");
+				if (-1 != index)
+				{
+					shader->UniformInt(index, 1);
+				}
+			}
+			{
+				auto index = shader->GetUniformLocation("solidColor");
+				if (-1 != index)
+				{
+					shader->UniformV3(index, { 0.25f, 0.25f, 0.25f });
+				}
+			}
 		}
 
 		if (0 < numberOfInstances)
@@ -110,14 +145,23 @@ void Renderable::Draw()
 			}
 		}
 
-		if (WireFrame == drawingMode)
+		if (WireFrame == drawingMode || WireFrameSingleColor == drawingMode)
 		{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+
+		if (WireFrameSingleColor == drawingMode)
+		{
+			auto index = shader->GetUniformLocation("useSolidColor");
+			if (-1 != index)
+			{
+				shader->UniformInt(index, 0);
+			}
 		}
 	}
 	else if (WireFrameOverSolid == drawingMode)
 	{
-		glLineWidth(20.0f);
+		glLineWidth(2.0f);
 
 		// Enable depth testing and render solid mesh
 		glEnable(GL_DEPTH_TEST);
@@ -159,6 +203,21 @@ void Renderable::Draw()
 		glPolygonOffset(0.5f, 0.5f);  // Slight offset to avoid z-fighting
 		glEnable(GL_DEPTH_TEST);  // Keep depth testing ON
 
+		{
+			auto index = shader->GetUniformLocation("useSolidColor");
+			if (-1 != index)
+			{
+				shader->UniformInt(index, 1);
+			}
+		}
+		{
+			auto index = shader->GetUniformLocation("solidColor");
+			if (-1 != index)
+			{
+				shader->UniformV3(index, { 0.25f, 0.25f, 0.25f });
+			}
+		}
+
 		if (0 < numberOfInstances)
 		{
 			if (0 < indices.size())
@@ -179,6 +238,14 @@ void Renderable::Draw()
 			else
 			{
 				glDrawArrays(geometryMode, 0, vertices.size());
+			}
+		}
+
+		{
+			auto index = shader->GetUniformLocation("useSolidColor");
+			if (-1 != index)
+			{
+				shader->UniformInt(index, 0);
 			}
 		}
 
@@ -245,6 +312,42 @@ void Renderable::AddUV(const MiniMath::V2& uv)
 	dirty = true;
 
 	uvs.AddData(uv);
+}
+
+ui32 Renderable::GetIndex(ui32 bufferIndex)
+{
+	if (bufferIndex >= indices.size()) return UINT32_MAX;
+	return indices[bufferIndex];
+}
+
+MiniMath::V3& Renderable::GetVertex(ui32 bufferIndex)
+{
+	if (bufferIndex >= vertices.size()) return MiniMath::V3();
+	return vertices[bufferIndex];
+}
+
+MiniMath::V3& Renderable::GetNormal(ui32 bufferIndex)
+{
+	if (bufferIndex >= normals.size()) return MiniMath::V3();
+	return normals[bufferIndex];
+}
+
+MiniMath::V3& Renderable::GetColor3(ui32 bufferIndex)
+{
+	if (bufferIndex >= colors3.size()) return MiniMath::V3();
+	return colors3[bufferIndex];
+}
+
+MiniMath::V4& Renderable::GetColor4(ui32 bufferIndex)
+{
+	if (bufferIndex >= colors4.size()) return MiniMath::V4();
+	return colors4[bufferIndex];
+}
+
+MiniMath::V2& Renderable::GetUV(ui32 bufferIndex)
+{
+	if (bufferIndex >= uvs.size()) return MiniMath::V2();
+	return uvs[bufferIndex];
 }
 
 void Renderable::SetIndex(ui32 bufferIndex, ui32 index)

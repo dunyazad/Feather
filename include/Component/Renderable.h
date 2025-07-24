@@ -134,6 +134,8 @@ public:
 	inline bool IsUseInstancing() { return useInstancing; }
 	inline void SetUseInstancing(bool use) { useInstancing = use; }
 
+	inline T& operator [](unsigned int index) { return datas.at(index); }
+
 protected:
 	BufferTarget bufferTarget = Array;
 	BufferUsage bufferUsage = Static;
@@ -165,6 +167,7 @@ public:
 		Solid,
 		WireFrameOverSolid,
 		WireFrame,
+		WireFrameSingleColor,
 		NumberOfDrawingModes
 	};
 
@@ -177,7 +180,7 @@ public:
 
 	virtual void Update(ui32 frameNo, f32 timeDelta);
 
-	virtual void Draw();
+	virtual void Draw(Shader* shader);
 
 	virtual void Clear();
 
@@ -187,6 +190,13 @@ public:
 	void AddColor(const MiniMath::V3& color);
 	void AddColor(const MiniMath::V4& color);
 	void AddUV(const MiniMath::V2& uv);
+
+	ui32 GetIndex(ui32 bufferIndex);
+	MiniMath::V3& GetVertex(ui32 bufferIndex);
+	MiniMath::V3& GetNormal(ui32 bufferIndex);
+	MiniMath::V3& GetColor3(ui32 bufferIndex);
+	MiniMath::V4& GetColor4(ui32 bufferIndex);
+	MiniMath::V2& GetUV(ui32 bufferIndex);
 
 	void SetIndex(ui32 bufferIndex, ui32 index);
 	void SetVertex(ui32 bufferIndex, const MiniMath::V3& vertex);
@@ -237,7 +247,7 @@ public:
 	inline void SetVisible(bool visible) { this->visible = visible; }
 	inline void ToggleVisible() { visible = !visible; }
 
-	inline Shader* GetActiveShader() const { if (shaders.empty()) return nullptr; else return shaders[activeShaderIndex]; }
+	inline Shader* GetActiveShader() const { if (shaders.empty() || activeShaderIndex >= shaders.size()) return nullptr; else return shaders[activeShaderIndex]; }
 	inline ui32 GetActiveShaderIndex() { return activeShaderIndex; }
 	inline void SetActiveShaderIndex(ui32 index) { activeShaderIndex = index; }
 	inline const vector<Shader*>& GetShaders() const { return shaders; }

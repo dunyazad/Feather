@@ -123,7 +123,7 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
                 }
             }
 
-            renderable->Draw();
+            renderable->Draw(shader);
 
             if (nullptr != texture)
             {
