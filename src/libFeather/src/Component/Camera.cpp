@@ -100,6 +100,31 @@ void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
     }
 }
 
+Ray PerspectiveCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const
+{
+    // 1. Screen to NDC
+    float x_ndc = (2.0f * mouseX) / screenWidth - 1.0f;
+    float y_ndc = 1.0f - (2.0f * mouseY) / screenHeight;
+
+    // 2. NDC to Clip
+    MiniMath::V4 clip(x_ndc, y_ndc, -1.0f, 1.0f); // OpenGL 기준
+
+    // 3. Clip to View
+    MiniMath::M4 invProj = projectionMatrix.inverse();
+    MiniMath::V4 view = invProj * clip;
+    view.z = -1.0f; // view space에서 -z방향
+    view.w = 0.0f;  // direction
+
+    // 4. View to World
+    MiniMath::M4 invView = viewMatrix.inverse();
+    MiniMath::V4 worldDir = invView * view;
+    MiniMath::V3 dir(worldDir.x, worldDir.y, worldDir.z);
+    dir = MiniMath::normalize(dir);
+
+    // 5. Ray origin: camera position
+    return { eye, dir };
+}
+
 OrthogonalCamera::OrthogonalCamera()
 {
 }
@@ -146,4 +171,29 @@ void OrthogonalCamera::Update(ui32 frameNo, f32 timeDelta)
 
         dirty = false;
     }
+}
+
+Ray OrthogonalCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const
+{
+    // 1. Screen to NDC
+    float x_ndc = (2.0f * mouseX) / screenWidth - 1.0f;
+    float y_ndc = 1.0f - (2.0f * mouseY) / screenHeight;
+
+    // 2. NDC to Clip
+    MiniMath::V4 clip(x_ndc, y_ndc, 0.0f, 1.0f); // Ortho: z=0(near plane)
+
+    // 3. Clip to View
+    MiniMath::M4 invProj = projectionMatrix.inverse();
+    MiniMath::V4 view = invProj * clip;
+    view.w = 1.0f;
+
+    // 4. View to World
+    MiniMath::M4 invView = viewMatrix.inverse();
+    MiniMath::V4 world = invView * view;
+    MiniMath::V3 origin(world.x / world.w, world.y / world.w, world.z / world.w);
+
+    // 5. Ray direction: camera forward
+    MiniMath::V3 dir = MiniMath::normalize(target - eye);
+
+    return { origin, dir };
 }
