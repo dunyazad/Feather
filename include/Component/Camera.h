@@ -2,6 +2,12 @@
 
 #include <FeatherCommon.h>
 
+struct Ray
+{
+	MiniMath::V3 origin;
+	MiniMath::V3 direction;
+};
+
 struct ProjectionInfoOrthogonal
 {
 	f32 left, right, bottom, top, zNear, zFar;
@@ -22,6 +28,8 @@ public:
 	virtual ~CameraBase();
 
 	MiniMath::M4 LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const;
+
+	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const = 0;
 
 	inline bool IsDirty() const { return dirty; }
 	inline void SetDirty(bool isDirty) { dirty = isDirty; }
@@ -68,6 +76,8 @@ public:
 	inline void SetNear(f32 zNear) { this->zNear = zNear; dirty = true; }
 	inline void SetFar(f32 zFar) { this->zFar = zFar; dirty = true; }
 
+	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const;
+
 protected:
 	f32 fovy = 45 * DEG2RAD;
 	f32 aspectRatio = 1.0f;
@@ -82,6 +92,8 @@ public:
 	virtual ~OrthogonalCamera();
 
 	virtual void Update(ui32 frameNo, f32 timeDelta);
+
+	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const;
 
 protected:
 	f32 left = -1.0f;
