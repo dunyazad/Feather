@@ -261,6 +261,26 @@ public:
 
 	inline void NextDrawingMode() { drawingMode = (DrawingMode)((drawingMode + 1) % NumberOfDrawingModes); }
 
+	inline GraphicsBuffer<ui32>& GetIndices() { return indices; }
+	inline GraphicsBuffer<MiniMath::V3>& GetVertices() { return vertices; }
+	inline GraphicsBuffer<MiniMath::V3>& GetNormals() { return normals; }
+	inline GraphicsBuffer<MiniMath::V3>& GetColors3() { return colors3; }
+	inline GraphicsBuffer<MiniMath::V4>& GetColors4() { return colors4; }
+	inline GraphicsBuffer<MiniMath::V2>& GetUvs() { return uvs; }
+	inline GraphicsBuffer<MiniMath::M4>& GetInstanceTransforms() { return instanceTransforms; }
+	inline GraphicsBuffer<MiniMath::V4>& GetInstanceColors() { return instanceColors; }
+	inline GraphicsBuffer<MiniMath::V3>& GetInstanceNormals() { return instanceNormals; }
+
+	inline const GraphicsBuffer<ui32>& GetIndices() const { return indices; }
+	inline const GraphicsBuffer<MiniMath::V3>& GetVertices() const { return vertices; }
+	inline const GraphicsBuffer<MiniMath::V3>& GetNormals() const { return normals; }
+	inline const GraphicsBuffer<MiniMath::V3>& GetColors3() const { return colors3; }
+	inline const GraphicsBuffer<MiniMath::V4>& GetColors4() const { return colors4; }
+	inline const GraphicsBuffer<MiniMath::V2>& GetUvs() const { return uvs; }
+	inline const GraphicsBuffer<MiniMath::M4>& GetInstanceTransforms() const { return instanceTransforms; }
+	inline const GraphicsBuffer<MiniMath::V4>& GetInstanceColors() const { return instanceColors; }
+	inline const GraphicsBuffer<MiniMath::V3>& GetInstanceNormals() const { return instanceNormals; }
+
 private:
 	bool visible = true;
 	bool dirty = true;

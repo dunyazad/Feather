@@ -16,6 +16,8 @@ public:
 	static void Initialize();
 	static void Terminate();
 
+	static void CreateEntity(const string& tag);
+	static void Clear(const string& tag);
 	static void AddLine(const string& tag, const MiniMath::V3& v0, const MiniMath::V3& v1, const MiniMath::V4& c0, const MiniMath::V4& c1);
 
 private:
