@@ -8,15 +8,15 @@ public:
 	GeometryBuilder();
 	~GeometryBuilder();
 
-	static tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
-		BuildPlane(f32 width, f32 height, const MiniMath::V3& center, const MiniMath::V3& normal, const MiniMath::V4& color = MiniMath::V4(1.0f, 1.0f, 1.0f, 1.0f));
+	static tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+		BuildPlane(f32 width, f32 height, const glm::vec3& center, const glm::vec3& normal, const glm::vec4& color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-	static tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
-		BuildBox(const MiniMath::V3& center, const MiniMath::V3& dimension, const MiniMath::V4& color = MiniMath::V4(1.0f, 1.0f, 1.0f, 1.0f));
+	static tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+		BuildBox(const glm::vec3& center, const glm::vec3& dimension, const glm::vec4& color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-	static tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
-		BuildWiredBox(const MiniMath::V3& center, const MiniMath::V3& dimension, const MiniMath::V4& color = MiniMath::V4(1.0f, 1.0f, 1.0f, 1.0f));
+	static tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+		BuildWiredBox(const glm::vec3& center, const glm::vec3& dimension, const glm::vec4& color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-	static tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
-		BuildSphere(const MiniMath::V3& center, f32 radius, ui32 horizontalSegments, ui32 verticalSegments, const MiniMath::V4& color = MiniMath::V4(1.0f, 1.0f, 1.0f, 1.0f));
+	static tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+		BuildSphere(const glm::vec3& center, f32 radius, ui32 horizontalSegments, ui32 verticalSegments, const glm::vec4& color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 };

@@ -118,7 +118,7 @@ private:
 	f32 mousePanningSensitivity = 0.01f;
 	f32 mouseWheelSensitivity = 0.5f;
 
-	MiniMath::Quaternion cameraRotation = MiniMath::Quaternion::identity();
+	glm::quat cameraRotation = glm::identity<glm::quat>();
 
 	std::unordered_set<int> pressedKeys;
 
@@ -127,6 +127,6 @@ private:
 
 
 
-	vector<tuple<MiniMath::V3, MiniMath::V3, MiniMath::V3, f32>> cameraHistory;
+	vector<tuple<glm::vec3, glm::vec3, glm::vec3, f32>> cameraHistory;
 	i32 cameraHistoryIndex = 0;
 };

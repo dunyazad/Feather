@@ -2,99 +2,24 @@
 #include <Feather.h>
 #include <FeatherWindow.h>
 
-CameraBase::CameraBase()
-{
-}
-
-CameraBase::~CameraBase()
-{
-}
-
-MiniMath::M4 CameraBase::LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const
-{
-    MiniMath::V3 F = MiniMath::normalize(target - eye);
-    MiniMath::V3 R = MiniMath::normalize(MiniMath::cross(F, up));
-    MiniMath::V3 U = MiniMath::cross(R, F);
-
-    // 결과 행렬 초기화
-    MiniMath::M4 result = {};
-
-    result.m[0][0] = R.x;
-    result.m[1][0] = R.y;
-    result.m[2][0] = R.z;
-    result.m[3][0] = MiniMath::dot(-R, eye);
-
-    result.m[0][1] = U.x;
-    result.m[1][1] = U.y;
-    result.m[2][1] = U.z;
-    result.m[3][1] = MiniMath::dot(-U, eye);
-
-    result.m[0][2] = -F.x;
-    result.m[1][2] = -F.y;
-    result.m[2][2] = -F.z;
-    result.m[3][2] = MiniMath::dot(F, eye);
-
-    result.m[0][3] = 0.0f;
-    result.m[1][3] = 0.0f;
-    result.m[2][3] = 0.0f;
-    result.m[3][3] = 1.0f;
-
-    return result;
-}
+CameraBase::CameraBase() {}
+CameraBase::~CameraBase() {}
 
 PerspectiveCamera::PerspectiveCamera()
 {
     auto window = Feather.GetFeatherWindow();
-
     aspectRatio = (f32)window->GetWidth() / (f32)window->GetHeight();
-
-    //AddEventHandler(EventType::FrameBufferResize, [&](const Event& event, FeatherObject* object) {
-    //    aspectRatio =
-    //        (f32)event.frameBufferResizeEvent.width /
-    //        (f32)event.frameBufferResizeEvent.height;
-    //    });
 }
 
-PerspectiveCamera::~PerspectiveCamera()
-{
-}
+PerspectiveCamera::~PerspectiveCamera() {}
 
 void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
 {
     if (dirty)
     {
-        float tanHalfFovy = tanf(fovy * 0.5f);
+        projectionMatrix = glm::perspective(fovy, aspectRatio, zNear, zFar);
 
-        projectionMatrix.m[0][0] = 1.0f / (aspectRatio * tanHalfFovy);
-        projectionMatrix.m[1][1] = 1.0f / tanHalfFovy;
-        projectionMatrix.m[2][2] = -(zFar + zNear) / (zFar - zNear);
-        projectionMatrix.m[2][3] = -1.0f;
-        projectionMatrix.m[3][2] = -(2.0f * zFar * zNear) / (zFar - zNear);
-        projectionMatrix.m[3][3] = 0.0f;
-
-        MiniMath::V3 F = MiniMath::normalize(target - eye);
-        MiniMath::V3 R = MiniMath::normalize(MiniMath::cross(F, up));
-        MiniMath::V3 U = MiniMath::cross(R, F);
-
-        viewMatrix.m[0][0] = R.x;
-        viewMatrix.m[1][0] = R.y;
-        viewMatrix.m[2][0] = R.z;
-        viewMatrix.m[3][0] = MiniMath::dot(-R, eye);
-
-        viewMatrix.m[0][1] = U.x;
-        viewMatrix.m[1][1] = U.y;
-        viewMatrix.m[2][1] = U.z;
-        viewMatrix.m[3][1] = MiniMath::dot(-U, eye);
-
-        viewMatrix.m[0][2] = -F.x;
-        viewMatrix.m[1][2] = -F.y;
-        viewMatrix.m[2][2] = -F.z;
-        viewMatrix.m[3][2] = MiniMath::dot(F, eye);
-
-        viewMatrix.m[0][3] = 0.0f;
-        viewMatrix.m[1][3] = 0.0f;
-        viewMatrix.m[2][3] = 0.0f;
-        viewMatrix.m[3][3] = 1.0f;
+        viewMatrix = glm::lookAt(eye, target, up);
 
         dirty = false;
     }
@@ -102,72 +27,40 @@ void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
 
 Ray PerspectiveCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const
 {
-    // 1. Screen to NDC
-    float x_ndc = (2.0f * mouseX) / screenWidth - 1.0f;
-    float y_ndc = 1.0f - (2.0f * mouseY) / screenHeight;
+    float x_ndc = (2.0f * mouseX) / (float)screenWidth - 1.0f;
+    float y_ndc = 1.0f - (2.0f * mouseY) / (float)screenHeight;
 
-    // 2. NDC to Clip
-    MiniMath::V4 clip(x_ndc, y_ndc, -1.0f, 1.0f); // OpenGL 기준
+    glm::vec4 rayClip(x_ndc, y_ndc, -1.0f, 1.0f);
 
-    // 3. Clip to View
-    MiniMath::M4 invProj = projectionMatrix.inverse();
-    MiniMath::V4 view = invProj * clip;
-    view.z = -1.0f; // view space에서 -z방향
-    view.w = 0.0f;  // direction
+    glm::vec4 rayEye = glm::inverse(projectionMatrix) * rayClip;
+    rayEye.w = 0.0f;
 
-    // 4. View to World
-    MiniMath::M4 invView = viewMatrix.inverse();
-    MiniMath::V4 worldDir = invView * view;
-    MiniMath::V3 dir(worldDir.x, worldDir.y, worldDir.z);
-    dir = MiniMath::normalize(dir);
+    glm::mat4 invView = glm::inverse(viewMatrix);
+    glm::vec4 rayWorld4 = invView * rayEye;
 
-    // 5. Ray origin: camera position
-    return { eye, dir };
+    glm::vec3 rayDir(rayWorld4.x, rayWorld4.y, rayWorld4.z);
+    rayDir = glm::normalize(rayDir);
+
+    // Extract camera origin (column-major, row index 0~2, col index 3)
+    glm::vec3 rayOrigin(
+        invView[0][3],
+        invView[1][3],
+        invView[2][3]
+    );
+
+    return { rayOrigin, rayDir };
 }
 
-OrthogonalCamera::OrthogonalCamera()
-{
-}
-
-OrthogonalCamera::~OrthogonalCamera()
-{
-}
+OrthogonalCamera::OrthogonalCamera() {}
+OrthogonalCamera::~OrthogonalCamera() {}
 
 void OrthogonalCamera::Update(ui32 frameNo, f32 timeDelta)
 {
     if (dirty)
     {
-        projectionMatrix.m[0][0] = 2.0f / (right - left);
-        projectionMatrix.m[1][1] = 2.0f / (top - bottom);
-        projectionMatrix.m[2][2] = -2.0f / (zFar - zNear);
-        projectionMatrix.m[3][0] = -(right + left) / (right - left);
-        projectionMatrix.m[3][1] = -(top + bottom) / (top - bottom);
-        projectionMatrix.m[3][2] = -(zFar + zNear) / (zFar - zNear);
-        projectionMatrix.m[3][3] = 1.0f;
+        projectionMatrix = glm::ortho(left, right, bottom, top);
 
-        MiniMath::V3 F = MiniMath::normalize(target - eye);
-        MiniMath::V3 R = MiniMath::normalize(MiniMath::cross(F, up));
-        MiniMath::V3 U = MiniMath::cross(R, F);
-
-        viewMatrix.m[0][0] = R.x;
-        viewMatrix.m[1][0] = R.y;
-        viewMatrix.m[2][0] = R.z;
-        viewMatrix.m[3][0] = MiniMath::dot(-R, eye);
-
-        viewMatrix.m[0][1] = U.x;
-        viewMatrix.m[1][1] = U.y;
-        viewMatrix.m[2][1] = U.z;
-        viewMatrix.m[3][1] = MiniMath::dot(-U, eye);
-
-        viewMatrix.m[0][2] = -F.x;
-        viewMatrix.m[1][2] = -F.y;
-        viewMatrix.m[2][2] = -F.z;
-        viewMatrix.m[3][2] = MiniMath::dot(F, eye);
-
-        viewMatrix.m[0][3] = 0.0f;
-        viewMatrix.m[1][3] = 0.0f;
-        viewMatrix.m[2][3] = 0.0f;
-        viewMatrix.m[3][3] = 1.0f;
+        viewMatrix = glm::lookAt(eye, target, up);
 
         dirty = false;
     }
@@ -175,25 +68,20 @@ void OrthogonalCamera::Update(ui32 frameNo, f32 timeDelta)
 
 Ray OrthogonalCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const
 {
-    // 1. Screen to NDC
     float x_ndc = (2.0f * mouseX) / screenWidth - 1.0f;
     float y_ndc = 1.0f - (2.0f * mouseY) / screenHeight;
 
-    // 2. NDC to Clip
-    MiniMath::V4 clip(x_ndc, y_ndc, 0.0f, 1.0f); // Ortho: z=0(near plane)
+    glm::vec4 clip(x_ndc, y_ndc, 0.0f, 1.0f);
 
-    // 3. Clip to View
-    MiniMath::M4 invProj = projectionMatrix.inverse();
-    MiniMath::V4 view = invProj * clip;
+    glm::mat4 invProj = glm::inverse(projectionMatrix);
+    glm::vec4 view = invProj * clip;
     view.w = 1.0f;
 
-    // 4. View to World
-    MiniMath::M4 invView = viewMatrix.inverse();
-    MiniMath::V4 world = invView * view;
-    MiniMath::V3 origin(world.x / world.w, world.y / world.w, world.z / world.w);
+    glm::mat4 invView = glm::inverse(viewMatrix);
+    glm::vec4 world = invView * view;
+    glm::vec3 origin(world.x / world.w, world.y / world.w, world.z / world.w);
 
-    // 5. Ray direction: camera forward
-    MiniMath::V3 dir = MiniMath::normalize(target - eye);
+    glm::vec3 dir = glm::normalize(target - eye);
 
     return { origin, dir };
 }

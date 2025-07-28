@@ -82,28 +82,28 @@ public:
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else if constexpr (is_same_v<T, MiniMath::V2>) {
+				else if constexpr (is_same_v<T, glm::vec2>) {
 					glVertexAttribPointer(attributeIndex, 2, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 					if (useInstancing)
 					{
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else if constexpr (is_same_v<T, MiniMath::V3>) {
+				else if constexpr (is_same_v<T, glm::vec3>) {
 					glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 					if (useInstancing)
 					{
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else if constexpr (is_same_v<T, MiniMath::V4>) {
+				else if constexpr (is_same_v<T, glm::vec4>) {
 					glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 					if (useInstancing)
 					{
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else if constexpr (is_same_v<T, MiniMath::M4>) {
+				else if constexpr (is_same_v<T, glm::mat4>) {
 					if (useInstancing)
 					{
 						for (int i = 0; i < 4; i++) {
@@ -185,63 +185,63 @@ public:
 	virtual void Clear();
 
 	void AddIndex(ui32 index);
-	void AddVertex(const MiniMath::V3& vertex);
-	void AddNormal(const MiniMath::V3& normal);
-	void AddColor(const MiniMath::V3& color);
-	void AddColor(const MiniMath::V4& color);
-	void AddUV(const MiniMath::V2& uv);
+	void AddVertex(const glm::vec3& vertex);
+	void AddNormal(const glm::vec3& normal);
+	void AddColor(const glm::vec3& color);
+	void AddColor(const glm::vec4& color);
+	void AddUV(const glm::vec2& uv);
 
 	ui32 GetIndex(ui32 bufferIndex);
-	MiniMath::V3& GetVertex(ui32 bufferIndex);
-	MiniMath::V3& GetNormal(ui32 bufferIndex);
-	MiniMath::V3& GetColor3(ui32 bufferIndex);
-	MiniMath::V4& GetColor4(ui32 bufferIndex);
-	MiniMath::V2& GetUV(ui32 bufferIndex);
+	glm::vec3& GetVertex(ui32 bufferIndex);
+	glm::vec3& GetNormal(ui32 bufferIndex);
+	glm::vec3& GetColor3(ui32 bufferIndex);
+	glm::vec4& GetColor4(ui32 bufferIndex);
+	glm::vec2& GetUV(ui32 bufferIndex);
 
 	void SetIndex(ui32 bufferIndex, ui32 index);
-	void SetVertex(ui32 bufferIndex, const MiniMath::V3& vertex);
-	void SetNormal(ui32 bufferIndex, const MiniMath::V3& normal);
-	void SetColor(ui32 bufferIndex, const MiniMath::V3& color);
-	void SetColor(ui32 bufferIndex, const MiniMath::V4& color);
-	void SetUV(ui32 bufferIndex, const MiniMath::V2& uv);
+	void SetVertex(ui32 bufferIndex, const glm::vec3& vertex);
+	void SetNormal(ui32 bufferIndex, const glm::vec3& normal);
+	void SetColor(ui32 bufferIndex, const glm::vec3& color);
+	void SetColor(ui32 bufferIndex, const glm::vec4& color);
+	void SetUV(ui32 bufferIndex, const glm::vec2& uv);
 
-	void AddInstanceColor(const MiniMath::V4& color);
-	void AddInstanceNormal(const MiniMath::V3& normal);
-	void AddInstanceTransform(const MiniMath::M4& transform);
+	void AddInstanceColor(const glm::vec4& color);
+	void AddInstanceNormal(const glm::vec3& normal);
+	void AddInstanceTransform(const glm::mat4& transform);
 
-	const MiniMath::V4& GetInstanceColor(ui32 bufferIndex) const;
-	void SetInstanceColor(ui32 bufferIndex, const MiniMath::V4& color);
-	const MiniMath::V3& GetInstanceNormal(ui32 bufferIndex) const;
-	void SetInstanceNormal(ui32 bufferIndex, const MiniMath::V3& normal);
-	const MiniMath::M4& GetInstanceTransform(ui32 bufferIndex) const;
-	void SetInstanceTransform(ui32 bufferIndex, const MiniMath::M4& transform);
+	const glm::vec4& GetInstanceColor(ui32 bufferIndex) const;
+	void SetInstanceColor(ui32 bufferIndex, const glm::vec4& color);
+	const glm::vec3& GetInstanceNormal(ui32 bufferIndex) const;
+	void SetInstanceNormal(ui32 bufferIndex, const glm::vec3& normal);
+	const glm::mat4& GetInstanceTransform(ui32 bufferIndex) const;
+	void SetInstanceTransform(ui32 bufferIndex, const glm::mat4& transform);
 
 	void AddIndices(const vector<ui32>& indices);
 	void AddIndices(const ui32* indices, ui32 numberOfElements);
 
-	void AddVertices(const vector<MiniMath::V3>& vertices);
-	void AddVertices(const MiniMath::V3* vertices, ui32 numberOfElements);
+	void AddVertices(const vector<glm::vec3>& vertices);
+	void AddVertices(const glm::vec3* vertices, ui32 numberOfElements);
 
-	void AddNormals(const vector<MiniMath::V3>& normals);
-	void AddNormals(const MiniMath::V3* normals, ui32 numberOfElements);
+	void AddNormals(const vector<glm::vec3>& normals);
+	void AddNormals(const glm::vec3* normals, ui32 numberOfElements);
 
-	void AddColors(const vector<MiniMath::V3>& colors);
-	void AddColors(const MiniMath::V3* colors, ui32 numberOfElements);
+	void AddColors(const vector<glm::vec3>& colors);
+	void AddColors(const glm::vec3* colors, ui32 numberOfElements);
 
-	void AddColors(const vector<MiniMath::V4>& colors);
-	void AddColors(const MiniMath::V4* colors, ui32 numberOfElements);
+	void AddColors(const vector<glm::vec4>& colors);
+	void AddColors(const glm::vec4* colors, ui32 numberOfElements);
 
-	void AddUVs(const vector<MiniMath::V2>& uvs);
-	void AddUVs(const MiniMath::V2* uvs, ui32 numberOfElements);
+	void AddUVs(const vector<glm::vec2>& uvs);
+	void AddUVs(const glm::vec2* uvs, ui32 numberOfElements);
 
-	void AddInstanceColors(const vector<MiniMath::V4>& colors);
-	void AddInstanceColors(const MiniMath::V4* colors, ui32 numberOfElements);
+	void AddInstanceColors(const vector<glm::vec4>& colors);
+	void AddInstanceColors(const glm::vec4* colors, ui32 numberOfElements);
 
-	void AddInstanceNormals(const vector<MiniMath::V3>& normals);
-	void AddInstanceNormals(const MiniMath::V3* normals, ui32 numberOfElements);
+	void AddInstanceNormals(const vector<glm::vec3>& normals);
+	void AddInstanceNormals(const glm::vec3* normals, ui32 numberOfElements);
 
-	void AddInstanceTransforms(const vector<MiniMath::M4>& transforms);
-	void AddInstanceTransforms(const MiniMath::M4* transforms, ui32 numberOfElements);
+	void AddInstanceTransforms(const vector<glm::mat4>& transforms);
+	void AddInstanceTransforms(const glm::mat4* transforms, ui32 numberOfElements);
 
 	inline bool IsVisible() const { return visible; }
 	inline void SetVisible(bool visible) { this->visible = visible; }
@@ -262,24 +262,24 @@ public:
 	inline void NextDrawingMode() { drawingMode = (DrawingMode)((drawingMode + 1) % NumberOfDrawingModes); }
 
 	inline GraphicsBuffer<ui32>& GetIndices() { return indices; }
-	inline GraphicsBuffer<MiniMath::V3>& GetVertices() { return vertices; }
-	inline GraphicsBuffer<MiniMath::V3>& GetNormals() { return normals; }
-	inline GraphicsBuffer<MiniMath::V3>& GetColors3() { return colors3; }
-	inline GraphicsBuffer<MiniMath::V4>& GetColors4() { return colors4; }
-	inline GraphicsBuffer<MiniMath::V2>& GetUvs() { return uvs; }
-	inline GraphicsBuffer<MiniMath::M4>& GetInstanceTransforms() { return instanceTransforms; }
-	inline GraphicsBuffer<MiniMath::V4>& GetInstanceColors() { return instanceColors; }
-	inline GraphicsBuffer<MiniMath::V3>& GetInstanceNormals() { return instanceNormals; }
+	inline GraphicsBuffer<glm::vec3>& GetVertices() { return vertices; }
+	inline GraphicsBuffer<glm::vec3>& GetNormals() { return normals; }
+	inline GraphicsBuffer<glm::vec3>& GetColors3() { return colors3; }
+	inline GraphicsBuffer<glm::vec4>& GetColors4() { return colors4; }
+	inline GraphicsBuffer<glm::vec2>& GetUvs() { return uvs; }
+	inline GraphicsBuffer<glm::mat4>& GetInstanceTransforms() { return instanceTransforms; }
+	inline GraphicsBuffer<glm::vec4>& GetInstanceColors() { return instanceColors; }
+	inline GraphicsBuffer<glm::vec3>& GetInstanceNormals() { return instanceNormals; }
 
 	inline const GraphicsBuffer<ui32>& GetIndices() const { return indices; }
-	inline const GraphicsBuffer<MiniMath::V3>& GetVertices() const { return vertices; }
-	inline const GraphicsBuffer<MiniMath::V3>& GetNormals() const { return normals; }
-	inline const GraphicsBuffer<MiniMath::V3>& GetColors3() const { return colors3; }
-	inline const GraphicsBuffer<MiniMath::V4>& GetColors4() const { return colors4; }
-	inline const GraphicsBuffer<MiniMath::V2>& GetUvs() const { return uvs; }
-	inline const GraphicsBuffer<MiniMath::M4>& GetInstanceTransforms() const { return instanceTransforms; }
-	inline const GraphicsBuffer<MiniMath::V4>& GetInstanceColors() const { return instanceColors; }
-	inline const GraphicsBuffer<MiniMath::V3>& GetInstanceNormals() const { return instanceNormals; }
+	inline const GraphicsBuffer<glm::vec3>& GetVertices() const { return vertices; }
+	inline const GraphicsBuffer<glm::vec3>& GetNormals() const { return normals; }
+	inline const GraphicsBuffer<glm::vec3>& GetColors3() const { return colors3; }
+	inline const GraphicsBuffer<glm::vec4>& GetColors4() const { return colors4; }
+	inline const GraphicsBuffer<glm::vec2>& GetUvs() const { return uvs; }
+	inline const GraphicsBuffer<glm::mat4>& GetInstanceTransforms() const { return instanceTransforms; }
+	inline const GraphicsBuffer<glm::vec4>& GetInstanceColors() const { return instanceColors; }
+	inline const GraphicsBuffer<glm::vec3>& GetInstanceNormals() const { return instanceNormals; }
 
 private:
 	bool visible = true;
@@ -293,15 +293,15 @@ private:
 	DrawingMode drawingMode = Solid;
 
 	GraphicsBuffer<ui32> indices;
-	GraphicsBuffer<MiniMath::V3> vertices;
-	GraphicsBuffer<MiniMath::V3> normals;
-	GraphicsBuffer<MiniMath::V3> colors3;
-	GraphicsBuffer<MiniMath::V4> colors4;
-	GraphicsBuffer<MiniMath::V2> uvs;
+	GraphicsBuffer<glm::vec3> vertices;
+	GraphicsBuffer<glm::vec3> normals;
+	GraphicsBuffer<glm::vec3> colors3;
+	GraphicsBuffer<glm::vec4> colors4;
+	GraphicsBuffer<glm::vec2> uvs;
 
-	GraphicsBuffer<MiniMath::M4> instanceTransforms;
-	GraphicsBuffer<MiniMath::V4> instanceColors;
-	GraphicsBuffer<MiniMath::V3> instanceNormals;
+	GraphicsBuffer<glm::mat4> instanceTransforms;
+	GraphicsBuffer<glm::vec4> instanceColors;
+	GraphicsBuffer<glm::vec3> instanceNormals;
 
 	ui32 numberOfInstances = 1;
 };

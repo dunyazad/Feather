@@ -6,7 +6,6 @@
 #include <FeatherWindow.h>
 #include <File.h>
 #include <GeometryBuilder.h>
-#include <MiniMath.h>
 #include <Monitor.h>
 #include <Serialization.hpp>
 

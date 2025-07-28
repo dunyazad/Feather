@@ -8,33 +8,33 @@ GeometryBuilder::~GeometryBuilder()
 {
 }
 
-tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
-GeometryBuilder::BuildPlane(f32 width, f32 height, const MiniMath::V3& center, const MiniMath::V3& normal, const MiniMath::V4& color)
+tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+GeometryBuilder::BuildPlane(f32 width, f32 height, const glm::vec3& center, const glm::vec3& normal, const glm::vec4& color)
 {
 	vector<unsigned int> indices;
-	vector<MiniMath::V3> vertices;
-	vector<MiniMath::V3> normals;
-	vector<MiniMath::V4> colors;
-	vector<MiniMath::V2> uvs;
+	vector<glm::vec3> vertices;
+	vector<glm::vec3> normals;
+	vector<glm::vec4> colors;
+	vector<glm::vec2> uvs;
 
 	f32 halfWidth = width * 0.5f;
 	f32 halfHeight = height * 0.5f;
 
-	auto r = MiniMath::rotation({ 0.0f, 0.0f, 1.0f }, normal);
+	auto r = glm::rotation({ 0.0f, 0.0f, 1.0f }, normal);
 	
-	vertices.push_back(center + r * MiniMath::V3(-halfWidth, -halfHeight, 0.0f));
-	vertices.push_back(center + r * MiniMath::V3( halfWidth, -halfHeight, 0.0f));
-	vertices.push_back(center + r * MiniMath::V3( halfWidth,  halfHeight, 0.0f));
-	vertices.push_back(center + r * MiniMath::V3(-halfWidth,  halfHeight, 0.0f));
+	vertices.push_back(center + r * glm::vec3(-halfWidth, -halfHeight, 0.0f));
+	vertices.push_back(center + r * glm::vec3( halfWidth, -halfHeight, 0.0f));
+	vertices.push_back(center + r * glm::vec3( halfWidth,  halfHeight, 0.0f));
+	vertices.push_back(center + r * glm::vec3(-halfWidth,  halfHeight, 0.0f));
 	
 	normals.push_back(normal);
 	
 	colors.push_back(color);
 
-	uvs.push_back(MiniMath::V2(0, 0));
-	uvs.push_back(MiniMath::V2(1, 0));
-	uvs.push_back(MiniMath::V2(1, 1));
-	uvs.push_back(MiniMath::V2(0, 1));
+	uvs.push_back(glm::vec2(0, 0));
+	uvs.push_back(glm::vec2(1, 0));
+	uvs.push_back(glm::vec2(1, 1));
+	uvs.push_back(glm::vec2(0, 1));
 
 	indices.push_back(0);
 	indices.push_back(1);
@@ -46,42 +46,42 @@ GeometryBuilder::BuildPlane(f32 width, f32 height, const MiniMath::V3& center, c
 	return make_tuple(indices, vertices, normals, colors, uvs);
 }
 
-tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
-GeometryBuilder::BuildBox(const MiniMath::V3& center, const MiniMath::V3& dimension, const MiniMath::V4& color)
+tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+GeometryBuilder::BuildBox(const glm::vec3& center, const glm::vec3& dimension, const glm::vec4& color)
 {
 	vector<unsigned int> indices;
-	vector<MiniMath::V3> vertices;
-	vector<MiniMath::V3> normals;
-	vector<MiniMath::V4> colors;
-	vector<MiniMath::V2> uvs;
+	vector<glm::vec3> vertices;
+	vector<glm::vec3> normals;
+	vector<glm::vec4> colors;
+	vector<glm::vec2> uvs;
 
-	MiniMath::V3 halfDim = dimension * 0.5f;
+	glm::vec3 halfDim = dimension * 0.5f;
 
-	MiniMath::V3 positions[8] = {
-		center + MiniMath::V3(-halfDim.x, -halfDim.y, -halfDim.z),
-		center + MiniMath::V3(halfDim.x, -halfDim.y, -halfDim.z),
-		center + MiniMath::V3(halfDim.x, halfDim.y, -halfDim.z),
-		center + MiniMath::V3(-halfDim.x, halfDim.y, -halfDim.z),
-		center + MiniMath::V3(-halfDim.x, -halfDim.y, halfDim.z),
-		center + MiniMath::V3(halfDim.x, -halfDim.y, halfDim.z),
-		center + MiniMath::V3(halfDim.x, halfDim.y, halfDim.z),
-		center + MiniMath::V3(-halfDim.x, halfDim.y, halfDim.z)
+	glm::vec3 positions[8] = {
+		center + glm::vec3(-halfDim.x, -halfDim.y, -halfDim.z),
+		center + glm::vec3(halfDim.x, -halfDim.y, -halfDim.z),
+		center + glm::vec3(halfDim.x, halfDim.y, -halfDim.z),
+		center + glm::vec3(-halfDim.x, halfDim.y, -halfDim.z),
+		center + glm::vec3(-halfDim.x, -halfDim.y, halfDim.z),
+		center + glm::vec3(halfDim.x, -halfDim.y, halfDim.z),
+		center + glm::vec3(halfDim.x, halfDim.y, halfDim.z),
+		center + glm::vec3(-halfDim.x, halfDim.y, halfDim.z)
 	};
 
-	MiniMath::V2 uvCoords[4] = {
-		MiniMath::V2(0, 0),
-		MiniMath::V2(1, 0),
-		MiniMath::V2(1, 1),
-		MiniMath::V2(0, 1)
+	glm::vec2 uvCoords[4] = {
+		glm::vec2(0, 0),
+		glm::vec2(1, 0),
+		glm::vec2(1, 1),
+		glm::vec2(0, 1)
 	};
 
-	MiniMath::V3 faceNormals[6] = {
-		MiniMath::V3(0, 0, -1),
-		MiniMath::V3(0, 0, 1),
-		MiniMath::V3(-1, 0, 0),
-		MiniMath::V3(1, 0, 0),
-		MiniMath::V3(0, -1, 0),
-		MiniMath::V3(0, 1, 0)
+	glm::vec3 faceNormals[6] = {
+		glm::vec3(0, 0, -1),
+		glm::vec3(0, 0, 1),
+		glm::vec3(-1, 0, 0),
+		glm::vec3(1, 0, 0),
+		glm::vec3(0, -1, 0),
+		glm::vec3(0, 1, 0)
 	};
 
 	unsigned int faceIndices[6][6] = {
@@ -95,7 +95,7 @@ GeometryBuilder::BuildBox(const MiniMath::V3& center, const MiniMath::V3& dimens
 
 	for (int i = 0; i < 6; ++i)
 	{
-		MiniMath::V3 normal = faceNormals[i];
+		glm::vec3 normal = faceNormals[i];
 
 		for (int j = 0; j < 6; ++j)
 		{
@@ -112,27 +112,27 @@ GeometryBuilder::BuildBox(const MiniMath::V3& center, const MiniMath::V3& dimens
 	return make_tuple(indices, vertices, normals, colors, uvs);
 }
 
-tuple<vector<ui32>, vector<MiniMath::V3>, vector<MiniMath::V3>, vector<MiniMath::V4>, vector<MiniMath::V2>>
-GeometryBuilder::BuildWiredBox(const MiniMath::V3& center, const MiniMath::V3& dimension, const MiniMath::V4& color)
+tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+GeometryBuilder::BuildWiredBox(const glm::vec3& center, const glm::vec3& dimension, const glm::vec4& color)
 {
 	vector<ui32> indices;
-	vector<MiniMath::V3> vertices;
-	vector<MiniMath::V3> normals; // Empty or zero since wireframe has no surface
-	vector<MiniMath::V4> colors;
-	vector<MiniMath::V2> uvs;     // Empty if not needed for wireframe
+	vector<glm::vec3> vertices;
+	vector<glm::vec3> normals; // Empty or zero since wireframe has no surface
+	vector<glm::vec4> colors;
+	vector<glm::vec2> uvs;     // Empty if not needed for wireframe
 
-	MiniMath::V3 halfDim = dimension * 0.5f;
+	glm::vec3 halfDim = dimension * 0.5f;
 
 	// Define 8 corners of the box
-	MiniMath::V3 positions[8] = {
-		center + MiniMath::V3(-halfDim.x, -halfDim.y, -halfDim.z), // 0
-		center + MiniMath::V3(halfDim.x, -halfDim.y, -halfDim.z), // 1
-		center + MiniMath::V3(halfDim.x,  halfDim.y, -halfDim.z), // 2
-		center + MiniMath::V3(-halfDim.x,  halfDim.y, -halfDim.z), // 3
-		center + MiniMath::V3(-halfDim.x, -halfDim.y,  halfDim.z), // 4
-		center + MiniMath::V3(halfDim.x, -halfDim.y,  halfDim.z), // 5
-		center + MiniMath::V3(halfDim.x,  halfDim.y,  halfDim.z), // 6
-		center + MiniMath::V3(-halfDim.x,  halfDim.y,  halfDim.z)  // 7
+	glm::vec3 positions[8] = {
+		center + glm::vec3(-halfDim.x, -halfDim.y, -halfDim.z), // 0
+		center + glm::vec3(halfDim.x, -halfDim.y, -halfDim.z), // 1
+		center + glm::vec3(halfDim.x,  halfDim.y, -halfDim.z), // 2
+		center + glm::vec3(-halfDim.x,  halfDim.y, -halfDim.z), // 3
+		center + glm::vec3(-halfDim.x, -halfDim.y,  halfDim.z), // 4
+		center + glm::vec3(halfDim.x, -halfDim.y,  halfDim.z), // 5
+		center + glm::vec3(halfDim.x,  halfDim.y,  halfDim.z), // 6
+		center + glm::vec3(-halfDim.x,  halfDim.y,  halfDim.z)  // 7
 	};
 
 	// Define the 12 edges of a box using index pairs
@@ -146,8 +146,8 @@ GeometryBuilder::BuildWiredBox(const MiniMath::V3& center, const MiniMath::V3& d
 	{
 		const int startIdx = vertices.size(); // Each edge is 2 vertices
 
-		MiniMath::V3 v0 = positions[edgePairs[i][0]];
-		MiniMath::V3 v1 = positions[edgePairs[i][1]];
+		glm::vec3 v0 = positions[edgePairs[i][0]];
+		glm::vec3 v1 = positions[edgePairs[i][1]];
 
 		vertices.push_back(v0);
 		vertices.push_back(v1);
@@ -155,11 +155,11 @@ GeometryBuilder::BuildWiredBox(const MiniMath::V3& center, const MiniMath::V3& d
 		colors.push_back(color);
 		colors.push_back(color);
 
-		normals.push_back(MiniMath::V3(0, 0, 0)); // placeholder
-		normals.push_back(MiniMath::V3(0, 0, 0));
+		normals.push_back(glm::vec3(0, 0, 0)); // placeholder
+		normals.push_back(glm::vec3(0, 0, 0));
 
-		uvs.push_back(MiniMath::V2(0, 0));
-		uvs.push_back(MiniMath::V2(0, 0));
+		uvs.push_back(glm::vec2(0, 0));
+		uvs.push_back(glm::vec2(0, 0));
 
 		indices.push_back(startIdx);
 		indices.push_back(startIdx + 1);
@@ -168,14 +168,14 @@ GeometryBuilder::BuildWiredBox(const MiniMath::V3& center, const MiniMath::V3& d
 	return make_tuple(indices, vertices, normals, colors, uvs);
 }
 
-std::tuple<std::vector<ui32>, std::vector<MiniMath::V3>, std::vector<MiniMath::V3>, std::vector<MiniMath::V4>, std::vector<MiniMath::V2>>
-GeometryBuilder::BuildSphere(const MiniMath::V3& center, f32 radius, ui32 horizontalSegments, ui32 verticalSegments, const MiniMath::V4& color)
+std::tuple<std::vector<ui32>, std::vector<glm::vec3>, std::vector<glm::vec3>, std::vector<glm::vec4>, std::vector<glm::vec2>>
+GeometryBuilder::BuildSphere(const glm::vec3& center, f32 radius, ui32 horizontalSegments, ui32 verticalSegments, const glm::vec4& color)
 {
 	std::vector<ui32> indices;
-	std::vector<MiniMath::V3> vertices;
-	std::vector<MiniMath::V3> normals;
-	std::vector<MiniMath::V4> colors;
-	std::vector<MiniMath::V2> uvs;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec4> colors;
+	std::vector<glm::vec2> uvs;
 
 	float dTheta = 2.0f * M_PI / horizontalSegments;
 	float dPhi = M_PI / verticalSegments;
@@ -187,15 +187,15 @@ GeometryBuilder::BuildSphere(const MiniMath::V3& center, f32 radius, ui32 horizo
 		{
 			float theta = j * dTheta;
 
-			MiniMath::V3 normal(
+			glm::vec3 normal(
 				std::cos(theta) * std::sin(phi),
 				std::cos(phi),
 				std::sin(theta) * std::sin(phi)
 			);
 
-			MiniMath::V3 position = center + radius * normal;
+			glm::vec3 position = center + radius * normal;
 
-			MiniMath::V2 uv(
+			glm::vec2 uv(
 				static_cast<float>(j) / horizontalSegments,
 				static_cast<float>(i) / verticalSegments
 			);

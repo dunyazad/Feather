@@ -18,7 +18,7 @@ public:
 
 	static void CreateEntity(const string& tag);
 	static void Clear(const string& tag);
-	static void AddLine(const string& tag, const MiniMath::V3& v0, const MiniMath::V3& v1, const MiniMath::V4& c0, const MiniMath::V4& c1);
+	static void AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1);
 
 private:
 	static bool initialized;

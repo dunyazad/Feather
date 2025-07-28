@@ -14,12 +14,12 @@ public:
 	void AddChild(Transform* child);
 	void RemoveChild(Transform* child);
 
-	inline const MiniMath::M4& GetTransformMatrix() const { return transformMatrix; }
-	inline void SetTransformMatrix(const MiniMath::M4& m) { transformMatrix = m; }
+	inline const glm::mat4& GetTransformMatrix() const { return transformMatrix; }
+	inline void SetTransformMatrix(const glm::mat4& m) { transformMatrix = m; }
 
 private:
 	Transform* parent = nullptr;
 	set<Transform*> children;
 
-	MiniMath::M4 transformMatrix = MiniMath::M4::identity();
+	glm::mat4 transformMatrix = glm::identity<glm::mat4>();
 };

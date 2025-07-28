@@ -43,7 +43,7 @@ void VisualDebugging::Clear(const string& tag)
 	renderable->Clear();
 }
 
-void VisualDebugging::AddLine(const string& tag, const MiniMath::V3& v0, const MiniMath::V3& v1, const MiniMath::V4& c0, const MiniMath::V4& c1)
+void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)
 {
 	if (false == initialized) Initialize();
 	if (entities.end() == entities.find(tag)) CreateEntity(tag);

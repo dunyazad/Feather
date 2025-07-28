@@ -19,7 +19,6 @@ set(source_list
 
     ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/File.h
-    ${CMAKE_SOURCE_DIR}/include/MiniMath.h
     ${CMAKE_SOURCE_DIR}/include/Monitor.h
     ${CMAKE_SOURCE_DIR}/include/Serialization.hpp
     
@@ -46,7 +45,6 @@ set(source_list
 
     src/Feather.cpp
     src/FeatherCommon.cpp
-    src/MiniMath.cpp
     src/FeatherWindow.cpp
     src/File.cpp
     src/Monitor.cpp
@@ -119,6 +117,7 @@ source_group("Source Files\\imgui\\implot" FILES
 # Include directories
 target_include_directories(libFeather PUBLIC
     ${Feather_SOURCE_DIR}/External/glad/include/
+    ${Feather_SOURCE_DIR}/External/glm/
     ${CMAKE_SOURCE_DIR}/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${glfw_SOURCE_DIR}/include

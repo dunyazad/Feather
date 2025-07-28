@@ -22,9 +22,9 @@ void RenderSystem::Terminate()
 template<typename T>
 void RenderRenderablesTemplate(
     ui32 frameNo, f32 timeDelta,
-    const MiniMath::M4& viewMatrix,
-    const MiniMath::M4& perspectiveMatrix,
-    const MiniMath::V3& eye,
+    const glm::mat4& viewMatrix,
+    const glm::mat4& perspectiveMatrix,
+    const glm::vec3& eye,
     const map<Shader*, vector<T*>>& shaderMapping)
 {
     for (auto& [shader, renderables] : shaderMapping)
@@ -56,7 +56,7 @@ void RenderRenderablesTemplate(
                 auto index = shader->GetUniformLocation("model");
                 if (-1 != index)
                 {
-                    shader->UniformM4(index, MiniMath::M4::identity());
+                    shader->UniformM4(index, glm::identity<glm::mat4>());
                 }
             }
 
@@ -112,9 +112,9 @@ void RenderRenderablesTemplate(
 
 void RenderSystem::RenderRenderables(
     ui32 frameNo, f32 timeDelta,
-    const MiniMath::M4& viewMatrix,
-    const MiniMath::M4& perspectiveMatrix,
-    const MiniMath::V3& eye,
+    const glm::mat4& viewMatrix,
+    const glm::mat4& perspectiveMatrix,
+    const glm::vec3& eye,
     const map<Shader*, vector<Renderable*>>& shaderMapping)
 {
     RenderRenderablesTemplate<Renderable>(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shaderMapping);
@@ -122,9 +122,9 @@ void RenderSystem::RenderRenderables(
 
 void RenderSystem::RenderDebuggingRenderables(
     ui32 frameNo, f32 timeDelta,
-    const MiniMath::M4& viewMatrix,
-    const MiniMath::M4& perspectiveMatrix,
-    const MiniMath::V3& eye,
+    const glm::mat4& viewMatrix,
+    const glm::mat4& perspectiveMatrix,
+    const glm::vec3& eye,
     const map<Shader*, vector<DebuggingRenderable*>>& shaderMapping)
 {
     RenderRenderablesTemplate<DebuggingRenderable>(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shaderMapping);
@@ -132,9 +132,9 @@ void RenderSystem::RenderDebuggingRenderables(
 
 void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
 {
-    MiniMath::M4 viewMatrix;
-    MiniMath::M4 perspectiveMatrix;
-    MiniMath::V3 eye;
+    glm::mat4 viewMatrix;
+    glm::mat4 perspectiveMatrix;
+    glm::vec3 eye;
 
     auto& registry = Feather.GetRegistry();
     auto entites = registry.view<PerspectiveCamera>();

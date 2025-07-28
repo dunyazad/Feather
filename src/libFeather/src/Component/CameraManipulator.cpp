@@ -30,8 +30,8 @@ CameraManipulatorOrbit::~CameraManipulatorOrbit()
 //		auto vPanning = vDelta * mouseSensitivity;
 //
 //		auto viewMatrix = camera->GetViewMatrix();
-//		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
-//		MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
+//		glm::vec3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
+//		glm::vec3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
 //
 //		auto target = camera->GetTarget();
 //		auto eye = camera->GetEye();
@@ -60,8 +60,8 @@ CameraManipulatorOrbit::~CameraManipulatorOrbit()
 //		auto vPanning = vDelta * mouseSensitivity;
 //
 //		auto viewMatrix = camera->GetViewMatrix();
-//		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
-//		MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
+//		glm::vec3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
+//		glm::vec3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
 //
 //		auto target = camera->GetTarget();
 //		auto eye = camera->GetEye();
@@ -138,41 +138,44 @@ void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event
 	if (isRButtonPressed)
 	{
 		float angleX = -dx * mouseSensitivity;
-		float angleY = dy * mouseSensitivity;
+		float angleY = -dy * mouseSensitivity;
 
-		MiniMath::V3 eye = camera->GetEye();
-		MiniMath::V3 target = camera->GetTarget();
-		MiniMath::V3 up = camera->GetUp();
+		glm::vec3 eye = camera->GetEye();
+		glm::vec3 target = camera->GetTarget();
+		glm::vec3 up = camera->GetUp();
 
-		MiniMath::V3 viewDir = MiniMath::normalize(eye - target);
-		MiniMath::V3 right = MiniMath::normalize(MiniMath::cross(viewDir, up));
+		glm::vec3 viewDir = glm::normalize(eye - target);
+		glm::vec3 right = glm::normalize(glm::cross(up, viewDir));
 
-		MiniMath::Quaternion rotX = MiniMath::Quaternion(angleX, up);
-		MiniMath::Quaternion rotY = MiniMath::Quaternion(angleY, right);
+		glm::quat rotX = glm::angleAxis(angleX, up);
+		glm::quat rotY = glm::angleAxis(angleY, right);
 
-		MiniMath::V3 rotatedViewDir = MiniMath::rotate(viewDir, rotX * rotY);
+		glm::quat rot = rotX * rotY;
 
-		MiniMath::V3 newEye = target + rotatedViewDir * radius;
+		glm::vec3 rotatedViewDir = glm::normalize(rot * viewDir);
+		glm::vec3 rotatedUp = glm::normalize(rot * up);
 
-		MiniMath::V3 newUp = MiniMath::normalize(MiniMath::cross(right, rotatedViewDir));
+		glm::vec3 newEye = target + rotatedViewDir * radius;
 
 		camera->SetEye(newEye);
-		camera->SetUp(newUp);
+		camera->SetUp(rotatedUp);
 	}
 
-	if (isMButtonPressed) {
+	if (isMButtonPressed)
+	{
 		float panX = -dx * mousePanningSensitivity;
 		float panY = dy * mousePanningSensitivity;
 
-		MiniMath::M4 viewMatrix = camera->GetViewMatrix();
-		MiniMath::V3 right(viewMatrix.at(0, 0), viewMatrix.at(1, 0), viewMatrix.at(2, 0));
-		MiniMath::V3 up(viewMatrix.at(0, 1), viewMatrix.at(1, 1), viewMatrix.at(2, 1));
+		glm::mat4 viewMatrix = camera->GetViewMatrix();
+		glm::vec3 right = glm::vec3(viewMatrix[0]);
+		glm::vec3 up = glm::vec3(viewMatrix[1]);
 
-		MiniMath::V3 eye = camera->GetEye();
-		MiniMath::V3 target = camera->GetTarget();
+		glm::vec3 eye = camera->GetEye();
+		glm::vec3 target = camera->GetTarget();
 
-		target += right * panX + up * panY;
-		eye += right * panX + up * panY;
+		glm::vec3 offset = right * panX + up * panY;
+		target += offset;
+		eye += offset;
 
 		camera->SetTarget(target);
 		camera->SetEye(eye);
@@ -254,7 +257,7 @@ void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 		auto eye = camera->GetEye();
 		auto target = camera->GetTarget();
 
-		MiniMath::V3 viewDir = MiniMath::normalize(eye - target);
+		glm::vec3 viewDir = glm::normalize(eye - target);
 		camera->SetEye(target + viewDir * radius);
 	}
 }
@@ -265,11 +268,11 @@ void CameraManipulatorTrackball::OnKey(const KeyEvent& event)
 
 	if (nullptr == camera) return;
 
-	MiniMath::V3 eye = camera->GetEye();
-	MiniMath::V3 target = camera->GetTarget();
-	MiniMath::V3 up = camera->GetUp();
-	MiniMath::V3 viewDir = MiniMath::normalize(target - eye);
-	MiniMath::V3 right = MiniMath::normalize(MiniMath::cross(up, viewDir));
+	glm::vec3 eye = camera->GetEye();
+	glm::vec3 target = camera->GetTarget();
+	glm::vec3 up = camera->GetUp();
+	glm::vec3 viewDir = glm::normalize(target - eye);
+	glm::vec3 right = glm::normalize(glm::cross(up, viewDir));
 
 	float moveStep = 0.2f;
 
@@ -305,9 +308,9 @@ void CameraManipulatorTrackball::OnKey(const KeyEvent& event)
 
 void CameraManipulatorTrackball::PushCameraHistory()
 {
-	MiniMath::V3 eye = camera->GetEye();
-	MiniMath::V3 target = camera->GetTarget();
-	MiniMath::V3 up = camera->GetUp();
+	glm::vec3 eye = camera->GetEye();
+	glm::vec3 target = camera->GetTarget();
+	glm::vec3 up = camera->GetUp();
 
 	cameraHistory.push_back({ eye, target, up, radius });
 
@@ -370,9 +373,9 @@ void CameraManipulatorTrackball::Reset()
 
 void CameraManipulatorTrackball::MakeDefault()
 {
-	MiniMath::V3 eye = camera->GetEye();
-	MiniMath::V3 target = camera->GetTarget();
-	MiniMath::V3 up = camera->GetUp();
+	glm::vec3 eye = camera->GetEye();
+	glm::vec3 target = camera->GetTarget();
+	glm::vec3 up = camera->GetUp();
 
 	cameraHistory.clear();
 	cameraHistory.push_back({ eye, target, up, radius });

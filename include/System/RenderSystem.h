@@ -20,16 +20,16 @@ public:
 
 	void RenderRenderables(
 		ui32 frameNo, f32 timeDelta,
-		const MiniMath::M4& viewMatrix,
-		const MiniMath::M4& perspectiveMatrix,
-		const MiniMath::V3& eye,
+		const glm::mat4& viewMatrix,
+		const glm::mat4& perspectiveMatrix,
+		const glm::vec3& eye,
 		const map<Shader*, vector<Renderable*>>& shaderMapping);
 
 	void RenderDebuggingRenderables(
 		ui32 frameNo, f32 timeDelta,
-		const MiniMath::M4& viewMatrix,
-		const MiniMath::M4& perspectiveMatrix,
-		const MiniMath::V3& eye,
+		const glm::mat4& viewMatrix,
+		const glm::mat4& perspectiveMatrix,
+		const glm::vec3& eye,
 		const map<Shader*, vector<DebuggingRenderable*>>& shaderMapping);
 
 private:

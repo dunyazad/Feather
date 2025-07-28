@@ -137,11 +137,11 @@ int main(int argc, char** argv)
 				int y = (i % (xCount * yCount)) / xCount;
 				int x = (i % (xCount * yCount)) % xCount;
 
-				MiniMath::M4 model = MiniMath::M4::identity();
+				glm::mat4 model = glm::identity<glm::mat4>();
 				model.m[0][0] = 0.5f;
 				model.m[1][1] = 0.5f;
 				model.m[2][2] = 0.5f;
-				model = MiniMath::translate(model, MiniMath::V3(x, y, z));
+				model = glm::translate(model, glm::vec3(x, y, z));
 				renderable->AddInstanceTransform(model);
 			}
 
@@ -178,11 +178,11 @@ int main(int argc, char** argv)
 				int y = (i % (xCount * yCount)) / xCount;
 				int x = (i % (xCount * yCount)) % xCount;
 
-				MiniMath::M4 model = MiniMath::M4::identity();
+				glm::mat4 model = glm::identity<glm::mat4>();
 				model.m[0][0] = 0.5f;
 				model.m[1][1] = 0.5f;
 				model.m[2][2] = 0.5f;
-				model = MiniMath::translate(model, MiniMath::V3(x, y, z));
+				model = glm::translate(model, glm::vec3(x, y, z));
 				renderable->AddInstanceTransform(model);
 			}
 
@@ -214,18 +214,18 @@ int main(int argc, char** argv)
 			ply.SwapAxisYZ();
 
 			if(false == ply.GetPoints().empty())
-				renderable->AddVertices((MiniMath::V3*)ply.GetPoints().data(), ply.GetPoints().size() / 3);
+				renderable->AddVertices((glm::vec3*)ply.GetPoints().data(), ply.GetPoints().size() / 3);
 			if (false == ply.GetNormals().empty())
-				renderable->AddNormals((MiniMath::V3*)ply.GetNormals().data(), ply.GetNormals().size() / 3);
+				renderable->AddNormals((glm::vec3*)ply.GetNormals().data(), ply.GetNormals().size() / 3);
 			if (false == ply.GetColors().empty())
 			{
 				if (ply.UseAlpha())
 				{
-					renderable->AddColors((MiniMath::V4*)ply.GetColors().data(), ply.GetColors().size() / 4);
+					renderable->AddColors((glm::vec4*)ply.GetColors().data(), ply.GetColors().size() / 4);
 				}
 				else
 				{
-					renderable->AddColors((MiniMath::V3*)ply.GetColors().data(), ply.GetColors().size() / 3);
+					renderable->AddColors((glm::vec3*)ply.GetColors().data(), ply.GetColors().size() / 3);
 				}
 			}
 
@@ -266,11 +266,11 @@ int main(int argc, char** argv)
 				auto y = ply.GetPoints()[i * 3 + 1];
 				auto z = ply.GetPoints()[i * 3 + 2];
 
-				MiniMath::M4 model = MiniMath::M4::identity();
+				glm::mat4 model = glm::identity<glm::mat4>();
 				model.m[0][0] = 0.5f;
 				model.m[1][1] = 0.5f;
 				model.m[2][2] = 0.5f;
-				model = MiniMath::translate(model, MiniMath::V3(x, y, z));
+				model = glm::translate(model, glm::vec3(x, y, z));
 				renderable->AddInstanceTransform(model);
 			}
 
@@ -289,9 +289,9 @@ int main(int argc, char** argv)
 		{
 			struct Point
 			{
-				MiniMath::V3 position;
-				MiniMath::V3 normal;
-				MiniMath::V3 color;
+				glm::vec3 position;
+				glm::vec3 normal;
+				glm::vec3 color;
 			};
 			ALPFormat<Point> alp;
 			if (false == alp.Deserialize("../../res/3D/Teeth_Full.alp"))
@@ -336,7 +336,7 @@ int main(int argc, char** argv)
 				}
 				renderable.SetActiveShaderIndex(1);
 
-				auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.05f, 6, 6);
+				auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere({0.0f, 0.0f, 0.0f}, 0.05f, 6, 6);
 				//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
 				renderable.AddIndices(indices);
 				renderable.AddVertices(vertices);
@@ -351,14 +351,14 @@ int main(int argc, char** argv)
 					auto b = p.color.z;
 					auto a = 1.f;
 
-					renderable.AddInstanceColor(MiniMath::V4(r, g, b, a));
+					renderable.AddInstanceColor(glm::vec4(r, g, b, a));
 					renderable.AddInstanceNormal(p.normal);
 
-					MiniMath::M4 model = MiniMath::M4::identity();
-					model.m[0][0] = 1.5f;
-					model.m[1][1] = 1.5f;
-					model.m[2][2] = 1.5f;
-					model = MiniMath::translate(model, p.position);
+					glm::mat4 model = glm::identity<glm::mat4>();
+					model[0][0] = 1.5f;
+					model[1][1] = 1.5f;
+					model[2][2] = 1.5f;
+					model = glm::translate(model, p.position);
 					renderable.AddInstanceTransform(model);
 				}
 

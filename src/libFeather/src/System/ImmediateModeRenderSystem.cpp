@@ -71,12 +71,12 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 
 		const auto& projection = camera.GetProjectionMatrix();
 		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf((float*)projection.m);
+		glLoadMatrixf(glm::value_ptr(projection));
 
 		const auto& view = camera.GetViewMatrix();
 		auto target = camera.GetTarget();
 		glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf((float*)view.m);
+		glLoadMatrixf(glm::value_ptr(view));
 
 		glColor3f(1.0f, 0.0f, 0.0f);
 		glBegin(GL_POINTS);

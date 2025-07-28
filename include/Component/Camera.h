@@ -4,8 +4,8 @@
 
 struct Ray
 {
-	MiniMath::V3 origin;
-	MiniMath::V3 direction;
+	glm::vec3 origin;
+	glm::vec3 direction;
 };
 
 struct ProjectionInfoOrthogonal
@@ -27,35 +27,33 @@ public:
 	CameraBase();
 	virtual ~CameraBase();
 
-	MiniMath::M4 LookAt(const MiniMath::V3& eye, const MiniMath::V3& target, const MiniMath::V3& up) const;
-
 	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const = 0;
 
 	inline bool IsDirty() const { return dirty; }
 	inline void SetDirty(bool isDirty) { dirty = isDirty; }
 
-	inline MiniMath::V3& GetEye() { return eye; }
-	inline MiniMath::V3& GetTarget() { return target; }
-	inline MiniMath::V3& GetUp() { return up; }
+	inline glm::vec3& GetEye() { return eye; }
+	inline glm::vec3& GetTarget() { return target; }
+	inline glm::vec3& GetUp() { return up; }
 
-	inline void SetEye(const MiniMath::V3& eye) { this->eye = eye; dirty = true; }
-	inline void SetTarget(const MiniMath::V3& target) { this->target = target; dirty = true; }
-	inline void SetUp(const MiniMath::V3& up) { this->up = up; dirty = true; }
+	inline void SetEye(const glm::vec3& eye) { this->eye = eye; dirty = true; }
+	inline void SetTarget(const glm::vec3& target) { this->target = target; dirty = true; }
+	inline void SetUp(const glm::vec3& up) { this->up = up; dirty = true; }
 
-	inline const MiniMath::M4& GetProjectionMatrix() { return projectionMatrix; }
-	inline const MiniMath::M4& GetViewMatrix() { return viewMatrix; }
+	inline const glm::mat4& GetProjectionMatrix() { return projectionMatrix; }
+	inline const glm::mat4& GetViewMatrix() { return viewMatrix; }
 
 	ProjectionMode projectionMode = Perspective;
 
 protected:
 	bool dirty = true;
 
-	MiniMath::M4 projectionMatrix = MiniMath::M4::identity();
-	MiniMath::M4 viewMatrix = MiniMath::M4::identity();
+	glm::mat4 projectionMatrix = glm::identity<glm::mat4>();
+	glm::mat4 viewMatrix = glm::identity<glm::mat4>();
 
-	MiniMath::V3 eye = MiniMath::V3(0.0f, 0.0f, 5.0f);
-	MiniMath::V3 target = MiniMath::V3(0.0f, 0.0f, 0.0f);
-	MiniMath::V3 up = MiniMath::V3(0.0f, 1.0f, 0.0f);
+	glm::vec3 eye = glm::vec3(0.0f, 0.0f, 5.0f);
+	glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 };
 
 class PerspectiveCamera : public CameraBase

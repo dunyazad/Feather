@@ -1,6 +1,5 @@
 #include <Feather.h>
 
-#include <MiniMath.h>
 #include <Monitor.h>
 #include <FeatherWindow.h>
 #include <Component/Components.h>
