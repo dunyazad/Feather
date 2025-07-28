@@ -5,6 +5,8 @@
 class FeatherWindow;
 class Shader;
 class CameraBase;
+class Renderable;
+class DebuggingRenderable;
 
 class RenderSystem
 {
@@ -15,6 +17,20 @@ public:
 	virtual void Initialize();
 	virtual void Terminate();
 	virtual void Update(ui32 frameNo, f32 timeDelta);
+
+	void RenderRenderables(
+		ui32 frameNo, f32 timeDelta,
+		const MiniMath::M4& viewMatrix,
+		const MiniMath::M4& perspectiveMatrix,
+		const MiniMath::V3& eye,
+		const map<Shader*, vector<Renderable*>>& shaderMapping);
+
+	void RenderDebuggingRenderables(
+		ui32 frameNo, f32 timeDelta,
+		const MiniMath::M4& viewMatrix,
+		const MiniMath::M4& perspectiveMatrix,
+		const MiniMath::V3& eye,
+		const map<Shader*, vector<DebuggingRenderable*>>& shaderMapping);
 
 private:
 	FeatherWindow* window = nullptr;

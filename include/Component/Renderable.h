@@ -285,3 +285,7 @@ private:
 
 	ui32 numberOfInstances = 1;
 };
+
+class DebuggingRenderable : public Renderable
+{
+};

@@ -2,6 +2,7 @@
 
 #include <FeatherCommon.h>
 #include <File.h>
+#include <VisualDebugging.h>
 #include <Component/EventCallback.h>
 
 class EventSystem;
