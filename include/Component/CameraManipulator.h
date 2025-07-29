@@ -67,7 +67,7 @@ protected:
 
 	f32 azimuth = 0.0f;
 	f32 elevation = 0.0f;
-	f32 radius = 5.0f;
+	f32 radius = 50.0f;
 	f32 mouseSensitivity = 0.2f;
 	f32 mousePanningSensitivity = 0.1f;
 	f32 mouseWheelSensitivity = 0.5f;
@@ -113,7 +113,7 @@ private:
 	bool isMButtonPressed = false;
 	bool isRButtonPressed = false;
 
-	f32 radius = 5.0f;
+	f32 radius = 50.0f;
 	f32 mouseSensitivity = 0.005f;
 	f32 mousePanningSensitivity = 0.01f;
 	f32 mouseWheelSensitivity = 0.5f;

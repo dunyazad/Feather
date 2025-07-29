@@ -44,6 +44,18 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	glVertex3f(100.0f, 0.0f, 0.0f);
 	glEnd();
 
+	glBegin(GL_LINES);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(-10.f, 0.0f, 50.0f);
+	glVertex3f(10.0f, 0.0f, 50.0f);
+	glEnd();
+
+	glBegin(GL_LINES);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(-10.f, 10.0f, -50.0f);
+	glVertex3f(10.0f, 10.0f, -50.0f);
+	glEnd();
+
 	// Draw Y-axis (Green)
 	glBegin(GL_LINES);
 	glColor3f(0.0f, 1.0f, 0.0f);

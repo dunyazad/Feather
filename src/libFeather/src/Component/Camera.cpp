@@ -6,6 +6,7 @@ CameraBase::CameraBase() {}
 CameraBase::~CameraBase() {}
 
 PerspectiveCamera::PerspectiveCamera()
+    : CameraBase()
 {
     auto window = Feather.GetFeatherWindow();
     aspectRatio = (f32)window->GetWidth() / (f32)window->GetHeight();
@@ -25,33 +26,27 @@ void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
     }
 }
 
-Ray PerspectiveCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const
+Ray PerspectiveCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight)
 {
-    float x_ndc = (2.0f * mouseX) / (float)screenWidth - 1.0f;
-    float y_ndc = 1.0f - (2.0f * mouseY) / (float)screenHeight;
+    float x = (2.0f * mouseX) / (float)screenWidth - 1.0f;
+    float y = 1.0f - (2.0f * mouseY) / (float)screenHeight;
 
-    glm::vec4 rayClip(x_ndc, y_ndc, -1.0f, 1.0f);
+    glm::vec4 ray_clip = glm::vec4(x, y, -1.0f, 1.0f);
 
-    glm::vec4 rayEye = glm::inverse(projectionMatrix) * rayClip;
-    rayEye.w = 0.0f;
+    glm::mat4 invProj = glm::inverse(projectionMatrix);
+    glm::vec4 ray_eye = invProj * ray_clip;
+    ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
 
     glm::mat4 invView = glm::inverse(viewMatrix);
-    glm::vec4 rayWorld4 = invView * rayEye;
+    glm::vec4 ray_world = invView * ray_eye;
+    glm::vec3 rayDir = glm::normalize(glm::vec3(ray_world));
 
-    glm::vec3 rayDir(rayWorld4.x, rayWorld4.y, rayWorld4.z);
-    rayDir = glm::normalize(rayDir);
+    glm::vec3 origin = glm::vec3(glm::inverse(viewMatrix)[3]);
 
-    // Extract camera origin (column-major, row index 0~2, col index 3)
-    glm::vec3 rayOrigin(
-        invView[0][3],
-        invView[1][3],
-        invView[2][3]
-    );
-
-    return { rayOrigin, rayDir };
+    return { origin, rayDir };
 }
 
-OrthogonalCamera::OrthogonalCamera() {}
+OrthogonalCamera::OrthogonalCamera() : CameraBase() {}
 OrthogonalCamera::~OrthogonalCamera() {}
 
 void OrthogonalCamera::Update(ui32 frameNo, f32 timeDelta)
@@ -66,7 +61,7 @@ void OrthogonalCamera::Update(ui32 frameNo, f32 timeDelta)
     }
 }
 
-Ray OrthogonalCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const
+Ray OrthogonalCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight)
 {
     float x_ndc = (2.0f * mouseX) / screenWidth - 1.0f;
     float y_ndc = 1.0f - (2.0f * mouseY) / screenHeight;

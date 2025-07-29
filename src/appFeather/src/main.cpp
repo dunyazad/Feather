@@ -3,6 +3,8 @@ using namespace std;
 
 #include <libFeather.h>
 
+using VD = VisualDebugging;
+
 int main(int argc, char** argv)
 {
 	cout << "AppFeather" << endl;
@@ -39,27 +41,36 @@ int main(int argc, char** argv)
 
 #pragma region Camera
 		{
-			Entity cam = Feather.GetRegistry().create();
-			auto& pcam = Feather.GetRegistry().emplace<PerspectiveCamera>(cam);
-			auto& pcamMan = Feather.GetRegistry().emplace<CameraManipulatorTrackball>(cam);
-			pcamMan.SetCamera(&pcam);
+			Entity cam = Feather.CreateEntity("Camera");
+			auto pcam = Feather.CreateComponent<PerspectiveCamera>(cam);
+			auto pcamMan = Feather.CreateComponent<CameraManipulatorTrackball>(cam);
+			pcamMan->SetCamera(pcam);
 
-			Feather.CreateEventCallback<FrameBufferResizeEvent>(cam, [&pcam](Entity entity, const FrameBufferResizeEvent& event) {
+			Feather.CreateEventCallback<FrameBufferResizeEvent>(cam, [pcam](Entity entity, const FrameBufferResizeEvent& event) {
 				auto window = Feather.GetFeatherWindow();
 				auto aspectRatio = (f32)window->GetWidth() / (f32)window->GetHeight();
-				pcam.SetAspectRatio(aspectRatio);
+				pcam->SetAspectRatio(aspectRatio);
 				});
 
-			Feather.GetRegistry().emplace<EventCallback<KeyEvent>>(cam, cam, [](Entity entity, const KeyEvent& event) {
-				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnKey(event);
+			Feather.CreateEventCallback<KeyEvent>(cam, [](Entity entity, const KeyEvent& event) {
+				Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnKey(event);
 				});
 
-			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(cam, cam, [](Entity entity, const MousePositionEvent& event) {
-				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMousePosition(event);
+			Feather.CreateEventCallback<MousePositionEvent>(cam, [](Entity entity, const MousePositionEvent& event) {
+				Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnMousePosition(event);
 				});
 
-			Feather.GetRegistry().emplace<EventCallback<MouseButtonEvent>>(cam, cam, [](Entity entity, const MouseButtonEvent& event) {
-				Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseButton(event);
+			Feather.CreateEventCallback<MouseButtonEvent>(cam, [&](Entity entity, const MouseButtonEvent& event) {
+				auto manipulator = Feather.GetComponent<CameraManipulatorTrackball>(entity);
+				manipulator->OnMouseButton(event);
+
+				auto renderable = Feather.GetComponent<Renderable>(entity);
+				if (event.button == 0 && event.action == 0)
+				{
+					auto ray = manipulator->GetCamera()->ScreenPointToRay(event.xpos, event.ypos, w->GetWidth(), w->GetHeight());
+					//VD::Clear("PickingRay");
+					VD::AddLine("PickingRay", ray.origin, ray.direction * 500.0f, { 1.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f });
+				}
 				});
 
 			Feather.GetRegistry().emplace<EventCallback<MouseWheelEvent>>(cam, cam, [](Entity entity, const MouseWheelEvent& event) {
@@ -383,6 +394,8 @@ int main(int argc, char** argv)
 				//	});
 			}
 		}
+
+		VD::AddBox("TestBox", { 0.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 10.0f, 10.0f, 10.0f }, { 1.0f, 1.0f, 0.0f, 1.0f });
 		});
 
 	Feather.Run();

@@ -27,7 +27,9 @@ public:
 	CameraBase();
 	virtual ~CameraBase();
 
-	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const = 0;
+	virtual void Update(ui32 frameNo, f32 timeDelta) = 0;
+
+	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) = 0;
 
 	inline bool IsDirty() const { return dirty; }
 	inline void SetDirty(bool isDirty) { dirty = isDirty; }
@@ -51,7 +53,7 @@ protected:
 	glm::mat4 projectionMatrix = glm::identity<glm::mat4>();
 	glm::mat4 viewMatrix = glm::identity<glm::mat4>();
 
-	glm::vec3 eye = glm::vec3(0.0f, 0.0f, 5.0f);
+	glm::vec3 eye = glm::vec3(0.0f, 0.0f, 50.0f);
 	glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 };
@@ -74,7 +76,7 @@ public:
 	inline void SetNear(f32 zNear) { this->zNear = zNear; dirty = true; }
 	inline void SetFar(f32 zFar) { this->zFar = zFar; dirty = true; }
 
-	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const;
+	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight);
 
 protected:
 	f32 fovy = 45 * DEG2RAD;
@@ -91,7 +93,7 @@ public:
 
 	virtual void Update(ui32 frameNo, f32 timeDelta);
 
-	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) const;
+	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight);
 
 protected:
 	f32 left = -1.0f;

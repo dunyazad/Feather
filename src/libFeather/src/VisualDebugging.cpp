@@ -1,6 +1,7 @@
 #include <VisualDebugging.h>
 
 #include <Feather.h>
+#include <GeometryBuilder.h>
 #include <Component/Renderable.h>
 
 bool VisualDebugging::initialized = false;
@@ -22,22 +23,49 @@ void VisualDebugging::Terminate()
 	}
 }
 
-void VisualDebugging::CreateEntity(const string& tag)
+void VisualDebugging::CreateLineEntity(const string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
+	entities[tag] = entity;
+
 	auto renderable = Feather.CreateComponent<DebuggingRenderable>(entity);
 	renderable->Initialize(Renderable::GeometryMode::Lines);
-
-	entities[tag] = entity;
 	debuggingRenderables[tag] = renderable;
 
 	renderable->AddShader(Feather.CreateShader("Line", File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs")));
 }
 
+void VisualDebugging::CreateBoxEntity(const string& tag)
+{
+	auto entity = Feather.CreateEntity(tag);
+	entities[tag] = entity;
+	
+	auto renderable = Feather.CreateComponent<DebuggingRenderable>(entity);
+	renderable->Initialize(Renderable::GeometryMode::Triangles);
+	debuggingRenderables[tag] = renderable;
+
+	{
+		auto shader = Feather.CreateShader("Instancing", File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
+		renderable->AddShader(shader);
+	}
+	{
+		auto shader = Feather.CreateShader("InstancingWithoutNormal", File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
+		renderable->AddShader(shader);
+	}
+	renderable->SetActiveShaderIndex(1);
+
+	//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere({ 0.0f, 0.0f, 0.0f }, 0.05f, 6, 6);
+	auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
+	renderable->AddIndices(indices);
+	renderable->AddVertices(vertices);
+	renderable->AddNormals(normals);
+	renderable->AddColors(colors);
+	renderable->AddUVs(uvs);
+}
+
 void VisualDebugging::Clear(const string& tag)
 {
 	if (false == initialized) Initialize();
-	if (entities.end() == entities.find(tag)) CreateEntity(tag);
 
 	auto& renderable = debuggingRenderables[tag]; 
 	renderable->Clear();
@@ -46,11 +74,31 @@ void VisualDebugging::Clear(const string& tag)
 void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)
 {
 	if (false == initialized) Initialize();
-	if (entities.end() == entities.find(tag)) CreateEntity(tag);
+	if (entities.end() == entities.find(tag)) CreateLineEntity(tag);
 
 	auto& renderable = debuggingRenderables[tag];
 	renderable->AddVertex(v0);
 	renderable->AddVertex(v1);
 	renderable->AddColor(c0);
 	renderable->AddColor(c1);
+}
+
+void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
+{
+	if (false == initialized) Initialize();
+	if (entities.end() == entities.find(tag)) CreateBoxEntity(tag);
+
+	auto& renderable = debuggingRenderables[tag];
+
+	renderable->AddInstanceColor(color);
+	renderable->AddInstanceNormal(normal);
+
+	glm::mat4 model = glm::identity<glm::mat4>();
+	model[0][0] = dimensions.x;
+	model[1][1] = dimensions.y;
+	model[2][2] = dimensions.z;
+	model = glm::translate(model, center);
+	renderable->AddInstanceTransform(model);
+
+	renderable->IncreaseNumberOfInstances();
 }

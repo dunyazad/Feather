@@ -117,7 +117,7 @@ CameraManipulatorOrbit::~CameraManipulatorOrbit()
 //}
 
 CameraManipulatorTrackball::CameraManipulatorTrackball()
-	: radius(10.0f),
+	: radius(50.0f),
 	mouseSensitivity(0.005f),
 	mousePanningSensitivity(0.01f),
 	isLButtonPressed(false),

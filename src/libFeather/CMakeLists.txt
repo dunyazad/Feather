@@ -24,6 +24,7 @@ set(source_list
     
     ${CMAKE_SOURCE_DIR}/include/AsyncLoader.h
     ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
+    ${CMAKE_SOURCE_DIR}/include/VisualDebugging.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/Components.h
     ${CMAKE_SOURCE_DIR}/include/Component/Camera.h
@@ -35,6 +36,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Component/Transform.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/GUIComponents.h
+    ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/Panel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/StatusPanel.h
 
     ${CMAKE_SOURCE_DIR}/include/System/Systems.h
@@ -51,6 +53,7 @@ set(source_list
 
     src/AsyncLoader.cpp
     src/GeometryBuilder.cpp
+    src/VisualDebugging.cpp
     
     src/Component/Camera.cpp
     src/Component/CameraManipulator.cpp
@@ -59,6 +62,7 @@ set(source_list
     src/Component/Texture.cpp
     src/Component/Transform.cpp
 
+    src/Component/GUIComponent/Panel.cpp
     src/Component/GUIComponent/StatusPanel.cpp
 
     src/System/EventSystem.cpp

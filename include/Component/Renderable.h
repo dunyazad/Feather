@@ -281,6 +281,8 @@ public:
 	inline const GraphicsBuffer<glm::vec4>& GetInstanceColors() const { return instanceColors; }
 	inline const GraphicsBuffer<glm::vec3>& GetInstanceNormals() const { return instanceNormals; }
 
+	inline void IncreaseNumberOfInstances() { numberOfInstances++; if (false == instancingEnabled) EnableInstancing(numberOfInstances); }
+
 private:
 	bool visible = true;
 	bool dirty = true;
@@ -304,6 +306,8 @@ private:
 	GraphicsBuffer<glm::vec3> instanceNormals;
 
 	ui32 numberOfInstances = 1;
+
+	bool instancingEnabled = false;
 };
 
 class DebuggingRenderable : public Renderable
