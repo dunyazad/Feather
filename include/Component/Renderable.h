@@ -314,4 +314,6 @@ private:
 
 class DebuggingRenderable : public Renderable
 {
+public:
+	float lineWidth = 1.0f;
 };

@@ -186,7 +186,7 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         glPointSize(5.0f);
-        glLineWidth(2.0f);
+        glLineWidth(3.0f);
 
         glDisable(GL_BLEND);
 
