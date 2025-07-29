@@ -67,8 +67,11 @@ void VisualDebugging::Clear(const string& tag)
 {
 	if (false == initialized) Initialize();
 
-	auto& renderable = debuggingRenderables[tag]; 
-	renderable->Clear();
+	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+	{
+		auto& renderable = debuggingRenderables[tag];
+		renderable->Clear();
+	}
 }
 
 void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)

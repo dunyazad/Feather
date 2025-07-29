@@ -31,19 +31,26 @@ Ray PerspectiveCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWi
     float x = (2.0f * mouseX) / (float)screenWidth - 1.0f;
     float y = 1.0f - (2.0f * mouseY) / (float)screenHeight;
 
-    glm::vec4 ray_clip = glm::vec4(x, y, -1.0f, 1.0f);
+    glm::vec4 ray_begin = glm::vec4(x, y, -1.0f, 1.0f);
+    glm::vec4 ray_end = glm::vec4(x, y, 1.0f, 1.0f);
 
-    glm::mat4 invProj = glm::inverse(projectionMatrix);
-    glm::vec4 ray_eye = invProj * ray_clip;
-    ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
+    auto inv = glm::inverse(projectionMatrix * viewMatrix);
+    auto begin = inv * ray_begin;
+    auto end = inv * ray_end;
 
-    glm::mat4 invView = glm::inverse(viewMatrix);
-    glm::vec4 ray_world = invView * ray_eye;
-    glm::vec3 rayDir = glm::normalize(glm::vec3(ray_world));
+    begin.w = 1 / begin.w;
+    begin.x *= begin.w;
+    begin.y *= begin.w;
+    begin.z *= begin.w;
 
-    glm::vec3 origin = glm::vec3(glm::inverse(viewMatrix)[3]);
+    end.w = 1 / end.w;
+    end.x *= end.w;
+    end.y *= end.w;
+    end.z *= end.w;
 
-    return { origin, rayDir };
+    auto dir = glm::normalize(glm::vec3(end) - glm::vec3(begin));
+
+    return { begin, end };
 }
 
 OrthogonalCamera::OrthogonalCamera() : CameraBase() {}
