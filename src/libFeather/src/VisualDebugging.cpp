@@ -66,7 +66,36 @@ void VisualDebugging::CreateBoxEntity(const string& tag)
 	}
 	renderable->SetActiveShaderIndex(1);
 
+
+
 	auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
+	renderable->AddIndices(indices);
+	renderable->AddVertices(vertices);
+	renderable->AddNormals(normals);
+	renderable->AddColors(colors);
+	renderable->AddUVs(uvs);
+}
+
+void VisualDebugging::CreateWiredBoxEntity(const string& tag)
+{
+	auto entity = Feather.CreateEntity(tag);
+	entities[tag] = entity;
+
+	auto renderable = Feather.CreateComponent<DebuggingRenderable>(entity);
+	renderable->Initialize(Renderable::GeometryMode::Lines);
+	debuggingRenderables[tag] = renderable;
+
+	{
+		auto shader = Feather.CreateShader("Instancing", File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
+		renderable->AddShader(shader);
+	}
+	{
+		auto shader = Feather.CreateShader("InstancingWithoutNormal", File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
+		renderable->AddShader(shader);
+	}
+	renderable->SetActiveShaderIndex(1);
+
+	auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildWiredBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
 	renderable->AddIndices(indices);
 	renderable->AddVertices(vertices);
 	renderable->AddNormals(normals);
@@ -120,6 +149,48 @@ void VisualDebugging::ClearAll()
 	}
 }
 
+void VisualDebugging::SetVisiblility(bool visible, const string& tag)
+{
+	if (false == initialized) Initialize();
+
+	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+	{
+		auto& renderable = debuggingRenderables[tag];
+		renderable->SetVisible(visible);
+	}
+}
+
+void VisualDebugging::SetVisiblilityAll(bool visible)
+{
+	if (false == initialized) Initialize();
+
+	for (auto& kvp : debuggingRenderables)
+	{
+		kvp.second->SetVisible(visible);
+	}
+}
+
+void VisualDebugging::ToggleVisibility(const string& tag)
+{
+	if (false == initialized) Initialize();
+
+	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+	{
+		auto& renderable = debuggingRenderables[tag];
+		renderable->SetVisible(!renderable->IsVisible());
+	}
+}
+
+void VisualDebugging::ToggleVisibilityAll()
+{
+	if (false == initialized) Initialize();
+
+	for (auto& kvp : debuggingRenderables)
+	{
+		kvp.second->SetVisible(!kvp.second->IsVisible());
+	}
+}
+
 void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)
 {
 	if (false == initialized) Initialize();
@@ -162,16 +233,46 @@ void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const g
 	renderable->AddInstanceNormal(normal);
 
 	glm::mat4 tm = glm::identity<glm::mat4>();
-	tm = glm::translate(tm, center);
-	tm[0][0] = dimensions.x;
-	tm[1][1] = dimensions.y;
-	tm[2][2] = dimensions.z;
+	glm::mat4 rot = glm::mat4(1.0f);
+	if (glm::length(normal) > 0.0001f)
+	{
+		glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(0, 0, 1), normal));
+		float angle = acos(glm::dot(glm::normalize(normal), glm::vec3(0, 0, 1)));
+		if (glm::length(axis) > 0.0001f)
+			rot = glm::rotate(glm::mat4(1.0f), angle, axis);
+	}
+	tm = glm::translate(tm, center) * rot * glm::scale(glm::mat4(1.0f), dimensions);
 	renderable->AddInstanceTransform(tm);
 
 	renderable->IncreaseNumberOfInstances();
 }
 
-void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, float radius, const glm::vec4& color)
+void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
+{
+	if (false == initialized) Initialize();
+	if (entities.end() == entities.find(tag)) CreateWiredBoxEntity(tag);
+
+	auto& renderable = debuggingRenderables[tag];
+
+	renderable->AddInstanceColor(color);
+	renderable->AddInstanceNormal(normal);
+
+	glm::mat4 tm = glm::identity<glm::mat4>();
+	glm::mat4 rot = glm::mat4(1.0f);
+	if (glm::length(normal) > 0.0001f)
+	{
+		glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(0, 0, 1), normal));
+		float angle = acos(glm::dot(glm::normalize(normal), glm::vec3(0, 0, 1)));
+		if (glm::length(axis) > 0.0001f)
+			rot = glm::rotate(glm::mat4(1.0f), angle, axis);
+	}
+	tm = glm::translate(tm, center) * rot * glm::scale(glm::mat4(1.0f), dimensions);
+	renderable->AddInstanceTransform(tm);
+
+	renderable->IncreaseNumberOfInstances();
+}
+
+void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, const glm::vec3& normal, float radius, const glm::vec4& color)
 {
 	if (false == initialized) Initialize();
 	if (entities.end() == entities.find(tag)) CreateSphereEntity(tag);
@@ -181,7 +282,16 @@ void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, floa
 	renderable->AddInstanceColor(color);
 	renderable->AddInstanceNormal({0.0f, 0.1f, 0.0f});
 
-	glm::mat4 tm = glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), glm::vec3(radius));
+	glm::mat4 tm = glm::identity<glm::mat4>();
+	glm::mat4 rot = glm::mat4(1.0f);
+	if (glm::length(normal) > 0.0001f)
+	{
+		glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(0, 0, 1), normal));
+		float angle = acos(glm::dot(glm::normalize(normal), glm::vec3(0, 0, 1)));
+		if (glm::length(axis) > 0.0001f)
+			rot = glm::rotate(glm::mat4(1.0f), angle, axis);
+	}
+	tm = glm::translate(tm, center) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(radius));
 	renderable->AddInstanceTransform(tm);
 
 	renderable->IncreaseNumberOfInstances();

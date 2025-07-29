@@ -21,6 +21,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/File.h
     ${CMAKE_SOURCE_DIR}/include/Monitor.h
     ${CMAKE_SOURCE_DIR}/include/Serialization.hpp
+    ${CMAKE_SOURCE_DIR}/include/Color.hpp
     
     ${CMAKE_SOURCE_DIR}/include/AsyncLoader.h
     ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h

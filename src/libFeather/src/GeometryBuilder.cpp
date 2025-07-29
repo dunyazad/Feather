@@ -10,6 +10,37 @@ GeometryBuilder::~GeometryBuilder()
 
 tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
 GeometryBuilder::BuildPlane(f32 width, f32 height, const glm::vec3& center, const glm::vec3& normal, const glm::vec4& color)
+//{ To Change
+//	vector<ui32> indices;
+//	vector<glm::vec3> vertices, normals;
+//	vector<glm::vec4> colors;
+//	vector<glm::vec2> uvs;
+//
+//	f32 halfWidth = width * 0.5f;
+//	f32 halfHeight = height * 0.5f;
+//
+//	// Compute basis vectors for the plane
+//	glm::vec3 up = glm::abs(normal.z) < 0.99f ? glm::vec3(0, 0, 1) : glm::vec3(0, 1, 0);
+//	glm::vec3 tangent = glm::normalize(glm::cross(up, normal));
+//	glm::vec3 bitangent = glm::cross(normal, tangent);
+//
+//	glm::vec3 offsets[4] = {
+//		-tangent * halfWidth - bitangent * halfHeight,
+//		 tangent * halfWidth - bitangent * halfHeight,
+//		 tangent * halfWidth + bitangent * halfHeight,
+//		-tangent * halfWidth + bitangent * halfHeight
+//	};
+//
+//	for (int i = 0; i < 4; ++i)
+//	{
+//		vertices.push_back(center + offsets[i]);
+//		normals.push_back(normal);
+//		colors.push_back(color);
+//	}
+//	uvs = { {0,0}, {1,0}, {1,1}, {0,1} };
+//	indices = { 0, 1, 2, 2, 3, 0 };
+//	return make_tuple(indices, vertices, normals, colors, uvs);
+//} 
 {
 	vector<unsigned int> indices;
 	vector<glm::vec3> vertices;

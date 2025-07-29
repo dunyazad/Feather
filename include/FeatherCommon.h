@@ -36,6 +36,8 @@
 #include <vector>
 using namespace std;
 
+#include <Color.hpp>
+
 #include <omp.h>
 
 #include <entt/entt.hpp>

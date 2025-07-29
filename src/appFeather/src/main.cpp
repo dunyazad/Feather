@@ -347,8 +347,8 @@ int main(int argc, char** argv)
 				}
 				renderable.SetActiveShaderIndex(1);
 
-				auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere({0.0f, 0.0f, 0.0f}, 0.05f, 6, 6);
-				//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
+				auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere({0.0f, 0.0f, 0.0f}, 0.125f, 6, 6);
+				//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox({0.0f, 0.0f, 0.0f}, { 0.5f, 0.5f, 0.5f });
 				renderable.AddIndices(indices);
 				renderable.AddVertices(vertices);
 				renderable.AddNormals(normals);
@@ -365,11 +365,18 @@ int main(int argc, char** argv)
 					renderable.AddInstanceColor(glm::vec4(r, g, b, a));
 					renderable.AddInstanceNormal(p.normal);
 
+					//VD::AddLine("normals", p.position, p.position + p.normal * 0.5f, Color::red(), Color::red());
+
 					glm::mat4 model = glm::identity<glm::mat4>();
-					model = glm::translate(model, p.position);
-					//model[0][0] = 1.5f;
-					//model[1][1] = 1.5f;
-					//model[2][2] = 1.5f;
+					glm::mat4 rot = glm::mat4(1.0f);
+					if (glm::length(p.normal) > 0.0001f)
+					{
+						glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(0, 0, 1), p.normal));
+						float angle = acos(glm::dot(glm::normalize(p.normal), glm::vec3(0, 0, 1)));
+						if (glm::length(axis) > 0.0001f)
+							rot = glm::rotate(glm::mat4(1.0f), angle, axis);
+					}
+					model = glm::translate(model, p.position) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 					renderable.AddInstanceTransform(model);
 				}
 
@@ -394,8 +401,6 @@ int main(int argc, char** argv)
 				//	});
 			}
 		}
-
-		VD::AddBox("TestBox", { 0.0f, 2.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 10.0f, 10.0f, 10.0f }, { 1.0f, 1.0f, 0.0f, 1.0f });
 		});
 
 	Feather.Run();
