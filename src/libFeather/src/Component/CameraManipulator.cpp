@@ -166,14 +166,14 @@ void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event
 		float panX = -dx * mousePanningSensitivity;
 		float panY = dy * mousePanningSensitivity;
 
-		glm::mat4 viewMatrix = camera->GetViewMatrix();
-		glm::vec3 right = glm::vec3(viewMatrix[0]);
-		glm::vec3 up = glm::vec3(viewMatrix[1]);
+		glm::mat4 invView = glm::inverse(camera->GetViewMatrix());
+		glm::vec3 screenRight = glm::normalize(glm::vec3(invView * glm::vec4(1, 0, 0, 0)));
+		glm::vec3 screenUp = glm::normalize(glm::vec3(invView * glm::vec4(0, 1, 0, 0)));
 
 		glm::vec3 eye = camera->GetEye();
 		glm::vec3 target = camera->GetTarget();
 
-		glm::vec3 offset = right * panX + up * panY;
+		glm::vec3 offset = screenRight * panX + screenUp * panY;
 		camera->SetEye(eye + offset);
 		camera->SetTarget(target + offset);
 	}
