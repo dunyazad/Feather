@@ -89,6 +89,10 @@ const string EmptyString = "";
 #define DEG2RAD (PI/180)
 #define RAD2DEG (180/PI)
 
+#ifndef XYZ
+#define XYZ(v) (v).x, (v).y, (v).z
+#endif
+
 namespace Time
 {
     chrono::steady_clock::time_point Now();

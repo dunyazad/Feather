@@ -35,6 +35,18 @@ void VisualDebugging::CreateLineEntity(const string& tag)
 	renderable->AddShader(Feather.CreateShader("Line", File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs")));
 }
 
+void VisualDebugging::CreateTriangleEntity(const string& tag)
+{
+	auto entity = Feather.CreateEntity(tag);
+	entities[tag] = entity;
+
+	auto renderable = Feather.CreateComponent<DebuggingRenderable>(entity);
+	renderable->Initialize(Renderable::GeometryMode::Triangles);
+	debuggingRenderables[tag] = renderable;
+
+	renderable->AddShader(Feather.CreateShader("Line", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
+}
+
 void VisualDebugging::CreateBoxEntity(const string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
@@ -84,6 +96,25 @@ void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm:
 	renderable->AddVertex(v1);
 	renderable->AddColor(c0);
 	renderable->AddColor(c1);
+}
+
+void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c0, const glm::vec4& c1, const glm::vec4& c2)
+{
+	if (false == initialized) Initialize();
+	if (entities.end() == entities.find(tag)) CreateTriangleEntity(tag);
+
+	auto& renderable = debuggingRenderables[tag];
+	auto i0 = renderable->AddVertex(v0);
+	auto i1 = renderable->AddVertex(v1);
+	auto i2 = renderable->AddVertex(v2);
+	
+	renderable->AddColor(c0);
+	renderable->AddColor(c1);
+	renderable->AddColor(c2);
+
+	renderable->AddIndex(i0);
+	renderable->AddIndex(i1);
+	renderable->AddIndex(i2);
 }
 
 void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)

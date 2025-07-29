@@ -40,11 +40,13 @@ public:
 
 	void Bind() { glBindBuffer(bufferTarget, vbo); }
 
-	void AddData(const T& data)
+	ui32 AddData(const T& data)
 	{
 		datas.push_back(data);
 
 		dirty = true;
+
+		return datas.size() - 1;
 	}
 
 	void SetData(ui32 bufferIndex, const T& data)
@@ -184,12 +186,12 @@ public:
 
 	virtual void Clear();
 
-	void AddIndex(ui32 index);
-	void AddVertex(const glm::vec3& vertex);
-	void AddNormal(const glm::vec3& normal);
-	void AddColor(const glm::vec3& color);
-	void AddColor(const glm::vec4& color);
-	void AddUV(const glm::vec2& uv);
+	ui32 AddIndex(ui32 index);
+	ui32 AddVertex(const glm::vec3& vertex);
+	ui32 AddNormal(const glm::vec3& normal);
+	ui32 AddColor(const glm::vec3& color);
+	ui32 AddColor(const glm::vec4& color);
+	ui32 AddUV(const glm::vec2& uv);
 
 	ui32 GetIndex(ui32 bufferIndex);
 	glm::vec3& GetVertex(ui32 bufferIndex);

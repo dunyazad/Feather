@@ -272,46 +272,46 @@ void Renderable::Clear()
 	numberOfInstances = 1;
 }
 
-void Renderable::AddIndex(ui32 index)
+ui32 Renderable::AddIndex(ui32 index)
 {
 	dirty = true;
 
-	indices.AddData(index);
+	return indices.AddData(index);
 }
 
-void Renderable::AddVertex(const glm::vec3& vertex)
+ui32 Renderable::AddVertex(const glm::vec3& vertex)
 {
 	dirty = true;
 
-	vertices.AddData(vertex);
+	return vertices.AddData(vertex);
 }
 
-void Renderable::AddNormal(const glm::vec3& normal)
+ui32 Renderable::AddNormal(const glm::vec3& normal)
 {
 	dirty = true;
 
-	normals.AddData(normal);
+	return normals.AddData(normal);
 }
 
-void Renderable::AddColor(const glm::vec3& color)
+ui32 Renderable::AddColor(const glm::vec3& color)
 {
 	dirty = true;
 
-	colors3.AddData(color);
+	return colors3.AddData(color);
 }
 
-void Renderable::AddColor(const glm::vec4& color)
+ui32 Renderable::AddColor(const glm::vec4& color)
 {
 	dirty = true;
 
-	colors4.AddData(color);
+	return colors4.AddData(color);
 }
 
-void Renderable::AddUV(const glm::vec2& uv)
+ui32 Renderable::AddUV(const glm::vec2& uv)
 {
 	dirty = true;
 
-	uvs.AddData(uv);
+	return uvs.AddData(uv);
 }
 
 ui32 Renderable::GetIndex(ui32 bufferIndex)
