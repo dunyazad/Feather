@@ -48,9 +48,10 @@ Ray PerspectiveCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWi
     end.y *= end.w;
     end.z *= end.w;
 
+    auto origin = glm::vec3(begin);
     auto dir = glm::normalize(glm::vec3(end) - glm::vec3(begin));
 
-    return { begin, end };
+    return { origin, dir };
 }
 
 OrthogonalCamera::OrthogonalCamera() : CameraBase() {}

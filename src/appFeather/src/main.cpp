@@ -366,10 +366,10 @@ int main(int argc, char** argv)
 					renderable.AddInstanceNormal(p.normal);
 
 					glm::mat4 model = glm::identity<glm::mat4>();
-					model[0][0] = 1.5f;
-					model[1][1] = 1.5f;
-					model[2][2] = 1.5f;
 					model = glm::translate(model, p.position);
+					//model[0][0] = 1.5f;
+					//model[1][1] = 1.5f;
+					//model[2][2] = 1.5f;
 					renderable.AddInstanceTransform(model);
 				}
 

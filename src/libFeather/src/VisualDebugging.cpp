@@ -51,7 +51,7 @@ void VisualDebugging::CreateBoxEntity(const string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
 	entities[tag] = entity;
-	
+
 	auto renderable = Feather.CreateComponent<DebuggingRenderable>(entity);
 	renderable->Initialize(Renderable::GeometryMode::Triangles);
 	debuggingRenderables[tag] = renderable;
@@ -66,8 +66,34 @@ void VisualDebugging::CreateBoxEntity(const string& tag)
 	}
 	renderable->SetActiveShaderIndex(1);
 
-	//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere({ 0.0f, 0.0f, 0.0f }, 0.05f, 6, 6);
 	auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
+	renderable->AddIndices(indices);
+	renderable->AddVertices(vertices);
+	renderable->AddNormals(normals);
+	renderable->AddColors(colors);
+	renderable->AddUVs(uvs);
+}
+
+void VisualDebugging::CreateSphereEntity(const string& tag)
+{
+	auto entity = Feather.CreateEntity(tag);
+	entities[tag] = entity;
+
+	auto renderable = Feather.CreateComponent<DebuggingRenderable>(entity);
+	renderable->Initialize(Renderable::GeometryMode::Triangles);
+	debuggingRenderables[tag] = renderable;
+
+	{
+		auto shader = Feather.CreateShader("Instancing", File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
+		renderable->AddShader(shader);
+	}
+	{
+		auto shader = Feather.CreateShader("InstancingWithoutNormal", File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
+		renderable->AddShader(shader);
+	}
+	renderable->SetActiveShaderIndex(1);
+
+	auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere({ 0.0f, 0.0f, 0.0f }, 0.5f, 6, 6);
 	renderable->AddIndices(indices);
 	renderable->AddVertices(vertices);
 	renderable->AddNormals(normals);
@@ -83,6 +109,14 @@ void VisualDebugging::Clear(const string& tag)
 	{
 		auto& renderable = debuggingRenderables[tag];
 		renderable->Clear();
+	}
+}
+
+void VisualDebugging::ClearAll()
+{
+	for (auto& kvp : debuggingRenderables)
+	{
+		kvp.second->Clear();
 	}
 }
 
@@ -127,12 +161,28 @@ void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const g
 	renderable->AddInstanceColor(color);
 	renderable->AddInstanceNormal(normal);
 
-	glm::mat4 model = glm::identity<glm::mat4>();
-	model[0][0] = dimensions.x;
-	model[1][1] = dimensions.y;
-	model[2][2] = dimensions.z;
-	model = glm::translate(model, center);
-	renderable->AddInstanceTransform(model);
+	glm::mat4 tm = glm::identity<glm::mat4>();
+	tm = glm::translate(tm, center);
+	tm[0][0] = dimensions.x;
+	tm[1][1] = dimensions.y;
+	tm[2][2] = dimensions.z;
+	renderable->AddInstanceTransform(tm);
+
+	renderable->IncreaseNumberOfInstances();
+}
+
+void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, float radius, const glm::vec4& color)
+{
+	if (false == initialized) Initialize();
+	if (entities.end() == entities.find(tag)) CreateSphereEntity(tag);
+
+	auto& renderable = debuggingRenderables[tag];
+
+	renderable->AddInstanceColor(color);
+	renderable->AddInstanceNormal({0.0f, 0.1f, 0.0f});
+
+	glm::mat4 tm = glm::translate(glm::mat4(1.0f), center) * glm::scale(glm::mat4(1.0f), glm::vec3(radius));
+	renderable->AddInstanceTransform(tm);
 
 	renderable->IncreaseNumberOfInstances();
 }
