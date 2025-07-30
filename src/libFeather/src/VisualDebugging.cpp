@@ -85,15 +85,8 @@ void VisualDebugging::CreateWiredBoxEntity(const string& tag)
 	renderable->Initialize(Renderable::GeometryMode::Lines);
 	debuggingRenderables[tag] = renderable;
 
-	{
-		auto shader = Feather.CreateShader("Instancing", File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
-		renderable->AddShader(shader);
-	}
-	{
-		auto shader = Feather.CreateShader("InstancingWithoutNormal", File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
-		renderable->AddShader(shader);
-	}
-	renderable->SetActiveShaderIndex(1);
+	auto shader = Feather.CreateShader("InstancingWithoutLighting", File("../../res/Shaders/InstancingWithoutLighting.vs"), File("../../res/Shaders/InstancingWithoutLighting.fs"));
+	renderable->AddShader(shader);
 
 	auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildWiredBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
 	renderable->AddIndices(indices);
@@ -222,6 +215,13 @@ void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const 
 	renderable->AddIndex(i2);
 }
 
+void VisualDebugging::AddBox(const string& tag, const glm::vec3& min, const glm::vec3& max, const glm::vec4& color)
+{
+	auto center = (min + max) * 0.5f;
+	auto dimensions = max - min;
+	AddBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
+}
+
 void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
 {
 	if (false == initialized) Initialize();
@@ -245,6 +245,13 @@ void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const g
 	renderable->AddInstanceTransform(tm);
 
 	renderable->IncreaseNumberOfInstances();
+}
+
+void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& min, const glm::vec3& max, const glm::vec4& color)
+{
+	auto center = (min + max) * 0.5f;
+	auto dimensions = max - min;
+	AddWiredBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
 }
 
 void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)

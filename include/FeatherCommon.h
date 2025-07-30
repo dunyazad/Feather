@@ -85,6 +85,14 @@ const string EmptyString = "";
 #include <glm/gtx/norm.hpp>             // norm 관련 함수 (normalize, length 등)
 #include <glm/gtx/string_cast.hpp>      // std::string 변환
 
+namespace glm
+{
+    inline glm::vec3 trianglenormal(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2)
+    {
+        return glm::normalize(glm::cross(v1 - v0, v2 - v0));
+    }
+}
+
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
