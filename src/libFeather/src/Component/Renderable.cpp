@@ -43,10 +43,8 @@ void Renderable::Initialize(GeometryMode geometryMode)
 	glBindVertexArray(0);
 }
 
-void Renderable::EnableInstancing(ui32 numberOfInstances)
+void Renderable::EnableInstancing()
 {
-	this->numberOfInstances = numberOfInstances;
-
 	glBindVertexArray(vao);
 
 	instanceColors.Initialize(4, GraphicsBuffer<glm::vec4>::BufferTarget::Array);
@@ -59,6 +57,8 @@ void Renderable::EnableInstancing(ui32 numberOfInstances)
 	instanceTransforms.SetUseInstancing(true);
 
 	glBindVertexArray(0);
+
+	instancingEnabled = true;
 }
 
 void Renderable::Update(ui32 frameNo, f32 timeDelta)
@@ -94,6 +94,8 @@ void Renderable::Update(ui32 frameNo, f32 timeDelta)
 void Renderable::Draw(Shader* shader)
 {
 	if (false == visible) return;
+
+	if (instancingEnabled && 0 == numberOfInstances) return;
 
 	glBindVertexArray(vao);
 
@@ -265,11 +267,16 @@ void Renderable::Clear()
 	colors4.Clear();
 	uvs.Clear();
 
+	ClearInstancingData();
+}
+
+void Renderable::ClearInstancingData()
+{
 	instanceTransforms.Clear();
 	instanceColors.Clear();
 	instanceNormals.Clear();
 
-	numberOfInstances = 1;
+	numberOfInstances = 0;
 }
 
 ui32 Renderable::AddIndex(ui32 index)

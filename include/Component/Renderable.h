@@ -178,13 +178,14 @@ public:
 	~Renderable();
 
 	void Initialize(GeometryMode geometryMode);
-	void EnableInstancing(ui32 numberOfInstances);
+	void EnableInstancing();
 
 	virtual void Update(ui32 frameNo, f32 timeDelta);
 
 	virtual void Draw(Shader* shader);
 
 	virtual void Clear();
+	virtual void ClearInstancingData();
 
 	ui32 AddIndex(ui32 index);
 	ui32 AddVertex(const glm::vec3& vertex);
@@ -283,7 +284,12 @@ public:
 	inline const GraphicsBuffer<glm::vec4>& GetInstanceColors() const { return instanceColors; }
 	inline const GraphicsBuffer<glm::vec3>& GetInstanceNormals() const { return instanceNormals; }
 
-	inline void IncreaseNumberOfInstances() { numberOfInstances++; if (false == instancingEnabled) EnableInstancing(numberOfInstances); }
+	inline void IncreaseNumberOfInstances() { numberOfInstances++; if (false == instancingEnabled) EnableInstancing(); }
+
+	inline bool IsInstancingEnabled() const { return instancingEnabled; }
+
+	inline ui32 GetNumberOfInstances() const { return numberOfInstances; }
+	inline void SetNumberOfInstances(ui32 n) { numberOfInstances = n; }
 
 private:
 	bool visible = true;
@@ -307,7 +313,7 @@ private:
 	GraphicsBuffer<glm::vec4> instanceColors;
 	GraphicsBuffer<glm::vec3> instanceNormals;
 
-	ui32 numberOfInstances = 1;
+	ui32 numberOfInstances = 0;
 
 	bool instancingEnabled = false;
 };
@@ -315,5 +321,4 @@ private:
 class DebuggingRenderable : public Renderable
 {
 public:
-	float lineWidth = 1.0f;
 };

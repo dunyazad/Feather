@@ -26,6 +26,9 @@ void GUISystem::Initialize()
 
     ImGui_ImplGlfw_InitForOpenGL(window->GetGLFWwindow(), true);
     ImGui_ImplOpenGL3_Init("#version 330");
+
+    io.Fonts->AddFontFromFileTTF("../../res/Fonts/NanumGothic/NanumGothic.ttf", 18.0f, nullptr,
+    io.Fonts->GetGlyphRangesKorean());
 }
 
 void GUISystem::Terminate()
@@ -65,6 +68,15 @@ void GUISystem::Update(ui32 frameNo, f32 timeDelta)
         }
     }
 
+    {
+        auto entities = Feather.GetRegistry().view<TextBlock>();
+        for (auto& entity : entities)
+        {
+            auto component = Feather.GetRegistry().get<TextBlock>(entity);
+            component.Render();
+        }
+    }
+
     ShowUIPanel();
     ShowGraphPanel();
     //ShowFPS();
@@ -79,7 +91,7 @@ void GUISystem::ReloadFont(float newFontSize)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->Clear();
-    io.Fonts->AddFontFromFileTTF("../../res/Fonts/NanumGothic/NanumGothic-Regular.ttf", newFontSize);
+    io.Fonts->AddFontFromFileTTF("../../res/Fonts/NanumGothic/NanumGothic.ttf", newFontSize);
     //ImGui_ImplOpenGL3_DestroyFontsTexture();
     //ImGui_ImplOpenGL3_CreateFontsTexture();
 }

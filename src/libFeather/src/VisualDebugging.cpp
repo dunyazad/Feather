@@ -3,10 +3,12 @@
 #include <Feather.h>
 #include <GeometryBuilder.h>
 #include <Component/Renderable.h>
+#include <Component/GUIComponent/GUIComponents.h>
 
 bool VisualDebugging::initialized = false;
 map<string, Entity> VisualDebugging::entities;
 map<string, DebuggingRenderable*> VisualDebugging::debuggingRenderables;
+map<string, TextBlock*> VisualDebugging::textBlocks;
 
 void VisualDebugging::Initialize()
 {
@@ -66,8 +68,6 @@ void VisualDebugging::CreateBoxEntity(const string& tag)
 	}
 	renderable->SetActiveShaderIndex(1);
 
-
-
 	auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
 	renderable->AddIndices(indices);
 	renderable->AddVertices(vertices);
@@ -123,6 +123,15 @@ void VisualDebugging::CreateSphereEntity(const string& tag)
 	renderable->AddUVs(uvs);
 }
 
+void VisualDebugging::CreateTextBlockEntity(const string& tag)
+{
+	auto entity = Feather.CreateEntity(tag);
+	entities[tag] = entity;
+
+	auto renderable = Feather.CreateComponent<TextBlock>(entity);
+	textBlocks[tag] = renderable;
+}
+
 void VisualDebugging::Clear(const string& tag)
 {
 	if (false == initialized) Initialize();
@@ -130,13 +139,40 @@ void VisualDebugging::Clear(const string& tag)
 	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
 	{
 		auto& renderable = debuggingRenderables[tag];
-		renderable->Clear();
+		if (renderable->IsInstancingEnabled())
+		{
+			renderable->ClearInstancingData();
+		}
+		else
+		{
+			renderable->Clear();
+		}
+		return;
+	}
+
+	if (textBlocks.end() != textBlocks.find(tag))
+	{
+		auto& textBlock = textBlocks[tag];
+		textBlock->Clear();
+		return;
 	}
 }
 
 void VisualDebugging::ClearAll()
 {
 	for (auto& kvp : debuggingRenderables)
+	{
+		if (kvp.second->IsInstancingEnabled())
+		{
+			kvp.second->ClearInstancingData();
+		}
+		else
+		{
+			kvp.second->Clear();
+		}
+	}
+
+	for (auto& kvp : textBlocks)
 	{
 		kvp.second->Clear();
 	}
@@ -150,6 +186,14 @@ void VisualDebugging::SetVisiblility(bool visible, const string& tag)
 	{
 		auto& renderable = debuggingRenderables[tag];
 		renderable->SetVisible(visible);
+		return;
+	}
+
+	if (textBlocks.end() != textBlocks.find(tag))
+	{
+		auto& textBlock = textBlocks[tag];
+		textBlock->SetVisible(visible);
+		return;
 	}
 }
 
@@ -158,6 +202,11 @@ void VisualDebugging::SetVisiblilityAll(bool visible)
 	if (false == initialized) Initialize();
 
 	for (auto& kvp : debuggingRenderables)
+	{
+		kvp.second->SetVisible(visible);
+	}
+
+	for (auto& kvp : textBlocks)
 	{
 		kvp.second->SetVisible(visible);
 	}
@@ -171,6 +220,13 @@ void VisualDebugging::ToggleVisibility(const string& tag)
 	{
 		auto& renderable = debuggingRenderables[tag];
 		renderable->SetVisible(!renderable->IsVisible());
+		return;
+	}
+	if (textBlocks.end() != textBlocks.find(tag))
+	{
+		auto& textBlock = textBlocks[tag];
+		textBlock->SetVisible(!textBlock->IsVisible());
+		return;
 	}
 }
 
@@ -179,6 +235,10 @@ void VisualDebugging::ToggleVisibilityAll()
 	if (false == initialized) Initialize();
 
 	for (auto& kvp : debuggingRenderables)
+	{
+		kvp.second->SetVisible(!kvp.second->IsVisible());
+	}
+	for (auto& kvp : textBlocks)
 	{
 		kvp.second->SetVisible(!kvp.second->IsVisible());
 	}
@@ -205,7 +265,13 @@ void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const 
 	auto i0 = renderable->AddVertex(v0);
 	auto i1 = renderable->AddVertex(v1);
 	auto i2 = renderable->AddVertex(v2);
-	
+
+	auto normal = glm::trianglenormal(v0, v1, v2);
+
+	renderable->AddNormal(normal);
+	renderable->AddNormal(normal);
+	renderable->AddNormal(normal);
+
 	renderable->AddColor(c0);
 	renderable->AddColor(c1);
 	renderable->AddColor(c2);
@@ -302,4 +368,13 @@ void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, cons
 	renderable->AddInstanceTransform(tm);
 
 	renderable->IncreaseNumberOfInstances();
+}
+
+void VisualDebugging::AddText(const string& tag, const string& text, const glm::vec3& position, const glm::vec4& color, float fontSize)
+{
+	if (false == initialized) Initialize();
+	if (entities.end() == entities.find(tag)) CreateTextBlockEntity(tag);
+
+	auto& textBlock = textBlocks[tag];
+	textBlock->AddText(text, position, color, fontSize);
 }

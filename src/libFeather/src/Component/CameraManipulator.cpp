@@ -173,7 +173,7 @@ void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event
 		glm::vec3 eye = camera->GetEye();
 		glm::vec3 target = camera->GetTarget();
 
-		glm::vec3 offset = screenRight * panX + screenUp * panY;
+		glm::vec3 offset = screenRight * panX * radius * mouseSensitivity * 10.0f + screenUp * panY * radius * mouseSensitivity * 10.0f;
 		camera->SetEye(eye + offset);
 		camera->SetTarget(target + offset);
 	}

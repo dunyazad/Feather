@@ -102,6 +102,9 @@ namespace glm
 #ifndef XYZ
 #define XYZ(v) (v).x, (v).y, (v).z
 #endif
+#ifndef XYZW
+#define XYZW(v) (v).x, (v).y, (v).z, (v).w
+#endif
 
 namespace Time
 {

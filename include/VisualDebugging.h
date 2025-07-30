@@ -3,6 +3,7 @@
 #include <FeatherCommon.h>
 
 class DebuggingRenderable;
+class TextBlock;
 
 class VisualDebugging
 {
@@ -21,6 +22,7 @@ public:
 	static void CreateBoxEntity(const string& tag);
 	static void CreateWiredBoxEntity(const string& tag);
 	static void CreateSphereEntity(const string& tag);
+	static void CreateTextBlockEntity(const string& tag);
 
 	static void Clear(const string& tag);
 	static void ClearAll();
@@ -41,8 +43,11 @@ public:
 
 	static void AddSphere(const string& tag, const glm::vec3& center, const glm::vec3& normal, float radius, const glm::vec4& color);
 
+	static void AddText(const string& tag, const string& text = "", const glm::vec3& position = glm::vec3(0.0f), const glm::vec4& color = Color::black(), float fontSize = 32.0f);
+
 private:
 	static bool initialized;
 	static map<string, Entity> entities;
 	static map<string, DebuggingRenderable*> debuggingRenderables;
+	static map<string, TextBlock*> textBlocks;
 };

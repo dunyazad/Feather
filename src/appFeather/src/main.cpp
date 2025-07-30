@@ -378,9 +378,9 @@ int main(int argc, char** argv)
 					}
 					model = glm::translate(model, p.position) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
 					renderable.AddInstanceTransform(model);
-				}
 
-				renderable.EnableInstancing(alp.GetPoints().size());
+					renderable.IncreaseNumberOfInstances();
+				}
 
 				//renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
 				//	if (GLFW_KEY_M == event.keyEvent.keyCode)
@@ -399,6 +399,19 @@ int main(int argc, char** argv)
 				//		renderable->SetActiveShaderIndex(1);
 				//	}
 				//	});
+			}
+
+			{
+				//ImGuiIO& io = ImGui::GetIO();
+				//ImFont* font = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/malgun.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesKorean());
+				//if (font)
+				//	printf("ImGui 폰트 로드 성공!\n");
+				//else
+				//	printf("ImGui 폰트 로드 실패!\n");
+
+				auto entity = Feather.CreateEntity("Text");
+				auto textComponent = Feather.CreateComponent<TextBlock>(entity);
+				textComponent->AddText(u8"원점");
 			}
 		}
 		});
