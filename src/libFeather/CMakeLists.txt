@@ -75,6 +75,9 @@ set(source_list
 
     ${CMAKE_SOURCE_DIR}/res/Shaders/Default.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Default.fs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Flat.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Flat.gs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Flat.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Instancing.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Instancing.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/InstancingWithoutLighting.vs

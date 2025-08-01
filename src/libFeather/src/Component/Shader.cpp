@@ -28,10 +28,13 @@ void Shader::Initialize(const File& vsFile, const File& gsFile, const File& fsFi
     string vs(vsFile.GetFileLength() + 1, 0);
     vsFile.Read(vs.data(), vsFile.GetFileLength());
 
+    string gs(gsFile.GetFileLength() + 1, 0);
+    gsFile.Read(gs.data(), gsFile.GetFileLength());
+
     string fs(fsFile.GetFileLength() + 1, 0);
     fsFile.Read(fs.data(), fsFile.GetFileLength());
 
-    Initialize(vs, gsFile.GetFileName(), fs);
+    Initialize(vs, gs, fs);
 }
 
 void Shader::Initialize(const string& vs, const string& gs, const string& fs)
@@ -62,6 +65,10 @@ void Shader::Initialize(const string& vs, const string& gs, const string& fs)
 
     shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
+    if (false == gs.empty())
+    {
+        glAttachShader(shaderProgram, geometryShader);
+    }
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
     CheckShaderCompileErrors(shaderProgram, "PROGRAM");

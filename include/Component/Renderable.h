@@ -130,6 +130,7 @@ public:
 	}
 
 	inline ui64 size() { return datas.size(); }
+	inline void resize(size_t s) { datas.resize(s); }
 	inline bool empty() { return datas.empty(); }
 	inline T& at(ui32 index) { return datas.at(index); }
 	inline const T& at(ui32 index) const { return datas.at(index); }
@@ -246,11 +247,15 @@ public:
 	void AddInstanceTransforms(const vector<glm::mat4>& transforms);
 	void AddInstanceTransforms(const glm::mat4* transforms, ui32 numberOfElements);
 
+	inline bool IsDirty() const { return dirty; }
+	inline void SetDirty(bool dirty = true) { this->dirty = dirty; }
 	inline bool IsVisible() const { return visible; }
 	inline void SetVisible(bool visible) { this->visible = visible; }
 	inline void ToggleVisible() { visible = !visible; }
 	inline bool IsUsingAlpha() const { return useAlpha; }
 	inline void SetUseAlpha(bool useAlpha) { this->useAlpha = useAlpha; }
+
+	inline GLuint GetVAO() const { return vao; }
 
 	inline Shader* GetActiveShader() const { if (shaders.empty() || activeShaderIndex >= shaders.size()) return nullptr; else return shaders[activeShaderIndex]; }
 	inline ui32 GetActiveShaderIndex() { return activeShaderIndex; }
