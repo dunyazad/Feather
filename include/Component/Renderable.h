@@ -249,6 +249,8 @@ public:
 	inline bool IsVisible() const { return visible; }
 	inline void SetVisible(bool visible) { this->visible = visible; }
 	inline void ToggleVisible() { visible = !visible; }
+	inline bool IsUsingAlpha() const { return useAlpha; }
+	inline void SetUseAlpha(bool useAlpha) { this->useAlpha = useAlpha; }
 
 	inline Shader* GetActiveShader() const { if (shaders.empty() || activeShaderIndex >= shaders.size()) return nullptr; else return shaders[activeShaderIndex]; }
 	inline ui32 GetActiveShaderIndex() { return activeShaderIndex; }
@@ -294,6 +296,7 @@ public:
 private:
 	bool visible = true;
 	bool dirty = true;
+	bool useAlpha = false;
 
 	ui32 activeShaderIndex = 0;
 	vector<Shader*> shaders;

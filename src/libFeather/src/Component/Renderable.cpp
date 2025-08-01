@@ -310,6 +310,7 @@ ui32 Renderable::AddColor(const glm::vec3& color)
 ui32 Renderable::AddColor(const glm::vec4& color)
 {
 	dirty = true;
+	if (color.a < 0.999f) useAlpha = true;
 
 	return colors4.AddData(color);
 }
@@ -388,6 +389,7 @@ void Renderable::SetColor(ui32 bufferIndex, const glm::vec3& color)
 void Renderable::SetColor(ui32 bufferIndex, const glm::vec4& color)
 {
 	dirty = true;
+	if (color.a < 0.999f) useAlpha = true;
 
 	colors4.SetData(bufferIndex, color);
 }
@@ -402,6 +404,7 @@ void Renderable::SetUV(ui32 bufferIndex, const glm::vec2& uv)
 void Renderable::AddInstanceColor(const glm::vec4& color)
 {
 	dirty = true;
+	if (color.a < 0.999f) useAlpha = true;
 
 	instanceColors.AddData(color);
 }
@@ -515,6 +518,14 @@ void Renderable::AddColors(const glm::vec3* colors, ui32 numberOfElements)
 void Renderable::AddColors(const vector<glm::vec4>& colors)
 {
 	dirty = true;
+	for (auto& color : colors)
+	{
+		if (color.a < 0.999f)
+		{
+			useAlpha = true;
+			break;
+		}
+	}
 
 	this->colors4.AddData(colors.data(), colors.size());
 }
@@ -522,6 +533,14 @@ void Renderable::AddColors(const vector<glm::vec4>& colors)
 void Renderable::AddColors(const glm::vec4* colors, ui32 numberOfElements)
 {
 	dirty = true;
+	for (ui32 i = 0; i < numberOfElements; ++i)
+	{
+		if (colors[i].a < 0.999f)
+		{
+			useAlpha = true;
+			break;
+		}
+	}
 
 	this->colors4.AddData(colors, numberOfElements);
 }
@@ -543,6 +562,14 @@ void Renderable::AddUVs(const glm::vec2* uvs, ui32 numberOfElements)
 void Renderable::AddInstanceColors(const vector<glm::vec4>& colors)
 {
 	dirty = true;
+	for (auto& color : colors)
+	{
+		if (color.a < 0.999f)
+		{
+			useAlpha = true;
+			break;
+		}
+	}
 
 	this->instanceColors.AddData(colors.data(), colors.size());
 }
@@ -550,6 +577,14 @@ void Renderable::AddInstanceColors(const vector<glm::vec4>& colors)
 void Renderable::AddInstanceColors(const glm::vec4* colors, ui32 numberOfElements)
 {
 	dirty = true;
+	for (ui32 i = 0; i < numberOfElements; ++i)
+	{
+		if (colors[i].a < 0.999f)
+		{
+			useAlpha = true;
+			break;
+		}
+	}
 
 	this->instanceColors.AddData(colors, numberOfElements);
 }

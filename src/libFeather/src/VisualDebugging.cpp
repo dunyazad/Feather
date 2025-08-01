@@ -364,7 +364,7 @@ void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, cons
 		if (glm::length(axis) > 0.0001f)
 			rot = glm::rotate(glm::mat4(1.0f), angle, axis);
 	}
-	tm = glm::translate(tm, center) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(radius));
+	tm = glm::translate(tm, center) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(radius * 2.0f));
 	renderable->AddInstanceTransform(tm);
 
 	renderable->IncreaseNumberOfInstances();
