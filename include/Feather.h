@@ -97,13 +97,20 @@ public:
 		return registry.emplace<EventCallback<T>>(entity, entity, std::forward<Args>(args)...);
 	}
 
+	template<typename T>
+	void RemoveEventCallback(Entity entity)
+	{
+		if (registry.all_of<EventCallback<T>>(entity))
+		{
+			registry.remove<EventCallback<T>>(entity);
+		}
+	}
+
 	Shader* CreateShader(const string& name, const File& vsFile, const File& gsFile, const File& fsFile);
 	Shader* CreateShader(const string& name, const File& vsFile, const File& fsFile);
 	Shader* GetShader(const string& name);
 
 private:
-	static libFeather* s_instance;
-
 	libFeather();
 	~libFeather();
 

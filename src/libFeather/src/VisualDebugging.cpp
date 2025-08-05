@@ -281,10 +281,10 @@ void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const 
 	renderable->AddIndex(i2);
 }
 
-void VisualDebugging::AddBox(const string& tag, const glm::vec3& min, const glm::vec3& max, const glm::vec4& color)
+void VisualDebugging::AddBox(const string& tag, const AABB& aabb, const glm::vec4& color)
 {
-	auto center = (min + max) * 0.5f;
-	auto dimensions = max - min;
+	auto center = (aabb.min + aabb.max) * 0.5f;
+	auto dimensions = aabb.max - aabb.min;
 	AddBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
 }
 
@@ -313,10 +313,10 @@ void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const g
 	renderable->IncreaseNumberOfInstances();
 }
 
-void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& min, const glm::vec3& max, const glm::vec4& color)
+void VisualDebugging::AddWiredBox(const string& tag, const AABB& aabb, const glm::vec4& color)
 {
-	auto center = (min + max) * 0.5f;
-	auto dimensions = max - min;
+	auto center = (aabb.min + aabb.max) * 0.5f;
+	auto dimensions = aabb.max - aabb.min;
 	AddWiredBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
 }
 

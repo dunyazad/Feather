@@ -74,6 +74,12 @@ struct d4
 	f64 w = 0.0;
 };
 
+struct FrameEvent
+{
+	ui32 frameNo;
+	f32 timeDelta;
+};
+
 struct FrameBufferResizeEvent
 {
 	i32 width = 0;

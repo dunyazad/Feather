@@ -33,6 +33,7 @@ void EventSystem::Terminate()
 void EventSystem::Update(ui32 frameNo, f32 timeDelta)
 {
 	auto& dispatcher = Feather.GetDispatcher();
+	dispatcher.enqueue<FrameEvent>({ frameNo, timeDelta });
 	dispatcher.update();
 }
 

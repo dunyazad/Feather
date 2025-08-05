@@ -124,3 +124,15 @@ string Miliseconds(const chrono::steady_clock::time_point beginTime, const char*
 
 #define alog(...) printf("\033[38;5;1m\033[48;5;15m(^(OO)^) /V/\033[0m\t" __VA_ARGS__)
 #define alogt(tag, ...) printf("\033[38;5;1m\033[48;5;15m [%d] (^(OO)^) /V/\033[0m\t" tag, __VA_ARGS__)
+
+struct Ray
+{
+    glm::vec3 origin;
+    glm::vec3 direction;
+};
+
+struct AABB
+{
+    glm::vec3 min;
+    glm::vec3 max;
+};

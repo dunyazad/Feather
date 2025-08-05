@@ -2,12 +2,6 @@
 
 #include <FeatherCommon.h>
 
-struct Ray
-{
-	glm::vec3 origin;
-	glm::vec3 direction;
-};
-
 struct ProjectionInfoOrthogonal
 {
 	f32 left, right, bottom, top, zNear, zFar;
