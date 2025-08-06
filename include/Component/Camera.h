@@ -75,7 +75,7 @@ public:
 protected:
 	f32 fovy = 45.0f * (f32)DEG2RAD;
 	f32 aspectRatio = 1.0f;
-	f32 zNear = 0.001f;
+	f32 zNear = 0.01f;
 	f32 zFar = 1000.0f;
 };
 
