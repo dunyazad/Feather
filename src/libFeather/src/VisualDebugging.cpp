@@ -244,6 +244,11 @@ void VisualDebugging::ToggleVisibilityAll()
 	}
 }
 
+void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c)
+{
+	AddLine(tag, v0, v1, c, c);
+}
+
 void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)
 {
 	if (false == initialized) Initialize();
@@ -254,6 +259,11 @@ void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm:
 	renderable->AddVertex(v1);
 	renderable->AddColor(c0);
 	renderable->AddColor(c1);
+}
+
+void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c)
+{
+	AddTriangle(tag, v0, v1, v2, c, c, c);
 }
 
 void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c0, const glm::vec4& c1, const glm::vec4& c2)
