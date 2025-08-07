@@ -151,4 +151,10 @@ namespace Color
 	inline glm::vec4 whitesmoke() { return { 0.961f, 0.961f, 0.961f, 1.0f }; }
 	inline glm::vec4 yellow() { return { 1.0f, 1.0f, 0.0f, 1.0f }; }
 	inline glm::vec4 yellowgreen() { return { 0.604f, 0.804f, 0.196f, 1.0f }; }
+
+	inline glm::vec4 Lerp(const glm::vec4& a, const glm::vec4& b, float t)
+	{
+		t = glm::clamp(t, 0.0f, 1.0f);
+		return a * (1.0f - t) + b * t;
+	}
 }
