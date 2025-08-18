@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 
 #include <cstdio>
 #include <stdio.h>
@@ -50,9 +52,14 @@ using Dispatcher = entt::dispatcher;
 
 const string EmptyString = "";
 
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#define NO_MINMAX
+#endif
+
+#ifndef NO_BYTE
 #define NO_BYTE
+#endif
+
 #include <windows.h>
 #include <shellapi.h>
 

@@ -13,6 +13,8 @@ typedef unsigned long ui64;
 typedef float f32;
 typedef double f64;
 
+#ifndef PRIMITIVE_MAX
+#define PRIMITIVE_MAX
 #define i8_max (INT8_MAX)
 #define i8_min (-INT8_MAX)
 #define i16_max (INT16_MAX)
@@ -31,6 +33,7 @@ typedef double f64;
 #define f32_min (-FLT_MAX)
 #define f64_max (DBL_MAX)
 #define f64_min (-DBL_MAX)
+#endif
 
 struct f2
 {
