@@ -171,6 +171,7 @@ public:
 		WireFrameOverSolid,
 		WireFrame,
 		WireFrameSingleColor,
+		Point,
 		NumberOfDrawingModes
 	};
 

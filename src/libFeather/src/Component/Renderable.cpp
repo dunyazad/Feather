@@ -256,6 +256,31 @@ void Renderable::Draw(Shader* shader)
 
 		glLineWidth(2.0f);
 	}
+	else if (Point == drawingMode)
+	{
+		if (0 < numberOfInstances)
+		{
+			if (0 < indices.size())
+			{
+				glDrawElementsInstanced(Points, indices.size(), GL_UNSIGNED_INT, nullptr, numberOfInstances);
+			}
+			else
+			{
+				glDrawArraysInstanced(Points, 0, vertices.size(), numberOfInstances);
+			}
+		}
+		else
+		{
+			if (0 != indices.size())
+			{
+				glDrawElements(Points, indices.size(), GL_UNSIGNED_INT, nullptr);
+			}
+			else
+			{
+				glDrawArrays(Points, 0, vertices.size());
+			}
+		}
+	}
 }
 
 void Renderable::Clear()

@@ -9,6 +9,8 @@ bool VisualDebugging::initialized = false;
 map<string, Entity> VisualDebugging::entities;
 map<string, DebuggingRenderable*> VisualDebugging::debuggingRenderables;
 map<string, TextBlock*> VisualDebugging::textBlocks;
+vector<string> VisualDebugging::selectionRenderables;
+size_t VisualDebugging::selectionIndex = 0;
 
 void VisualDebugging::Initialize()
 {
@@ -387,4 +389,52 @@ void VisualDebugging::AddText(const string& tag, const string& text, const glm::
 
 	auto& textBlock = textBlocks[tag];
 	textBlock->AddText(text, position, color, fontSize);
+}
+
+void VisualDebugging::AddToSelectionList(const string& tag)
+{
+	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+	{
+		selectionRenderables.push_back(tag);
+	}
+}
+
+void VisualDebugging::ShowNextSelection()
+{
+	for (auto& tag : selectionRenderables)
+	{
+		if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+		{
+			debuggingRenderables[tag]->SetVisible(false);
+		}
+	}
+
+	selectionIndex++;
+	selectionIndex = selectionIndex % selectionRenderables.size();
+
+	auto& tag = selectionRenderables[selectionIndex];
+	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+	{
+		debuggingRenderables[tag]->SetVisible(true);
+	}
+}
+
+void VisualDebugging::ShowPreviousSelection()
+{
+	for (auto& tag : selectionRenderables)
+	{
+		if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+		{
+			debuggingRenderables[tag]->SetVisible(false);
+		}
+	}
+
+	if (0 == selectionIndex) selectionIndex += selectionRenderables.size();
+	selectionIndex--;
+
+	auto& tag = selectionRenderables[selectionIndex];
+	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+	{
+		debuggingRenderables[tag]->SetVisible(true);
+	}
 }
