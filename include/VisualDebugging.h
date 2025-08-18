@@ -48,8 +48,8 @@ public:
 	static void AddText(const string& tag, const string& text = "", const glm::vec3& position = glm::vec3(0.0f), const glm::vec4& color = Color::black(), float fontSize = 32.0f);
 
 	static void AddToSelectionList(const string& tag);
-	static void ShowNextSelection();
-	static void ShowPreviousSelection();
+	static unsigned int ShowNextSelection();
+	static unsigned int ShowPreviousSelection();
 
 private:
 	static bool initialized;

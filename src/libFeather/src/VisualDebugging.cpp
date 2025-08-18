@@ -399,7 +399,7 @@ void VisualDebugging::AddToSelectionList(const string& tag)
 	}
 }
 
-void VisualDebugging::ShowNextSelection()
+unsigned int VisualDebugging::ShowNextSelection()
 {
 	for (auto& tag : selectionRenderables)
 	{
@@ -417,9 +417,11 @@ void VisualDebugging::ShowNextSelection()
 	{
 		debuggingRenderables[tag]->SetVisible(true);
 	}
+
+	return selectionIndex;
 }
 
-void VisualDebugging::ShowPreviousSelection()
+unsigned int VisualDebugging::ShowPreviousSelection()
 {
 	for (auto& tag : selectionRenderables)
 	{
@@ -437,4 +439,6 @@ void VisualDebugging::ShowPreviousSelection()
 	{
 		debuggingRenderables[tag]->SetVisible(true);
 	}
+
+	return selectionIndex;
 }
