@@ -391,11 +391,16 @@ void VisualDebugging::AddText(const string& tag, const string& text, const glm::
 	textBlock->AddText(text, position, color, fontSize);
 }
 
-void VisualDebugging::AddToSelectionList(const string& tag)
+bool VisualDebugging::AddToSelectionList(const string& tag)
 {
 	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
 	{
 		selectionRenderables.push_back(tag);
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 
