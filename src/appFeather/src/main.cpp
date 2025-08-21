@@ -28,16 +28,6 @@ int main(int argc, char** argv)
 #pragma endregion
 
 	Feather.AddOnInitializeCallback([&]() {
-		{
-			//auto appMain = Feather.CreateInstance<Entity>("AppMain");
-			//auto appMainEventReceiver = Feather.CreateInstance<ComponentBase>();
-			//appMainEventReceiver->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-			//	if (GLFW_KEY_ESCAPE == event.keyEvent.keyCode)
-			//	{
-			//		glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
-			//	}
-			//	});
-		}
 
 #pragma region Camera
 		{
@@ -91,6 +81,15 @@ int main(int argc, char** argv)
 				});
 		}
 #pragma endregion
+
+#pragma region Control Panel
+		{
+			auto entity = Feather.CreateEntity("Control Panel");
+			auto controlPanel = Feather.CreateComponent<ControlPanel>(entity, "Control Panel");
+		}
+#pragma endregion
+
+		return;
 
 //#define RENDER_TRIANGLE
 #ifdef RENDER_TRIANGLE

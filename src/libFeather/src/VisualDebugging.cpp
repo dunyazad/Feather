@@ -300,6 +300,11 @@ void VisualDebugging::AddBox(const string& tag, const AABB& aabb, const glm::vec
 	AddBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
 }
 
+void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const glm::vec3& dimensions, const glm::vec4& color)
+{
+	AddBox(tag, center, glm::vec3(0.0f, 1.0f, 0.0f), dimensions, color);
+}
+
 void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
 {
 	if (false == initialized) Initialize();
@@ -332,6 +337,11 @@ void VisualDebugging::AddWiredBox(const string& tag, const AABB& aabb, const glm
 	AddWiredBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
 }
 
+void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& center, const glm::vec3& dimensions, const glm::vec4& color)
+{
+	AddWiredBox(tag, center, glm::vec3(0.0f, 1.0f, 0.0f), dimensions, color);
+}
+
 void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
 {
 	if (false == initialized) Initialize();
@@ -355,6 +365,11 @@ void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& center, co
 	renderable->AddInstanceTransform(tm);
 
 	renderable->IncreaseNumberOfInstances();
+}
+
+void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, float radius, const glm::vec4& color)
+{
+	AddSphere(tag, center, glm::vec3(0.0f, 1.0f, 0.0f), radius, color);
 }
 
 void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, const glm::vec3& normal, float radius, const glm::vec4& color)

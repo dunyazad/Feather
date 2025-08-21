@@ -77,8 +77,17 @@ void GUISystem::Update(ui32 frameNo, f32 timeDelta)
         }
     }
 
-    ShowUIPanel();
-    ShowGraphPanel();
+    {
+        auto entities = Feather.GetRegistry().view<ControlPanel>();
+        for (auto& entity : entities)
+        {
+            auto component = Feather.GetRegistry().get<ControlPanel>(entity);
+            component.Render();
+        }
+    }
+
+    //ShowUIPanel();
+    //ShowGraphPanel();
     //ShowFPS();
     //ShowTeapotPanel();
 
