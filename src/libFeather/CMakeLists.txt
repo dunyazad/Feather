@@ -38,6 +38,7 @@ set(source_list
 
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/GUIComponents.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/Panel.h
+    ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/ControlPanel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/StatusPanel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/TextBlock.h
 
@@ -65,6 +66,7 @@ set(source_list
     src/Component/Transform.cpp
 
     src/Component/GUIComponent/Panel.cpp
+    src/Component/GUIComponent/ControlPanel.cpp
     src/Component/GUIComponent/StatusPanel.cpp
     src/Component/GUIComponent/TextBlock.cpp
 
