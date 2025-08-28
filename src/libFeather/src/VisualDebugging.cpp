@@ -406,6 +406,12 @@ void VisualDebugging::AddText(const string& tag, const string& text, const glm::
 	textBlock->AddText(text, position, color, fontSize);
 }
 
+void VisualDebugging::ClearSelectionList()
+{
+	selectionRenderables.clear();
+	selectionIndex = 0;
+}
+
 bool VisualDebugging::AddToSelectionList(const string& tag)
 {
 	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
