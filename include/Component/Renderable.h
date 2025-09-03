@@ -130,14 +130,15 @@ public:
 	}
 
 	inline ui64 size() { return datas.size(); }
-	inline void resize(size_t s) { datas.resize(s); }
+	inline void resize(size_t s) { datas.resize(s); dirty = true; }
 	inline bool empty() { return datas.empty(); }
-	inline T& at(ui32 index) { return datas.at(index); }
+	inline T& at(ui32 index) { return datas.at(index); dirty = true; }
 	inline const T& at(ui32 index) const { return datas.at(index); }
 	inline bool IsUseInstancing() { return useInstancing; }
 	inline void SetUseInstancing(bool use) { useInstancing = use; }
 
-	inline T& operator [](unsigned int index) { return datas.at(index); }
+	inline T& operator [](unsigned int index) { return datas.at(index); dirty = true; }
+	inline const T& operator [](unsigned int index) const { return datas.at(index); }
 
 protected:
 	BufferTarget bufferTarget = Array;
