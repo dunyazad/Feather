@@ -110,6 +110,9 @@ public:
 	Shader* CreateShader(const string& name, const File& vsFile, const File& fsFile);
 	Shader* GetShader(const string& name);
 
+	inline const glm::vec4& GetClearColor() const { return clearColor; }
+	inline void SetClearColor(const glm::vec4& color) { clearColor = color; }
+
 private:
 	libFeather();
 	~libFeather();
@@ -132,4 +135,6 @@ private:
 	RenderSystem*                 renderSystem;
 	ImmediateModeRenderSystem*    immediateModeRenderSystem;
 	GUISystem*                    guiSystem;
+
+	glm::vec4 clearColor = Color::slategray();
 };

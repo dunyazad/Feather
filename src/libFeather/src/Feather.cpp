@@ -58,7 +58,7 @@ void libFeather::Run()
     ui32 frameNo = 0;
     auto lastTime = Time::Now();
 
-    glClearColor(0.3f, 0.6f, 0.9f, 1.0f);
+    glClearColor(XYZW(clearColor));
 
     while (!glfwWindowShouldClose(glfwGetCurrentContext()))
     {
