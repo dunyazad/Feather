@@ -1218,6 +1218,15 @@ public:
 
 							AddColor((float)red / 255.0f, (float)green / 255.0f, (float)blue / 255.0f, (float)alpha / 255.0f);
 						}
+						else if (elementPropertyNames[i][k] == "label")
+						{
+
+						}
+						else if (elementPropertyNames[i][k] == "deepLearningClass")
+						{
+							int deepLearningClass = (int)atoi(words[k].c_str());
+							deepLearningClasses.push_back(deepLearningClass);
+						}
 					}
 				}
 			}
@@ -1256,6 +1265,7 @@ public:
 	inline const vector<unsigned int>& GetLineIndices() const { return lineIndices; }
 	inline const vector<unsigned int>& GetTriangleIndices() const { return triangleIndices; }
 	inline const vector<float>& GetColors() const { return colors; }
+	inline const vector<int>& GetDeepLearningClasses() const { return deepLearningClasses; }
 	inline bool UseAlpha() const { return useAlpha; }
 
 	virtual inline void AddUV(float u, float v)
@@ -1422,6 +1432,7 @@ protected:
 	vector<unsigned int> lineIndices;
 	vector<unsigned int> triangleIndices;
 	vector<float> colors;
+	vector<int> deepLearningClasses;
 	bool useAlpha = false;
 };
 

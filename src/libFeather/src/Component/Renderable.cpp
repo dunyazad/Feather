@@ -94,6 +94,7 @@ void Renderable::Update(ui32 frameNo, f32 timeDelta)
 void Renderable::Draw(Shader* shader)
 {
 	if (false == visible) return;
+	if (None == drawingMode) return;
 
 	if (instancingEnabled && 0 == numberOfInstances) return;
 

@@ -168,6 +168,7 @@ public:
 
 	enum DrawingMode
 	{
+		None,
 		Solid,
 		WireFrameOverSolid,
 		WireFrame,
