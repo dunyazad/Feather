@@ -1265,6 +1265,7 @@ public:
 	inline const vector<unsigned int>& GetLineIndices() const { return lineIndices; }
 	inline const vector<unsigned int>& GetTriangleIndices() const { return triangleIndices; }
 	inline const vector<float>& GetColors() const { return colors; }
+	inline vector<int>& GetDeepLearningClasses() { return deepLearningClasses; }
 	inline const vector<int>& GetDeepLearningClasses() const { return deepLearningClasses; }
 	inline bool UseAlpha() const { return useAlpha; }
 
