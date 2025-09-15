@@ -1220,7 +1220,8 @@ public:
 						}
 						else if (elementPropertyNames[i][k] == "label")
 						{
-
+							int label = (int)atoi(words[k].c_str());
+							labels.push_back(label);
 						}
 						else if (elementPropertyNames[i][k] == "deepLearningClass")
 						{
@@ -1265,6 +1266,8 @@ public:
 	inline const vector<unsigned int>& GetLineIndices() const { return lineIndices; }
 	inline const vector<unsigned int>& GetTriangleIndices() const { return triangleIndices; }
 	inline const vector<float>& GetColors() const { return colors; }
+	inline vector<int>& GetLabels() { return labels; }
+	inline const vector<int>& GetLabels() const { return labels; }
 	inline vector<int>& GetDeepLearningClasses() { return deepLearningClasses; }
 	inline const vector<int>& GetDeepLearningClasses() const { return deepLearningClasses; }
 	inline bool UseAlpha() const { return useAlpha; }
@@ -1433,6 +1436,7 @@ protected:
 	vector<unsigned int> lineIndices;
 	vector<unsigned int> triangleIndices;
 	vector<float> colors;
+	vector<int> labels;
 	vector<int> deepLearningClasses;
 	bool useAlpha = false;
 };
