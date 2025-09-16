@@ -22,6 +22,8 @@ void ImmediateModeRenderSystem::Terminate()
 
 void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 {
+	if (false == bEnabled) return;
+
 	glUseProgram(0);
 
 	glViewport(0, 0,
