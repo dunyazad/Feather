@@ -1396,6 +1396,37 @@ public:
 		}
 	}
 
+	virtual void AddData(
+		float* positions,
+		float* normals,
+		float* colors,
+		unsigned int numberOfPoints,
+		bool useAlpha)
+	{
+		this->useAlpha = useAlpha;
+
+		auto lastPointSize = this->points.size();
+		this->points.resize(lastPointSize + numberOfPoints * 3);
+		memcpy(this->points.data() + lastPointSize, positions, sizeof(float) * numberOfPoints * 3);
+
+		auto lastNormalSize = this->normals.size();
+		this->normals.resize(lastNormalSize + numberOfPoints * 3);
+		memcpy(this->normals.data() + lastNormalSize, positions, sizeof(float) * numberOfPoints * 3);
+
+		if (useAlpha)
+		{
+			auto lastColorSize = this->colors.size();
+			this->colors.resize(lastColorSize + numberOfPoints * 3);
+			memcpy(this->colors.data() + lastColorSize, positions, sizeof(float) * numberOfPoints * 3);
+		}
+		else
+		{
+			auto lastColorSize = this->colors.size();
+			this->colors.resize(lastColorSize + numberOfPoints * 4);
+			memcpy(this->colors.data() + lastColorSize, positions, sizeof(float) * numberOfPoints * 4);
+		}
+	}
+
 	virtual inline void SwapAxisYZ()
 	{
 		if (false == points.empty())

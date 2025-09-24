@@ -142,4 +142,21 @@ struct AABB
 {
     glm::vec3 min;
     glm::vec3 max;
+
+    inline bool Intersects(const AABB& other) const
+    {
+        if (max.x < other.min.x || min.x > other.max.x) return false;
+        if (max.y < other.min.y || min.y > other.max.y) return false;
+        if (max.z < other.min.z || min.z > other.max.z) return false;
+
+        return true;
+    }
+
+    inline bool Contains(const glm::vec3& p) const
+    {
+        return
+            p.x >= min.x && p.x <= max.x &&
+            p.y >= min.y && p.y <= max.y &&
+            p.z >= min.z && p.z <= max.z;
+    }
 };
