@@ -699,7 +699,7 @@ class OBJFormat : public HSerializable
 public:
 	virtual bool Serialize(const string& filename)
 	{
-		ofstream ofs(filename);
+		std::ofstream ofs(filename);
 		stringstream ss;
 		ss.precision(6);
 
@@ -842,7 +842,7 @@ public:
 
 	virtual bool Deserialize(const string& filename)
 	{
-		ifstream ifs(filename);
+		std::ifstream ifs(filename);
 		if (false == ifs.is_open())
 		{
 			printf("filename : %s is not open\n", filename.c_str());
@@ -922,7 +922,7 @@ class PLYFormat : public HSerializable
 public:
 	virtual bool Serialize(const string& filename)
 	{
-		ofstream ofs(filename);
+		std::ofstream ofs(filename);
 		stringstream ss;
 		ss.precision(6);
 
@@ -1074,7 +1074,7 @@ public:
 
 	virtual bool Deserialize(const string& filename)
 	{
-		ifstream ifs(filename);
+		std::ifstream ifs(filename);
 		if (false == ifs.is_open())
 		{
 			printf("filename : %s is not open\n", filename.c_str());
@@ -1479,7 +1479,7 @@ class ALPFormat
 public:
 	bool Serialize(const string& filename)
 	{
-		ofstream ofs(filename, ios::out | ios::binary);
+		std::ofstream ofs(filename, ios::out | ios::binary);
 		if (false == ofs.is_open())
 		{
 			printf("filename : %s is not open\n", filename.c_str());
@@ -1512,7 +1512,7 @@ public:
 
 	bool Deserialize(const string& filename)
 	{
-		ifstream ifs(filename, ios::in | ios::binary);
+		std::ifstream ifs(filename, ios::in | ios::binary);
 		if (false == ifs.is_open())
 		{
 			printf("filename : %s is not open\n", filename.c_str());

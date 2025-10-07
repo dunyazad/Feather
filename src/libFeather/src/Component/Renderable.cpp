@@ -485,7 +485,7 @@ void Renderable::SetInstanceTransform(ui32 bufferIndex, const glm::mat4& transfo
 	instanceTransforms.SetData(bufferIndex, transform);
 }
 
-void Renderable::AddIndices(const vector<ui32>& indices)
+void Renderable::AddIndices(const std::vector<ui32>& indices)
 {
 	dirty = true;
 
@@ -499,7 +499,7 @@ void Renderable::AddIndices(const ui32* indices, ui32 numberOfElements)
 	this->indices.AddData(indices, numberOfElements);
 }
 
-void Renderable::AddVertices(const vector<glm::vec3>& vertices)
+void Renderable::AddVertices(const std::vector<glm::vec3>& vertices)
 {
 	dirty = true;
 
@@ -513,7 +513,7 @@ void Renderable::AddVertices(const glm::vec3* vertices, ui32 numberOfElements)
 	this->vertices.AddData(vertices, numberOfElements);
 }
 
-void Renderable::AddNormals(const vector<glm::vec3>& normals)
+void Renderable::AddNormals(const std::vector<glm::vec3>& normals)
 {
 	dirty = true;
 
@@ -527,7 +527,7 @@ void Renderable::AddNormals(const glm::vec3* normals, ui32 numberOfElements)
 	this->normals.AddData(normals, numberOfElements);
 }
 
-void Renderable::AddColors(const vector<glm::vec3>& colors)
+void Renderable::AddColors(const std::vector<glm::vec3>& colors)
 {
 	dirty = true;
 
@@ -541,7 +541,7 @@ void Renderable::AddColors(const glm::vec3* colors, ui32 numberOfElements)
 	this->colors3.AddData(colors, numberOfElements);
 }
 
-void Renderable::AddColors(const vector<glm::vec4>& colors)
+void Renderable::AddColors(const std::vector<glm::vec4>& colors)
 {
 	dirty = true;
 	for (auto& color : colors)
@@ -571,7 +571,7 @@ void Renderable::AddColors(const glm::vec4* colors, ui32 numberOfElements)
 	this->colors4.AddData(colors, numberOfElements);
 }
 
-void Renderable::AddUVs(const vector<glm::vec2>& uvs)
+void Renderable::AddUVs(const std::vector<glm::vec2>& uvs)
 {
 	dirty = true;
 
@@ -585,7 +585,7 @@ void Renderable::AddUVs(const glm::vec2* uvs, ui32 numberOfElements)
 	this->uvs.AddData(uvs, numberOfElements);
 }
 
-void Renderable::AddInstanceColors(const vector<glm::vec4>& colors)
+void Renderable::AddInstanceColors(const std::vector<glm::vec4>& colors)
 {
 	dirty = true;
 	for (auto& color : colors)
@@ -615,7 +615,7 @@ void Renderable::AddInstanceColors(const glm::vec4* colors, ui32 numberOfElement
 	this->instanceColors.AddData(colors, numberOfElements);
 }
 
-void Renderable::AddInstanceNormals(const vector<glm::vec3>& normals)
+void Renderable::AddInstanceNormals(const std::vector<glm::vec3>& normals)
 {
 	dirty = true;
 
@@ -629,7 +629,7 @@ void Renderable::AddInstanceNormals(const glm::vec3* normals, ui32 numberOfEleme
 	this->instanceNormals.AddData(normals, numberOfElements);
 }
 
-void Renderable::AddInstanceTransforms(const vector<glm::mat4>& transforms)
+void Renderable::AddInstanceTransforms(const std::vector<glm::mat4>& transforms)
 {
 	dirty = true;
 

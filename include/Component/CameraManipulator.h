@@ -56,7 +56,7 @@ public:
 protected:
 	CameraBase* camera = nullptr;
 
-	set<i32> pressedKeys;
+	std::set<i32> pressedKeys;
 
 	f64 lastMousePositionX = UINT32_MAX;
 	f64 lastMousePositionY = UINT32_MAX;
@@ -122,11 +122,6 @@ private:
 
 	std::unordered_set<int> pressedKeys;
 
-
-
-
-
-
-	vector<tuple<glm::vec3, glm::vec3, glm::vec3, f32>> cameraHistory;
+	std::vector<std::tuple<glm::vec3, glm::vec3, glm::vec3, f32>> cameraHistory;
 	i32 cameraHistoryIndex = 0;
 };

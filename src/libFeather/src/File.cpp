@@ -1,22 +1,22 @@
 #include <File.h>
 
-bool File::Exists(const string& filename)
+bool File::Exists(const std::string& filename)
 {
-	return filesystem::exists(filename);
+	return std::filesystem::exists(filename);
 }
 
 File::File()
 	: m_pFileStream(nullptr)
 {
-	m_pFileStream = new fstream();
+	m_pFileStream = new std::fstream();
 }
 
-File::File(const string& fileName, bool isBinary)
+File::File(const std::string& fileName, bool isBinary)
 	: m_fileName(fileName)
 {
 	if (Exists(fileName))
 	{
-		m_pFileStream = new fstream();
+		m_pFileStream = new std::fstream();
 
 		Open(fileName, isBinary);
 	}
@@ -29,32 +29,32 @@ File::~File()
 	}
 }
 
-void File::Create(const string& fileName, bool isBinary)
+void File::Create(const std::string& fileName, bool isBinary)
 {
 	if (isBinary) {
-		(*m_pFileStream).open(fileName, ios::binary | ios::in | ios::out | ios::trunc);
+		(*m_pFileStream).open(fileName, std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
 	}
 	else {
-		(*m_pFileStream).open(fileName, ios::in | ios::out | ios::trunc);
+		(*m_pFileStream).open(fileName, std::ios::in | std::ios::out | std::ios::trunc);
 	}
 }
 
-bool File::Open(const string& fileName, bool isBinary)
+bool File::Open(const std::string& fileName, bool isBinary)
 {
 	m_fileName = fileName;
 	if (false == Exists(fileName)) return false;
 
 	if (isBinary) {
-		(*m_pFileStream).open(fileName, ios::binary | ios::in);
+		(*m_pFileStream).open(fileName, std::ios::binary | std::ios::in);
 	}
 	else {
-		(*m_pFileStream).open(fileName, ios::in);
+		(*m_pFileStream).open(fileName, std::ios::in);
 	}
 
 	if ((*m_pFileStream).is_open()) {
-		(*m_pFileStream).seekg(0, ios::end);
+		(*m_pFileStream).seekg(0, std::ios::end);
 		m_fileLength = int((*m_pFileStream).tellg());
-		(*m_pFileStream).seekg(0, ios::beg);
+		(*m_pFileStream).seekg(0, std::ios::beg);
 
 		return true;
 	}
@@ -74,14 +74,14 @@ bool File::isOpen()
 	return (*m_pFileStream).is_open();
 }
 
-bool File::GetWord(string& word)
+bool File::GetWord(std::string& word)
 {
 	if (nullptr == m_pFileStream) return false;
 
 	return !((*m_pFileStream) >> word).eof();
 }
 
-bool File::GetLine(string& line)
+bool File::GetLine(std::string& line)
 {
 	if (nullptr == m_pFileStream) return false;
 
@@ -102,124 +102,124 @@ void File::Write(char* buffer, int length)
 	(*m_pFileStream).write(buffer, length);
 }
 
-fstream& File::operator << (bool data)
+std::fstream& File::operator << (bool data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (short data)
+std::fstream& File::operator << (short data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (unsigned short data)
+std::fstream& File::operator << (unsigned short data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (int data)
+std::fstream& File::operator << (int data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (unsigned int data)
+std::fstream& File::operator << (unsigned int data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (long data)
+std::fstream& File::operator << (long data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (unsigned long data)
+std::fstream& File::operator << (unsigned long data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (float data)
+std::fstream& File::operator << (float data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (double data)
+std::fstream& File::operator << (double data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (string& data)
+std::fstream& File::operator << (std::string& data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (const string& data)
+std::fstream& File::operator << (const std::string& data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (char* data)
+std::fstream& File::operator << (char* data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
-fstream& File::operator << (const char* data)
+std::fstream& File::operator << (const char* data)
 {
-	return (fstream&)((*m_pFileStream) << data);
+	return (std::fstream&)((*m_pFileStream) << data);
 }
 
 //
 
-fstream& File::operator >> (bool& data)
+std::fstream& File::operator >> (bool& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (short& data)
+std::fstream& File::operator >> (short& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (unsigned short& data)
+std::fstream& File::operator >> (unsigned short& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (int& data)
+std::fstream& File::operator >> (int& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (unsigned int& data)
+std::fstream& File::operator >> (unsigned int& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (long& data)
+std::fstream& File::operator >> (long& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (unsigned long& data)
+std::fstream& File::operator >> (unsigned long& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (float& data)
+std::fstream& File::operator >> (float& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (double& data)
+std::fstream& File::operator >> (double& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-fstream& File::operator >> (string& data)
+std::fstream& File::operator >> (std::string& data)
 {
-	return (fstream&)((*m_pFileStream) >> data);
+	return (std::fstream&)((*m_pFileStream) >> data);
 }
 
-//fstream& File::operator >> (char* data)
+//std::fstream& File::operator >> (char* data)
 //{
-//	return (fstream&)((*m_pFileStream) >> data);
+//	return (std::fstream&)((*m_pFileStream) >> data);
 //}

@@ -8,83 +8,64 @@ GeometryBuilder::~GeometryBuilder()
 {
 }
 
-tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
-GeometryBuilder::BuildPlane(f32 width, f32 height, const glm::vec3& center, const glm::vec3& normal, const glm::vec4& color)
-//{ To Change
-//	vector<ui32> indices;
-//	vector<glm::vec3> vertices, normals;
-//	vector<glm::vec4> colors;
-//	vector<glm::vec2> uvs;
-//
-//	f32 halfWidth = width * 0.5f;
-//	f32 halfHeight = height * 0.5f;
-//
-//	// Compute basis vectors for the plane
-//	glm::vec3 up = glm::abs(normal.z) < 0.99f ? glm::vec3(0, 0, 1) : glm::vec3(0, 1, 0);
-//	glm::vec3 tangent = glm::normalize(glm::cross(up, normal));
-//	glm::vec3 bitangent = glm::cross(normal, tangent);
-//
-//	glm::vec3 offsets[4] = {
-//		-tangent * halfWidth - bitangent * halfHeight,
-//		 tangent * halfWidth - bitangent * halfHeight,
-//		 tangent * halfWidth + bitangent * halfHeight,
-//		-tangent * halfWidth + bitangent * halfHeight
-//	};
-//
-//	for (int i = 0; i < 4; ++i)
-//	{
-//		vertices.push_back(center + offsets[i]);
-//		normals.push_back(normal);
-//		colors.push_back(color);
-//	}
-//	uvs = { {0,0}, {1,0}, {1,1}, {0,1} };
-//	indices = { 0, 1, 2, 2, 3, 0 };
-//	return make_tuple(indices, vertices, normals, colors, uvs);
-//} 
+std::tuple<std::vector<ui32>, std::vector<glm::vec3>, std::vector<glm::vec3>, std::vector<glm::vec4>, std::vector<glm::vec2>>
+GeometryBuilder::BuildPlane(f32 width, f32 height, ui32 hSegments, ui32 vSegments, const glm::vec3& center, const glm::vec3& normal, const glm::vec4& color)
 {
-	vector<unsigned int> indices;
-	vector<glm::vec3> vertices;
-	vector<glm::vec3> normals;
-	vector<glm::vec4> colors;
-	vector<glm::vec2> uvs;
+	std::vector<unsigned int> indices;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec4> colors;
+	std::vector<glm::vec2> uvs;
+
+	if (hSegments < 1 || vSegments < 1) {
+		return {};
+	}
 
 	f32 halfWidth = width * 0.5f;
 	f32 halfHeight = height * 0.5f;
 
 	auto r = glm::rotation({ 0.0f, 0.0f, 1.0f }, normal);
-	
-	vertices.push_back(center + r * glm::vec3(-halfWidth, -halfHeight, 0.0f));
-	vertices.push_back(center + r * glm::vec3( halfWidth, -halfHeight, 0.0f));
-	vertices.push_back(center + r * glm::vec3( halfWidth,  halfHeight, 0.0f));
-	vertices.push_back(center + r * glm::vec3(-halfWidth,  halfHeight, 0.0f));
-	
-	normals.push_back(normal);
-	
-	colors.push_back(color);
 
-	uvs.push_back(glm::vec2(0, 0));
-	uvs.push_back(glm::vec2(1, 0));
-	uvs.push_back(glm::vec2(1, 1));
-	uvs.push_back(glm::vec2(0, 1));
+	for (ui32 j = 0; j <= vSegments; ++j) {
+		for (ui32 i = 0; i <= hSegments; ++i) {
+			f32 x = (static_cast<f32>(i) / hSegments) * width - halfWidth;
+			f32 y = (static_cast<f32>(j) / vSegments) * height - halfHeight;
+			glm::vec3 localPos(x, y, 0.0f);
 
-	indices.push_back(0);
-	indices.push_back(1);
-	indices.push_back(2);
-	indices.push_back(2);
-	indices.push_back(3);
-	indices.push_back(0);
+			vertices.push_back(center + r * localPos);
+			normals.push_back(normal);
+			colors.push_back(color);
+
+			uvs.push_back(glm::vec2(static_cast<f32>(i) / hSegments, static_cast<f32>(j) / vSegments));
+		}
+	}
+
+	for (ui32 j = 0; j < vSegments; ++j) {
+		for (ui32 i = 0; i < hSegments; ++i) {
+			ui32 row1 = j * (hSegments + 1);
+			ui32 row2 = (j + 1) * (hSegments + 1);
+
+			indices.push_back(row1 + i);
+			indices.push_back(row1 + i + 1);
+			indices.push_back(row2 + i);
+
+			indices.push_back(row2 + i);
+			indices.push_back(row1 + i + 1);
+			indices.push_back(row2 + i + 1);
+		}
+	}
 
 	return make_tuple(indices, vertices, normals, colors, uvs);
 }
 
-tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+std::tuple<std::vector<ui32>, std::vector<glm::vec3>, std::vector<glm::vec3>, std::vector<glm::vec4>, std::vector<glm::vec2>>
 GeometryBuilder::BuildBox(const glm::vec3& center, const glm::vec3& dimension, const glm::vec4& color)
 {
-	vector<unsigned int> indices;
-	vector<glm::vec3> vertices;
-	vector<glm::vec3> normals;
-	vector<glm::vec4> colors;
-	vector<glm::vec2> uvs;
+	std::vector<unsigned int> indices;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec4> colors;
+	std::vector<glm::vec2> uvs;
 
 	glm::vec3 halfDim = dimension * 0.5f;
 
@@ -143,14 +124,14 @@ GeometryBuilder::BuildBox(const glm::vec3& center, const glm::vec3& dimension, c
 	return make_tuple(indices, vertices, normals, colors, uvs);
 }
 
-tuple<vector<ui32>, vector<glm::vec3>, vector<glm::vec3>, vector<glm::vec4>, vector<glm::vec2>>
+std::tuple<std::vector<ui32>, std::vector<glm::vec3>, std::vector<glm::vec3>, std::vector<glm::vec4>, std::vector<glm::vec2>>
 GeometryBuilder::BuildWiredBox(const glm::vec3& center, const glm::vec3& dimension, const glm::vec4& color)
 {
-	vector<ui32> indices;
-	vector<glm::vec3> vertices;
-	vector<glm::vec3> normals; // Empty or zero since wireframe has no surface
-	vector<glm::vec4> colors;
-	vector<glm::vec2> uvs;     // Empty if not needed for wireframe
+	std::vector<ui32> indices;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> normals; // Empty or zero since wireframe has no surface
+	std::vector<glm::vec4> colors;
+	std::vector<glm::vec2> uvs;     // Empty if not needed for wireframe
 
 	glm::vec3 halfDim = dimension * 0.5f;
 

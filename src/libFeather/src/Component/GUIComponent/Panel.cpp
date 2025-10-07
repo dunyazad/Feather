@@ -1,7 +1,7 @@
 #include<Component/GUIComponent/Panel.h>
 #include <Feather.h>
 
-Panel::Panel(const string& title)
+Panel::Panel(const std::string& title)
     : title(title)
 {
 }

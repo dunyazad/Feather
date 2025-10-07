@@ -14,6 +14,8 @@ void libFeather::Initialize(ui32 width, ui32 height)
     featherWindow = new FeatherWindow();
     featherWindow->Initialize(width, height);
 
+    inputSystem = new InputSystem(featherWindow);
+    inputSystem->Initialize();
     eventSystem = new EventSystem(featherWindow);
     eventSystem->Initialize();
     renderSystem = new RenderSystem(featherWindow);
@@ -34,6 +36,7 @@ void libFeather::Terminate()
     }
     shaders.clear();
 
+    if (nullptr != inputSystem) delete inputSystem;
     if (nullptr != eventSystem) delete eventSystem;
     if (nullptr != renderSystem) delete renderSystem;
     if (nullptr != immediateModeRenderSystem) delete immediateModeRenderSystem;
@@ -45,7 +48,7 @@ void libFeather::Terminate()
 void libFeather::Run()
 {
 #ifdef _WINDOWS
-    MaximizeConsoleWindowOnMonitor(1);
+    //MaximizeConsoleWindowOnMonitor(1);
     
     MaximizeWindowOnMonitor(glfwGetWin32Window(featherWindow->GetGLFWwindow()), 2);
 #endif
@@ -74,6 +77,7 @@ void libFeather::Run()
 
         glfwPollEvents();
 
+		inputSystem->Update(frameNo, timeDelta);
         eventSystem->Update(frameNo, timeDelta);
         renderSystem->Update(frameNo, timeDelta);
         immediateModeRenderSystem->Update(frameNo, timeDelta);
@@ -86,7 +90,7 @@ void libFeather::Run()
     }
 }
 
-Entity libFeather::CreateEntity(const string& name)
+Entity libFeather::CreateEntity(const std::string& name)
 {
     auto it = nameEntityMapping.find(name);
     if (it == nameEntityMapping.end())
@@ -102,7 +106,7 @@ Entity libFeather::CreateEntity(const string& name)
     }
 }
 
-Entity libFeather::GetEntityByName(const string& name)
+Entity libFeather::GetEntityByName(const std::string& name)
 {
     auto it = nameEntityMapping.find(name);
     if (it != nameEntityMapping.end())
@@ -115,7 +119,7 @@ Entity libFeather::GetEntityByName(const string& name)
     }
 }
 
-const string& libFeather::GetEntityName(Entity entity)
+const std::string& libFeather::GetEntityName(Entity entity)
 {
     auto it = entityNameMapping.find(entity);
     if (it != entityNameMapping.end())
@@ -128,7 +132,7 @@ const string& libFeather::GetEntityName(Entity entity)
     }
 }
 
-void libFeather::RemoveEntity(const string& name)
+void libFeather::RemoveEntity(const std::string& name)
 {
     auto it = nameEntityMapping.find(name);
     if (it != nameEntityMapping.end())
@@ -152,7 +156,7 @@ void libFeather::RemoveEntity(Entity entity)
     }
 }
 
-Shader* libFeather::CreateShader(const string& name, const File& vsFile, const File& gsFile, const File& fsFile)
+Shader* libFeather::CreateShader(const std::string& name, const File& vsFile, const File& gsFile, const File& fsFile)
 {
     if (0 != shaders.count(name)) return shaders[name];
     else
@@ -164,7 +168,7 @@ Shader* libFeather::CreateShader(const string& name, const File& vsFile, const F
     }
 }
 
-Shader* libFeather::CreateShader(const string& name, const File& vsFile, const File& fsFile)
+Shader* libFeather::CreateShader(const std::string& name, const File& vsFile, const File& fsFile)
 {
     if (0 != shaders.count(name)) return shaders[name];
     else
@@ -176,7 +180,7 @@ Shader* libFeather::CreateShader(const string& name, const File& vsFile, const F
     }
 }
 
-Shader* libFeather::GetShader(const string& name)
+Shader* libFeather::GetShader(const std::string& name)
 {
     if (0 != shaders.count(name)) return shaders[name];
     else return nullptr;

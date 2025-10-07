@@ -5,14 +5,14 @@
 class Panel
 {
 public:
-	Panel(const string& title = "");
+	Panel(const std::string& title = "");
 	~Panel();
 
 	virtual void Render();
 //private:
     const ui32 historySize = 50;
 
-    vector<f32> fpsHistory;
+    std::vector<f32> fpsHistory;
     ui32 historyOffset = 0;
     f32 accumulatedFPS = 0.0f;
     ui32 frameCount = 0;
@@ -22,5 +22,5 @@ public:
     ui32 mouseX = 0;
     ui32 mouseY = 0;
 
-    string title = "";
+    std::string title = "";
 };

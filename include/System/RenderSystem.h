@@ -23,14 +23,14 @@ public:
 		const glm::mat4& viewMatrix,
 		const glm::mat4& perspectiveMatrix,
 		const glm::vec3& eye,
-		const map<Shader*, vector<Renderable*>>& shaderMapping);
+		const std::map<Shader*, std::vector<Renderable*>>& shaderMapping);
 
 	void RenderDebuggingRenderables(
 		ui32 frameNo, f32 timeDelta,
 		const glm::mat4& viewMatrix,
 		const glm::mat4& perspectiveMatrix,
 		const glm::vec3& eye,
-		const map<Shader*, vector<DebuggingRenderable*>>& shaderMapping);
+		const std::map<Shader*, std::vector<DebuggingRenderable*>>& shaderMapping);
 
 private:
 	FeatherWindow* window = nullptr;

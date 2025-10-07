@@ -42,10 +42,14 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/StatusPanel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/TextBlock.h
 
+    ${CMAKE_SOURCE_DIR}/include/Component/InputComponent/InputComponents.h
+    ${CMAKE_SOURCE_DIR}/include/Component/InputComponent/Joystick.h
+
     ${CMAKE_SOURCE_DIR}/include/System/Systems.h
     ${CMAKE_SOURCE_DIR}/include/System/EventSystem.h
     ${CMAKE_SOURCE_DIR}/include/System/GUISystem.h
     ${CMAKE_SOURCE_DIR}/include/System/ImmediateModeRenderSystem.h
+    ${CMAKE_SOURCE_DIR}/include/System/InputSystem.h
     ${CMAKE_SOURCE_DIR}/include/System/RenderSystem.h
 
     src/Feather.cpp
@@ -70,9 +74,12 @@ set(source_list
     src/Component/GUIComponent/StatusPanel.cpp
     src/Component/GUIComponent/TextBlock.cpp
 
+    src/Component/InputComponent/Joystick.cpp
+
     src/System/EventSystem.cpp
     src/System/GUISystem.cpp
     src/System/ImmediateModeRenderSystem.cpp
+    src/System/InputSystem.cpp
     src/System/RenderSystem.cpp
 
     ${CMAKE_SOURCE_DIR}/res/Shaders/Default.vs

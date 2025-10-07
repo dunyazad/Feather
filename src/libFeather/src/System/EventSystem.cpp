@@ -3,7 +3,7 @@
 #include <FeatherWindow.h>
 #include <Feather.h>
 
-vector<EventSystem*> EventSystem::s_instances;
+std::vector<EventSystem*> EventSystem::s_instances;
 
 f64 EventSystem::lastMousePositionX = 0.0f;
 f64 EventSystem::lastMousePositionY = 0.0f;

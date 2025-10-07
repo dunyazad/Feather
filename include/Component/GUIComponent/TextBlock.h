@@ -4,7 +4,7 @@
 
 struct TextInfo
 {
-	string text = "";
+	std::string text = "";
 	glm::vec3 position = glm::vec3(0.0f);
 	glm::vec4 color = Color::black();
 	float fontSize = 32.0f;
@@ -18,7 +18,7 @@ public:
 
 	virtual void Render();
     
-	void AddText(const string& text = "", const glm::vec3& position = glm::vec3(0.0f), const glm::vec4& color = Color::black(), float fontSize = 32.0f);
+	void AddText(const std::string& text = "", const glm::vec3& position = glm::vec3(0.0f), const glm::vec4& color = Color::black(), float fontSize = 32.0f);
 
 	void Clear();
 
@@ -28,5 +28,5 @@ public:
 
 protected:
 	bool visible = true;
-	vector<TextInfo> textInfos;
+	std::vector<TextInfo> textInfos;
 };

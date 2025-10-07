@@ -12,10 +12,10 @@ void Shader::Initialize(const File& vsFile, const File& fsFile)
 {
     if (0 == vsFile.GetFileLength() || 0 == fsFile.GetFileLength()) return;
 
-    string vs(vsFile.GetFileLength() + 1, 0);
+    std::string vs(vsFile.GetFileLength() + 1, 0);
     vsFile.Read(vs.data(), vsFile.GetFileLength());
 
-    string fs(fsFile.GetFileLength() + 1, 0);
+    std::string fs(fsFile.GetFileLength() + 1, 0);
     fsFile.Read(fs.data(), fsFile.GetFileLength());
 
     Initialize(vs, "", fs);
@@ -25,19 +25,19 @@ void Shader::Initialize(const File& vsFile, const File& gsFile, const File& fsFi
 {
     if (0 == vsFile.GetFileLength() || 0 == fsFile.GetFileLength()) return;
 
-    string vs(vsFile.GetFileLength() + 1, 0);
+    std::string vs(vsFile.GetFileLength() + 1, 0);
     vsFile.Read(vs.data(), vsFile.GetFileLength());
 
-    string gs(gsFile.GetFileLength() + 1, 0);
+    std::string gs(gsFile.GetFileLength() + 1, 0);
     gsFile.Read(gs.data(), gsFile.GetFileLength());
 
-    string fs(fsFile.GetFileLength() + 1, 0);
+    std::string fs(fsFile.GetFileLength() + 1, 0);
     fsFile.Read(fs.data(), fsFile.GetFileLength());
 
     Initialize(vs, gs, fs);
 }
 
-void Shader::Initialize(const string& vs, const string& gs, const string& fs)
+void Shader::Initialize(const std::string& vs, const std::string& gs, const std::string& fs)
 {
     if (vs.empty() || fs.empty()) return;
 

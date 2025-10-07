@@ -1,5 +1,5 @@
 #include <iostream>
-using namespace std;
+//using namespace std;
 
 #include <libFeather.h>
 
@@ -28,6 +28,34 @@ int main(int argc, char** argv)
 #pragma endregion
 
 	Feather.AddOnInitializeCallback([&]() {
+
+#pragma region Ground Plane
+		{
+			auto entity = Feather.CreateEntity("Ground Plane");
+			auto component = Feather.CreateComponent<Renderable>(entity);
+			component->Initialize(Renderable::GeometryMode::Triangles);
+			component->SetDrawingMode(Renderable::DrawingMode::WireFrameOverSolid);
+
+			auto [indices, vertices, normals, colors, uvs] =
+				GeometryBuilder::BuildPlane(1000, 1000, 100, 100, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, Color::white());
+			component->AddIndices(indices.data(), indices.size());
+			component->AddVertices(vertices.data(), vertices.size());
+			component->AddNormals(normals.data(), normals.size());
+			component->AddColors(colors.data(), colors.size());
+			//component->AddUVs(uvs.data(), uvs.size());
+
+			component->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
+			component->AddShader(Feather.CreateShader("Flat", File("../../res/Shaders/Flat.vs"), File("../../res/Shaders/Flat.fs")));
+			component->SetActiveShaderIndex(0);
+		}
+#pragma endregion
+
+#pragma region Joystick
+		{
+			auto entity = Feather.CreateEntity("Joystick");
+			auto component = Feather.CreateComponent<Joystick>(entity, Feather.GetHWND());
+		}
+#pragma endregion
 
 #pragma region Camera
 		{
@@ -69,350 +97,25 @@ int main(int argc, char** argv)
 		}
 #pragma endregion
 
-#pragma region Status Panel
-		{
-			auto gui = Feather.GetRegistry().create();
-			auto statusPanel = Feather.GetRegistry().emplace<StatusPanel>(gui);
-
-			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(gui, gui, [](Entity entity, const MousePositionEvent& event) {
-				auto& component = Feather.GetRegistry().get<StatusPanel>(entity);
-				component.mouseX = event.xpos;
-				component.mouseY = event.ypos;
-				});
-		}
-#pragma endregion
-
-#pragma region Control Panel
-		{
-			auto entity = Feather.CreateEntity("Control Panel");
-			auto controlPanel = Feather.CreateComponent<ControlPanel>(entity, "Control Panel");
-		}
-#pragma endregion
-
-		return;
-
-//#define RENDER_TRIANGLE
-#ifdef RENDER_TRIANGLE
-		{
-			auto entity = Feather.CreateInstance<Entity>("Triangle");
-			auto shader = Feather.CreateInstance<Shader>();
-			shader->Initialize(File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs"));
-			auto renderable = Feather.CreateInstance<Renderable>();
-			renderable->Initialize(Renderable::GeometryMode::Triangles);
-			renderable->SetShader(shader);
-
-			renderable->AddVertex({ -1.0f, -1.0f, 0.0f });
-			renderable->AddVertex({ 1.0f, -1.0f, 0.0f });
-			renderable->AddVertex({ 0.0f, 1.0f, 0.0f });
-
-			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
-			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
-			renderable->AddNormal({ 0.0f, 0.0f, 1.0f });
-
-			renderable->AddColor({ 1.0f, 0.0f, 0.0f, 1.0f });
-			renderable->AddColor({ 0.0f, 1.0f, 0.0f, 1.0f });
-			renderable->AddColor({ 0.0f, 0.0f, 1.0f, 1.0f });
-
-			renderable->AddIndex(0);
-			renderable->AddIndex(1);
-			renderable->AddIndex(2);
-		}
-#endif // RENDER_TRIANGLE
-
-//#define RENDER_VOXELS_BOX
-#ifdef RENDER_VOXELS_BOX
-		{
-			auto entity = Feather.CreateInstance<Entity>("Box");
-			auto shader = Feather.CreateInstance<Shader>();
-			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
-			auto renderable = Feather.CreateInstance<Renderable>();
-			renderable->Initialize(Renderable::GeometryMode::Triangles);
-			renderable->SetShader(shader);
-
-			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "one");
-			renderable->AddIndices(indices);
-			renderable->AddVertices(vertices);
-			renderable->AddNormals(normals);
-			renderable->AddColors(colors);
-			renderable->AddUVs(uvs);
-
-			int xCount = 100;
-			int yCount = 100;
-			int zCount = 100;
-			int tCount = xCount * yCount * zCount;
-
-			for (int i = 0; i < tCount; i++)
-			{
-				int z = i / (xCount * yCount);
-				int y = (i % (xCount * yCount)) / xCount;
-				int x = (i % (xCount * yCount)) % xCount;
-
-				glm::mat4 model = glm::identity<glm::mat4>();
-				model.m[0][0] = 0.5f;
-				model.m[1][1] = 0.5f;
-				model.m[2][2] = 0.5f;
-				model = glm::translate(model, glm::vec3(x, y, z));
-				renderable->AddInstanceTransform(model);
-			}
-
-			renderable->EnableInstancing(tCount);
-		}
-#endif // RENDER_VOXELS_BOX
-
-//#define RENDER_VOXELS_SPHERE
-#ifdef RENDER_VOXELS_SPHERE
-		{
-			auto entity = Feather.CreateInstance<Entity>("Box");
-			auto shader = Feather.CreateInstance<Shader>();
-			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
-			auto renderable = Feather.CreateInstance<Renderable>();
-			renderable->Initialize(Renderable::GeometryMode::Triangles);
-			renderable->SetShader(shader);
-
-			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.25f, 6, 6);
-			//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
-			renderable->AddIndices(indices);
-			renderable->AddVertices(vertices);
-			renderable->AddNormals(normals);
-			renderable->AddColors(colors);
-			renderable->AddUVs(uvs);
-
-			int xCount = 100;
-			int yCount = 100;
-			int zCount = 100;
-			int tCount = xCount * yCount * zCount;
-
-			for (int i = 0; i < tCount; i++)
-			{
-				int z = i / (xCount * yCount);
-				int y = (i % (xCount * yCount)) / xCount;
-				int x = (i % (xCount * yCount)) % xCount;
-
-				glm::mat4 model = glm::identity<glm::mat4>();
-				model.m[0][0] = 0.5f;
-				model.m[1][1] = 0.5f;
-				model.m[2][2] = 0.5f;
-				model = glm::translate(model, glm::vec3(x, y, z));
-				renderable->AddInstanceTransform(model);
-			}
-
-			renderable->EnableInstancing(tCount);
-
-			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_M == event.keyEvent.keyCode)
-				{
-					auto renderable = dynamic_cast<Renderable*>(object);
-					renderable->NextDrawingMode();
-				}
-				});
-		}
-#endif // RENDER_VOXELS_BOX
-
-//#define LOAD_PLY
-#ifdef LOAD_PLY
-		{
-			auto entity = Feather.CreateInstance<Entity>("Teeth");
-			auto shader = Feather.CreateInstance<Shader>();
-			shader->Initialize(File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs"));
-
-			auto renderable = Feather.CreateInstance<Renderable>();
-			renderable->Initialize(Renderable::GeometryMode::Points);
-			renderable->SetShader(shader);
-
-			PLYFormat ply;
-			ply.Deserialize("../../res/3D/Teeth.ply");
-			ply.SwapAxisYZ();
-
-			if(false == ply.GetPoints().empty())
-				renderable->AddVertices((glm::vec3*)ply.GetPoints().data(), ply.GetPoints().size() / 3);
-			if (false == ply.GetNormals().empty())
-				renderable->AddNormals((glm::vec3*)ply.GetNormals().data(), ply.GetNormals().size() / 3);
-			if (false == ply.GetColors().empty())
-			{
-				if (ply.UseAlpha())
-				{
-					renderable->AddColors((glm::vec4*)ply.GetColors().data(), ply.GetColors().size() / 4);
-				}
-				else
-				{
-					renderable->AddColors((glm::vec3*)ply.GetColors().data(), ply.GetColors().size() / 3);
-				}
-			}
-
-			auto cameraManipulator = Feather.GetFirstInstance<CameraManipulatorTrackball>();
-			auto camera = cameraManipulator->SetCamera();
-			auto [x, y, z] = ply.GetAABBCenter();
-			camera->SetEye({ x,y,z + cameraManipulator->GetRadius() });
-			camera->SetTarget({ x,y,z });
-		}
-#endif // LOAD_PLY
-
-		/*
-		{
-			PLYFormat ply;
-			ply.Deserialize("../../res/3D/Teeth_Full.ply");
-			ply.SwapAxisYZ();
-
-			auto entity = Feather.CreateInstance<Entity>("Box");
-			auto shader = Feather.CreateInstance<Shader>();
-			shader->Initialize(File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
-			auto renderable = Feather.CreateInstance<Renderable>();
-			renderable->Initialize(Renderable::GeometryMode::Triangles);
-			renderable->SetShader(shader);
-
-			auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere("zero", 0.05f, 6, 6);
-			//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox("zero", "half");
-			renderable->AddIndices(indices);
-			renderable->AddVertices(vertices);
-			renderable->AddNormals(normals);
-			renderable->AddColors(colors);
-			renderable->AddUVs(uvs);
-
-			ui32 tCount = ply.GetPoints().size() / 3;
-
-			for (int i = 0; i < tCount; i++)
-			{
-				auto x = ply.GetPoints()[i * 3];
-				auto y = ply.GetPoints()[i * 3 + 1];
-				auto z = ply.GetPoints()[i * 3 + 2];
-
-				glm::mat4 model = glm::identity<glm::mat4>();
-				model.m[0][0] = 0.5f;
-				model.m[1][1] = 0.5f;
-				model.m[2][2] = 0.5f;
-				model = glm::translate(model, glm::vec3(x, y, z));
-				renderable->AddInstanceTransform(model);
-			}
-
-			renderable->EnableInstancing(tCount);
-
-			renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				if (GLFW_KEY_M == event.keyEvent.keyCode)
-				{
-					auto renderable = dynamic_cast<Renderable*>(object);
-					renderable->NextDrawingMode();
-				}
-				});
-		}
-		*/
-		
-		{
-			struct Point
-			{
-				glm::vec3 position;
-				glm::vec3 normal;
-				glm::vec3 color;
-			};
-			ALPFormat<Point> alp;
-			if (false == alp.Deserialize("../../res/3D/Teeth_Full.alp"))
-			{
-				PLYFormat ply;
-				ply.Deserialize("../../res/3D/Teeth_Full.ply");
-				ply.SwapAxisYZ();
-
-				vector<Point> points;
-				for (size_t i = 0; i < ply.GetPoints().size() / 3; i++)
-				{
-					auto px = ply.GetPoints()[i * 3];
-					auto py = ply.GetPoints()[i * 3 + 1];
-					auto pz = ply.GetPoints()[i * 3 + 2];
-
-					auto nx = ply.GetNormals()[i * 3];
-					auto ny = ply.GetNormals()[i * 3 + 1];
-					auto nz = ply.GetNormals()[i * 3 + 2];
-
-					auto cx = ply.GetColors()[i * 3];
-					auto cy = ply.GetColors()[i * 3 + 1];
-					auto cz = ply.GetColors()[i * 3 + 2];
-
-					points.push_back({ {px, py, pz}, {nx, ny, nz}, {cx, cy, cz} });
-				}
-
-				alp.AddPoints(points);
-				alp.Serialize("../../res/3D/Teeth_Full.alp");
-			}
-
-			{
-				auto entity = Feather.GetRegistry().create();
-				auto& renderable = Feather.GetRegistry().emplace<Renderable>(entity);
-				renderable.Initialize(Renderable::GeometryMode::Triangles);
-				{
-					auto shader = Feather.CreateShader("Instancing", File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs"));
-					renderable.AddShader(shader);
-				}
-				{
-					auto shader = Feather.CreateShader("InstancingWithoutNormal", File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs"));
-					renderable.AddShader(shader);
-				}
-				renderable.SetActiveShaderIndex(1);
-
-				auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere({0.0f, 0.0f, 0.0f}, 0.125f, 6, 6);
-				//auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildBox({0.0f, 0.0f, 0.0f}, { 0.5f, 0.5f, 0.5f });
-				renderable.AddIndices(indices);
-				renderable.AddVertices(vertices);
-				renderable.AddNormals(normals);
-				renderable.AddColors(colors);
-				renderable.AddUVs(uvs);
-
-				for (auto& p : alp.GetPoints())
-				{
-					auto r = p.color.x;
-					auto g = p.color.y;
-					auto b = p.color.z;
-					auto a = 1.f;
-
-					renderable.AddInstanceColor(glm::vec4(r, g, b, a));
-					renderable.AddInstanceNormal(p.normal);
-
-					//VD::AddLine("normals", p.position, p.position + p.normal * 0.5f, Color::red(), Color::red());
-
-					glm::mat4 model = glm::identity<glm::mat4>();
-					glm::mat4 rot = glm::mat4(1.0f);
-					if (glm::length(p.normal) > 0.0001f)
-					{
-						glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(0, 0, 1), p.normal));
-						float angle = acos(glm::dot(glm::normalize(p.normal), glm::vec3(0, 0, 1)));
-						if (glm::length(axis) > 0.0001f)
-							rot = glm::rotate(glm::mat4(1.0f), angle, axis);
-					}
-					model = glm::translate(model, p.position) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-					renderable.AddInstanceTransform(model);
-
-					renderable.IncreaseNumberOfInstances();
-				}
-
-				//renderable->AddEventHandler(EventType::KeyPress, [&](const Event& event, FeatherObject* object) {
-				//	if (GLFW_KEY_M == event.keyEvent.keyCode)
-				//	{
-				//		auto renderable = dynamic_cast<Renderable*>(object);
-				//		renderable->NextDrawingMode();
-				//	}
-				//	else if (GLFW_KEY_1 == event.keyEvent.keyCode)
-				//	{
-				//		auto renderable = dynamic_cast<Renderable*>(object);
-				//		renderable->SetActiveShaderIndex(0);
-				//	}
-				//	else if (GLFW_KEY_2 == event.keyEvent.keyCode)
-				//	{
-				//		auto renderable = dynamic_cast<Renderable*>(object);
-				//		renderable->SetActiveShaderIndex(1);
-				//	}
-				//	});
-			}
-
-			{
-				//ImGuiIO& io = ImGui::GetIO();
-				//ImFont* font = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/malgun.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesKorean());
-				//if (font)
-				//	printf("ImGui 폰트 로드 성공!\n");
-				//else
-				//	printf("ImGui 폰트 로드 실패!\n");
-
-				auto entity = Feather.CreateEntity("Text");
-				auto textComponent = Feather.CreateComponent<TextBlock>(entity);
-				textComponent->AddText(u8"원점");
-			}
-		}
+//#pragma region Status Panel
+//		{
+//			auto gui = Feather.GetRegistry().create();
+//			auto statusPanel = Feather.GetRegistry().emplace<StatusPanel>(gui);
+//
+//			Feather.GetRegistry().emplace<EventCallback<MousePositionEvent>>(gui, gui, [](Entity entity, const MousePositionEvent& event) {
+//				auto& component = Feather.GetRegistry().get<StatusPanel>(entity);
+//				component.mouseX = event.xpos;
+//				component.mouseY = event.ypos;
+//				});
+//		}
+//#pragma endregion
+//
+//#pragma region Control Panel
+//		{
+//			auto entity = Feather.CreateEntity("Control Panel");
+//			auto controlPanel = Feather.CreateComponent<ControlPanel>(entity, "Control Panel");
+//		}
+//#pragma endregion
 		});
 
 	Feather.Run();

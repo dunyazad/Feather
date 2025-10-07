@@ -52,7 +52,7 @@ void TextBlock::Render()
     }
 }
 
-void TextBlock::AddText(const string& text, const glm::vec3& position, const glm::vec4& color, float fontSize)
+void TextBlock::AddText(const std::string& text, const glm::vec3& position, const glm::vec4& color, float fontSize)
 {
     textInfos.push_back({ text, position, color, fontSize });
 }

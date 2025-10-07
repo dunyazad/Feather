@@ -10,5 +10,5 @@ public:
 	AsyncLoader();
 	~AsyncLoader();
 
-	void LoadAsync(Renderable* renderable, const string& filename);
+	void LoadAsync(Renderable* renderable, const std::string& filename);
 };

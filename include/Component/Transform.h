@@ -19,7 +19,7 @@ public:
 
 private:
 	Transform* parent = nullptr;
-	set<Transform*> children;
+	std::set<Transform*> children;
 
 	glm::mat4 transformMatrix = glm::identity<glm::mat4>();
 };

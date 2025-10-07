@@ -9,3 +9,4 @@
 #include<Component/Transform.h>
 
 #include<Component/GUIComponent/GUIComponents.h>
+#include<Component/InputComponent/InputComponents.h>

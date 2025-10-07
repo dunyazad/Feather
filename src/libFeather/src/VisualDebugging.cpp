@@ -6,10 +6,10 @@
 #include <Component/GUIComponent/GUIComponents.h>
 
 bool VisualDebugging::initialized = false;
-map<string, Entity> VisualDebugging::entities;
-map<string, DebuggingRenderable*> VisualDebugging::debuggingRenderables;
-map<string, TextBlock*> VisualDebugging::textBlocks;
-vector<string> VisualDebugging::selectionRenderables;
+std::map<std::string, Entity> VisualDebugging::entities;
+std::map<std::string, DebuggingRenderable*> VisualDebugging::debuggingRenderables;
+std::map<std::string, TextBlock*> VisualDebugging::textBlocks;
+std::vector<std::string> VisualDebugging::selectionRenderables;
 size_t VisualDebugging::selectionIndex = 0;
 
 void VisualDebugging::Initialize()
@@ -27,7 +27,7 @@ void VisualDebugging::Terminate()
 	}
 }
 
-void VisualDebugging::CreateLineEntity(const string& tag)
+void VisualDebugging::CreateLineEntity(const std::string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
 	entities[tag] = entity;
@@ -39,7 +39,7 @@ void VisualDebugging::CreateLineEntity(const string& tag)
 	renderable->AddShader(Feather.CreateShader("Line", File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs")));
 }
 
-void VisualDebugging::CreateTriangleEntity(const string& tag)
+void VisualDebugging::CreateTriangleEntity(const std::string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
 	entities[tag] = entity;
@@ -51,7 +51,7 @@ void VisualDebugging::CreateTriangleEntity(const string& tag)
 	renderable->AddShader(Feather.CreateShader("Line", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
 }
 
-void VisualDebugging::CreateBoxEntity(const string& tag)
+void VisualDebugging::CreateBoxEntity(const std::string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
 	entities[tag] = entity;
@@ -78,7 +78,7 @@ void VisualDebugging::CreateBoxEntity(const string& tag)
 	renderable->AddUVs(uvs);
 }
 
-void VisualDebugging::CreateWiredBoxEntity(const string& tag)
+void VisualDebugging::CreateWiredBoxEntity(const std::string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
 	entities[tag] = entity;
@@ -98,7 +98,7 @@ void VisualDebugging::CreateWiredBoxEntity(const string& tag)
 	renderable->AddUVs(uvs);
 }
 
-void VisualDebugging::CreateSphereEntity(const string& tag)
+void VisualDebugging::CreateSphereEntity(const std::string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
 	entities[tag] = entity;
@@ -125,7 +125,7 @@ void VisualDebugging::CreateSphereEntity(const string& tag)
 	renderable->AddUVs(uvs);
 }
 
-void VisualDebugging::CreateTextBlockEntity(const string& tag)
+void VisualDebugging::CreateTextBlockEntity(const std::string& tag)
 {
 	auto entity = Feather.CreateEntity(tag);
 	entities[tag] = entity;
@@ -134,7 +134,7 @@ void VisualDebugging::CreateTextBlockEntity(const string& tag)
 	textBlocks[tag] = renderable;
 }
 
-void VisualDebugging::Clear(const string& tag)
+void VisualDebugging::Clear(const std::string& tag)
 {
 	if (false == initialized) Initialize();
 
@@ -180,7 +180,7 @@ void VisualDebugging::ClearAll()
 	}
 }
 
-void VisualDebugging::SetVisiblility(bool visible, const string& tag)
+void VisualDebugging::SetVisiblility(bool visible, const std::string& tag)
 {
 	if (false == initialized) Initialize();
 
@@ -214,7 +214,7 @@ void VisualDebugging::SetVisiblilityAll(bool visible)
 	}
 }
 
-void VisualDebugging::ToggleVisibility(const string& tag)
+void VisualDebugging::ToggleVisibility(const std::string& tag)
 {
 	if (false == initialized) Initialize();
 
@@ -246,12 +246,12 @@ void VisualDebugging::ToggleVisibilityAll()
 	}
 }
 
-void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c)
+void VisualDebugging::AddLine(const std::string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c)
 {
 	AddLine(tag, v0, v1, c, c);
 }
 
-void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)
+void VisualDebugging::AddLine(const std::string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& c0, const glm::vec4& c1)
 {
 	if (false == initialized) Initialize();
 	if (entities.end() == entities.find(tag)) CreateLineEntity(tag);
@@ -263,12 +263,12 @@ void VisualDebugging::AddLine(const string& tag, const glm::vec3& v0, const glm:
 	renderable->AddColor(c1);
 }
 
-void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c)
+void VisualDebugging::AddTriangle(const std::string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c)
 {
 	AddTriangle(tag, v0, v1, v2, c, c, c);
 }
 
-void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c0, const glm::vec4& c1, const glm::vec4& c2)
+void VisualDebugging::AddTriangle(const std::string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c0, const glm::vec4& c1, const glm::vec4& c2)
 {
 	if (false == initialized) Initialize();
 	if (entities.end() == entities.find(tag)) CreateTriangleEntity(tag);
@@ -293,19 +293,19 @@ void VisualDebugging::AddTriangle(const string& tag, const glm::vec3& v0, const 
 	renderable->AddIndex(i2);
 }
 
-void VisualDebugging::AddBox(const string& tag, const AABB& aabb, const glm::vec4& color)
+void VisualDebugging::AddBox(const std::string& tag, const AABB& aabb, const glm::vec4& color)
 {
 	auto center = (aabb.min + aabb.max) * 0.5f;
 	auto dimensions = aabb.max - aabb.min;
 	AddBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
 }
 
-void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const glm::vec3& dimensions, const glm::vec4& color)
+void VisualDebugging::AddBox(const std::string& tag, const glm::vec3& center, const glm::vec3& dimensions, const glm::vec4& color)
 {
 	AddBox(tag, center, glm::vec3(0.0f, 1.0f, 0.0f), dimensions, color);
 }
 
-void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
+void VisualDebugging::AddBox(const std::string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
 {
 	if (false == initialized) Initialize();
 	if (entities.end() == entities.find(tag)) CreateBoxEntity(tag);
@@ -330,19 +330,19 @@ void VisualDebugging::AddBox(const string& tag, const glm::vec3& center, const g
 	renderable->IncreaseNumberOfInstances();
 }
 
-void VisualDebugging::AddWiredBox(const string& tag, const AABB& aabb, const glm::vec4& color)
+void VisualDebugging::AddWiredBox(const std::string& tag, const AABB& aabb, const glm::vec4& color)
 {
 	auto center = (aabb.min + aabb.max) * 0.5f;
 	auto dimensions = aabb.max - aabb.min;
 	AddWiredBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
 }
 
-void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& center, const glm::vec3& dimensions, const glm::vec4& color)
+void VisualDebugging::AddWiredBox(const std::string& tag, const glm::vec3& center, const glm::vec3& dimensions, const glm::vec4& color)
 {
 	AddWiredBox(tag, center, glm::vec3(0.0f, 1.0f, 0.0f), dimensions, color);
 }
 
-void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
+void VisualDebugging::AddWiredBox(const std::string& tag, const glm::vec3& center, const glm::vec3& normal, const glm::vec3& dimensions, const glm::vec4& color)
 {
 	if (false == initialized) Initialize();
 	if (entities.end() == entities.find(tag)) CreateWiredBoxEntity(tag);
@@ -367,12 +367,12 @@ void VisualDebugging::AddWiredBox(const string& tag, const glm::vec3& center, co
 	renderable->IncreaseNumberOfInstances();
 }
 
-void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, float radius, const glm::vec4& color)
+void VisualDebugging::AddSphere(const std::string& tag, const glm::vec3& center, float radius, const glm::vec4& color)
 {
 	AddSphere(tag, center, glm::vec3(0.0f, 1.0f, 0.0f), radius, color);
 }
 
-void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, const glm::vec3& normal, float radius, const glm::vec4& color)
+void VisualDebugging::AddSphere(const std::string& tag, const glm::vec3& center, const glm::vec3& normal, float radius, const glm::vec4& color)
 {
 	if (false == initialized) Initialize();
 	if (entities.end() == entities.find(tag)) CreateSphereEntity(tag);
@@ -397,7 +397,7 @@ void VisualDebugging::AddSphere(const string& tag, const glm::vec3& center, cons
 	renderable->IncreaseNumberOfInstances();
 }
 
-void VisualDebugging::AddText(const string& tag, const string& text, const glm::vec3& position, const glm::vec4& color, float fontSize)
+void VisualDebugging::AddText(const std::string& tag, const std::string& text, const glm::vec3& position, const glm::vec4& color, float fontSize)
 {
 	if (false == initialized) Initialize();
 	if (entities.end() == entities.find(tag)) CreateTextBlockEntity(tag);
@@ -412,7 +412,7 @@ void VisualDebugging::ClearSelectionList()
 	selectionIndex = 0;
 }
 
-bool VisualDebugging::AddToSelectionList(const string& tag)
+bool VisualDebugging::AddToSelectionList(const std::string& tag)
 {
 	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
 	{

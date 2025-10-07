@@ -1,6 +1,6 @@
 #include<Component/GUIComponent/ControlPanel.h>
 
-ControlPanel::ControlPanel(const string& title) : title(title)
+ControlPanel::ControlPanel(const std::string& title) : title(title)
 {
 }
 
@@ -35,7 +35,7 @@ void ControlPanel::Render()
     ImGui::PopStyleVar();
 }
 
-void ControlPanel::AddButton(const string& label, float width, float height, const function<void()>& callback)
+void ControlPanel::AddButton(const std::string& label, float width, float height, const std::function<void()>& callback)
 {
     buttons.push_back({ label, width, height, { callback } });
 }

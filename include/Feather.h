@@ -4,7 +4,9 @@
 #include <File.h>
 #include <VisualDebugging.h>
 #include <Component/EventCallback.h>
+#include <FeatherWindow.h>
 
+class InputSystem;
 class EventSystem;
 class RenderSystem;
 class ImmediateModeRenderSystem;
@@ -28,11 +30,12 @@ public:
 	void Run();
 
 	inline FeatherWindow* GetFeatherWindow() const { return featherWindow; }
+	inline HWND GetHWND() { return glfwGetWin32Window(featherWindow->GetGLFWwindow()); };
 
-	inline void AddOnInitializeCallback(function<void()> callback) { onInitializeCallbacks.push_back(callback); }
-	inline void AddOnUpdateCallback(function<void(f32)> callback) { onUpdateCallbacks.push_back(callback); }
-	inline void AddOnRenderCallback(function<void(f32)> callback) { onRenderCallbacks.push_back(callback); }
-	inline void AddOnTerminateCallback(function<void()> callback) { onTerminateCallbacks.push_back(callback); }
+	inline void AddOnInitializeCallback(std::function<void()> callback) { onInitializeCallbacks.push_back(callback); }
+	inline void AddOnUpdateCallback(std::function<void(f32)> callback) { onUpdateCallbacks.push_back(callback); }
+	inline void AddOnRenderCallback(std::function<void(f32)> callback) { onRenderCallbacks.push_back(callback); }
+	inline void AddOnTerminateCallback(std::function<void()> callback) { onTerminateCallbacks.push_back(callback); }
 
 	inline Registry& GetRegistry() { return registry; }
 	inline Dispatcher& GetDispatcher() { return dispatcher; }
@@ -42,8 +45,8 @@ public:
 	ImmediateModeRenderSystem* GetImmediateModeRenderSystem() { return immediateModeRenderSystem; }
 	GUISystem* GetGUISystem() { return guiSystem; }
 
-	Entity CreateEntity(const string& name);
-	Entity GetEntityByName(const string& name);
+	Entity CreateEntity(const std::string& name);
+	Entity GetEntityByName(const std::string& name);
 	template<typename T>
 	Entity GetEntityByComponent(T* t)
 	{
@@ -61,8 +64,8 @@ public:
 		return InvalidEntity;
 	}
 
-	const string& GetEntityName(Entity entity);
-	void RemoveEntity(const string& name);
+	const std::string& GetEntityName(Entity entity);
+	void RemoveEntity(const std::string& name);
 	void RemoveEntity(Entity entity);
 
 	template<typename T>
@@ -106,9 +109,9 @@ public:
 		}
 	}
 
-	Shader* CreateShader(const string& name, const File& vsFile, const File& gsFile, const File& fsFile);
-	Shader* CreateShader(const string& name, const File& vsFile, const File& fsFile);
-	Shader* GetShader(const string& name);
+	Shader* CreateShader(const std::string& name, const File& vsFile, const File& gsFile, const File& fsFile);
+	Shader* CreateShader(const std::string& name, const File& vsFile, const File& fsFile);
+	Shader* GetShader(const std::string& name);
 
 	inline const glm::vec4& GetClearColor() const { return clearColor; }
 	inline void SetClearColor(const glm::vec4& color) { clearColor = color; }
@@ -119,22 +122,23 @@ private:
 
 	FeatherWindow* featherWindow = nullptr;
 
-	vector<function<void()>> onInitializeCallbacks;
-	vector<function<void(f32)>> onUpdateCallbacks;
-	vector<function<void(f32)>> onRenderCallbacks;
-	vector<function<void()>> onTerminateCallbacks;
+	std::vector<std::function<void()>> onInitializeCallbacks;
+	std::vector<std::function<void(f32)>> onUpdateCallbacks;
+	std::vector<std::function<void(f32)>> onRenderCallbacks;
+	std::vector<std::function<void()>> onTerminateCallbacks;
 
 	Registry registry;
 	Dispatcher dispatcher;
 
-	unordered_map<string, Entity> nameEntityMapping;
-	unordered_map<Entity, string> entityNameMapping;
-	unordered_map<string, Shader*> shaders;
+	std::unordered_map<std::string, Entity> nameEntityMapping;
+	std::unordered_map<Entity, std::string> entityNameMapping;
+	std::unordered_map<std::string, Shader*> shaders;
 
-	EventSystem*                  eventSystem;
-	RenderSystem*                 renderSystem;
-	ImmediateModeRenderSystem*    immediateModeRenderSystem;
-	GUISystem*                    guiSystem;
+	InputSystem*					inputSystem = nullptr;
+	EventSystem*					eventSystem = nullptr;
+	RenderSystem*					renderSystem = nullptr;
+	ImmediateModeRenderSystem*		immediateModeRenderSystem = nullptr;
+	GUISystem*						guiSystem = nullptr;
 
 	glm::vec4 clearColor = Color::slategray();
 };

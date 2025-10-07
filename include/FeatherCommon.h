@@ -4,6 +4,8 @@
 #define NOMINMAX
 #endif
 
+//#define _HAS_STD_BYTE 0
+
 #include <cstdio>
 #include <stdio.h>
 #include <limits.h>
@@ -36,7 +38,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-using namespace std;
+//using namespace std;
 
 #include <Color.hpp>
 
@@ -50,7 +52,7 @@ using Entity = entt::entity;
 using Registry = entt::registry;
 using Dispatcher = entt::dispatcher;
 
-const string EmptyString = "";
+const std::string EmptyString = "";
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -62,6 +64,11 @@ const string EmptyString = "";
 
 #include <windows.h>
 #include <shellapi.h>
+
+#define DIRECTINPUT_VERSION 0x0800
+#include <dinput.h>
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -115,18 +122,18 @@ namespace glm
 
 namespace Time
 {
-    chrono::steady_clock::time_point Now();
+    std::chrono::steady_clock::time_point Now();
 
-    uint64_t Microseconds(chrono::steady_clock::time_point& from, chrono::steady_clock::time_point& now);
+    uint64_t Microseconds(std::chrono::steady_clock::time_point& from, std::chrono::steady_clock::time_point& now);
 
-    chrono::steady_clock::time_point End(chrono::steady_clock::time_point& from, const string& message = "", int number = -1);
+    std::chrono::steady_clock::time_point End(std::chrono::steady_clock::time_point& from, const std::string& message = "", int number = -1);
 
-    string DateTime();
+    std::string DateTime();
 }
 
-string Miliseconds(const chrono::steady_clock::time_point beginTime, const char* tag);
+std::string Miliseconds(const std::chrono::steady_clock::time_point beginTime, const char* tag);
 
-#define TS(name) auto time_##name = chrono::high_resolution_clock::now();
+#define TS(name) auto time_##name = std::chrono::high_resolution_clock::now();
 #define TE(name) std::cout << Miliseconds(time_##name, #name) << std::endl;
 
 #define alog(...) printf("\033[38;5;1m\033[48;5;15m(^(OO)^) /V/\033[0m\t" __VA_ARGS__)

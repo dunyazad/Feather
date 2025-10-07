@@ -77,35 +77,35 @@ public:
 
 			if (ui32_max != attributeIndex)
 			{
-				if constexpr (is_same_v<T, ui32>) {
+				if constexpr (std::is_same_v<T, ui32>) {
 					glVertexAttribIPointer(attributeIndex, 1, GL_UNSIGNED_INT, sizeof(T), (void*)0);
 					if (useInstancing)
 					{
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else if constexpr (is_same_v<T, glm::vec2>) {
+				else if constexpr (std::is_same_v<T, glm::vec2>) {
 					glVertexAttribPointer(attributeIndex, 2, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 					if (useInstancing)
 					{
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else if constexpr (is_same_v<T, glm::vec3>) {
+				else if constexpr (std::is_same_v<T, glm::vec3>) {
 					glVertexAttribPointer(attributeIndex, 3, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 					if (useInstancing)
 					{
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else if constexpr (is_same_v<T, glm::vec4>) {
+				else if constexpr (std::is_same_v<T, glm::vec4>) {
 					glVertexAttribPointer(attributeIndex, 4, GL_FLOAT, GL_FALSE, sizeof(T), (void*)0);
 					if (useInstancing)
 					{
 						glVertexAttribDivisor(attributeIndex, 1); // Set attribute to be per-instance
 					}
 				}
-				else if constexpr (is_same_v<T, glm::mat4>) {
+				else if constexpr (std::is_same_v<T, glm::mat4>) {
 					if (useInstancing)
 					{
 						for (int i = 0; i < 4; i++) {
@@ -148,7 +148,7 @@ protected:
 
 	bool dirty = true;
 	GLuint attributeIndex = UINT32_MAX;
-	vector<T> datas;
+	std::vector<T> datas;
 };
 
 class Renderable
@@ -223,31 +223,31 @@ public:
 	const glm::mat4& GetInstanceTransform(ui32 bufferIndex) const;
 	void SetInstanceTransform(ui32 bufferIndex, const glm::mat4& transform);
 
-	void AddIndices(const vector<ui32>& indices);
+	void AddIndices(const std::vector<ui32>& indices);
 	void AddIndices(const ui32* indices, ui32 numberOfElements);
 
-	void AddVertices(const vector<glm::vec3>& vertices);
+	void AddVertices(const std::vector<glm::vec3>& vertices);
 	void AddVertices(const glm::vec3* vertices, ui32 numberOfElements);
 
-	void AddNormals(const vector<glm::vec3>& normals);
+	void AddNormals(const std::vector<glm::vec3>& normals);
 	void AddNormals(const glm::vec3* normals, ui32 numberOfElements);
 
-	void AddColors(const vector<glm::vec3>& colors);
+	void AddColors(const std::vector<glm::vec3>& colors);
 	void AddColors(const glm::vec3* colors, ui32 numberOfElements);
 
-	void AddColors(const vector<glm::vec4>& colors);
+	void AddColors(const std::vector<glm::vec4>& colors);
 	void AddColors(const glm::vec4* colors, ui32 numberOfElements);
 
-	void AddUVs(const vector<glm::vec2>& uvs);
+	void AddUVs(const std::vector<glm::vec2>& uvs);
 	void AddUVs(const glm::vec2* uvs, ui32 numberOfElements);
 
-	void AddInstanceColors(const vector<glm::vec4>& colors);
+	void AddInstanceColors(const std::vector<glm::vec4>& colors);
 	void AddInstanceColors(const glm::vec4* colors, ui32 numberOfElements);
 
-	void AddInstanceNormals(const vector<glm::vec3>& normals);
+	void AddInstanceNormals(const std::vector<glm::vec3>& normals);
 	void AddInstanceNormals(const glm::vec3* normals, ui32 numberOfElements);
 
-	void AddInstanceTransforms(const vector<glm::mat4>& transforms);
+	void AddInstanceTransforms(const std::vector<glm::mat4>& transforms);
 	void AddInstanceTransforms(const glm::mat4* transforms, ui32 numberOfElements);
 
 	inline bool IsDirty() const { return dirty; }
@@ -263,7 +263,7 @@ public:
 	inline Shader* GetActiveShader() const { if (shaders.empty() || activeShaderIndex >= shaders.size()) return nullptr; else return shaders[activeShaderIndex]; }
 	inline ui32 GetActiveShaderIndex() { return activeShaderIndex; }
 	inline void SetActiveShaderIndex(ui32 index) { activeShaderIndex = index; }
-	inline const vector<Shader*>& GetShaders() const { return shaders; }
+	inline const std::vector<Shader*>& GetShaders() const { return shaders; }
 	inline void AddShader(Shader* shader) { shaders.push_back(shader); }
 
 	inline GeometryMode GetGeometryMode() { return geometryMode; }
@@ -307,7 +307,7 @@ private:
 	bool useAlpha = false;
 
 	ui32 activeShaderIndex = 0;
-	vector<Shader*> shaders;
+	std::vector<Shader*> shaders;
 	GLuint vao = UINT_MAX;
 
 	GeometryMode geometryMode = Triangles;

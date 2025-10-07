@@ -25,9 +25,9 @@ void RenderRenderablesTemplate(
     const glm::mat4& viewMatrix,
     const glm::mat4& perspectiveMatrix,
     const glm::vec3& eye,
-    const map<Shader*, vector<T*>>& shaderMapping)
+    const std::map<Shader*, std::vector<T*>>& shadermap)
 {
-    for (auto& [shader, renderables] : shaderMapping)
+    for (auto& [shader, renderables] : shadermap)
     {
         if (nullptr == shader) continue;
 
@@ -115,9 +115,9 @@ void RenderSystem::RenderRenderables(
     const glm::mat4& viewMatrix,
     const glm::mat4& perspectiveMatrix,
     const glm::vec3& eye,
-    const map<Shader*, vector<Renderable*>>& shaderMapping)
+    const std::map<Shader*, std::vector<Renderable*>>& shadermap)
 {
-    RenderRenderablesTemplate<Renderable>(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shaderMapping);
+    RenderRenderablesTemplate<Renderable>(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shadermap);
 }
 
 void RenderSystem::RenderDebuggingRenderables(
@@ -125,9 +125,9 @@ void RenderSystem::RenderDebuggingRenderables(
     const glm::mat4& viewMatrix,
     const glm::mat4& perspectiveMatrix,
     const glm::vec3& eye,
-    const map<Shader*, vector<DebuggingRenderable*>>& shaderMapping)
+    const std::map<Shader*, std::vector<DebuggingRenderable*>>& shadermap)
 {
-    RenderRenderablesTemplate<DebuggingRenderable>(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shaderMapping);
+    RenderRenderablesTemplate<DebuggingRenderable>(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shadermap);
 }
 
 void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
@@ -143,29 +143,29 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         for (auto& entity : entites)
         {
             auto& camera = entites.get<PerspectiveCamera>(entity);
-        
+
             camera.Update(frameNo, timeDelta);
-        
+
             viewMatrix = camera.GetViewMatrix();
             perspectiveMatrix = camera.GetProjectionMatrix();
             eye = camera.GetEye();
         }
     }
-    
+
     {
-        map<Shader*, vector<Renderable*>> shaderMapping;
+        std::map<Shader*, std::vector<Renderable*>> shadermap;
         for (auto& entity : registry.view<Renderable>())
         {
             auto& r = registry.get<Renderable>(entity);
             if (!r.IsUsingAlpha())
-                shaderMapping[r.GetActiveShader()].push_back(&r);
+                shadermap[r.GetActiveShader()].push_back(&r);
         }
 
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);      // Z-buffer write ON
         glDisable(GL_BLEND);       // Blend OFF
 
-        RenderRenderables(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shaderMapping);
+        RenderRenderables(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shadermap);
     }
     {
         struct ZRenderable { Renderable* r; float z; };
@@ -189,10 +189,10 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
                 return a.z > b.z;
             });
 
-        map<Shader*, vector<Renderable*>> shaderMapping;
+        std::map<Shader*, std::vector<Renderable*>> shadermap;
         for (auto& t : transparentObjs)
         {
-            shaderMapping[t.r->GetActiveShader()].push_back(t.r);
+            shadermap[t.r->GetActiveShader()].push_back(t.r);
         }
 
         glEnable(GL_DEPTH_TEST);
@@ -200,25 +200,25 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         glEnable(GL_BLEND);        // Blend ON
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        RenderRenderables(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shaderMapping);
+        RenderRenderables(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shadermap);
 
         glDepthMask(GL_TRUE);
     }
 
     {
-        map<Shader*, vector<DebuggingRenderable*>> shaderMapping;
+        std::map<Shader*, std::vector<DebuggingRenderable*>> shadermap;
         for (auto& entity : registry.view<DebuggingRenderable>())
         {
             auto& r = registry.get<DebuggingRenderable>(entity);
             if (!r.IsUsingAlpha())
-                shaderMapping[r.GetActiveShader()].push_back(&r);
+                shadermap[r.GetActiveShader()].push_back(&r);
         }
 
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);      // Z-buffer write ON
         glDisable(GL_BLEND);       // Blend OFF
 
-        RenderDebuggingRenderables(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shaderMapping);
+        RenderDebuggingRenderables(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shadermap);
     }
     {
         struct ZRenderable { DebuggingRenderable* r; float z; };
@@ -242,10 +242,10 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
                 return a.z > b.z;
             });
 
-        map<Shader*, vector<DebuggingRenderable*>> shaderMapping;
+        std::map<Shader*, std::vector<DebuggingRenderable*>> shadermap;
         for (auto& t : transparentObjs)
         {
-            shaderMapping[t.r->GetActiveShader()].push_back(t.r);
+            shadermap[t.r->GetActiveShader()].push_back(t.r);
         }
 
         glEnable(GL_DEPTH_TEST);
@@ -253,7 +253,7 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
         glEnable(GL_BLEND);        // Blend ON
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        RenderDebuggingRenderables(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shaderMapping);
+        RenderDebuggingRenderables(frameNo, timeDelta, viewMatrix, perspectiveMatrix, eye, shadermap);
 
         glDepthMask(GL_TRUE);
     }

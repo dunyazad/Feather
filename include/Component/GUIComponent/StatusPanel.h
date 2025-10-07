@@ -12,7 +12,7 @@ public:
 //private:
     const ui32 historySize = 50;
 
-    vector<f32> fpsHistory;
+    std::vector<f32> fpsHistory;
     ui32 historyOffset = 0;
     f32 accumulatedFPS = 0.0f;
     ui32 frameCount = 0;
