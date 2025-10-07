@@ -43,7 +43,7 @@ void RenderRenderablesTemplate(
             auto transform = Feather.GetComponent<Transform>(entity);
             if (nullptr != transform)
             {
-                auto& transformMatrix = transform->GetTransformMatrix();
+                auto& transformMatrix = transform->GetAbsoluteTransformMatrix();
 
                 auto index = shader->GetUniformLocation("model");
                 if (-1 != index)
@@ -149,6 +149,18 @@ void RenderSystem::Update(ui32 frameNo, f32 timeDelta)
             viewMatrix = camera.GetViewMatrix();
             perspectiveMatrix = camera.GetProjectionMatrix();
             eye = camera.GetEye();
+        }
+    }
+
+    {
+        auto entites = registry.view<Transform>();
+        for (auto& entity : entites)
+        {
+            auto& transform = entites.get<Transform>(entity);
+            if (nullptr == transform.GetParent())
+            {
+                transform.UpdateAbsoluteTransformMatrix();
+            }
         }
     }
 

@@ -14,12 +14,19 @@ public:
 	void AddChild(Transform* child);
 	void RemoveChild(Transform* child);
 
-	inline const glm::mat4& GetTransformMatrix() const { return transformMatrix; }
-	inline void SetTransformMatrix(const glm::mat4& m) { transformMatrix = m; }
+	inline const glm::mat4& GetLocalTransformMatrix() const { return localTransformMatrix; }
+	inline void SetLocalTransformMatrix(const glm::mat4& m) { localTransformMatrix = m; dirty = true; }
+
+	inline const glm::mat4& GetAbsoluteTransformMatrix() const { return absoluteTransformMatrix; }
+	inline void SetAbsoluteTransformMatrix(const glm::mat4& m) { absoluteTransformMatrix = m; dirty = true; }
+
+	void UpdateAbsoluteTransformMatrix();
 
 private:
+	bool dirty = true;
 	Transform* parent = nullptr;
 	std::set<Transform*> children;
 
-	glm::mat4 transformMatrix = glm::identity<glm::mat4>();
+	glm::mat4 localTransformMatrix = glm::identity<glm::mat4>();
+	glm::mat4 absoluteTransformMatrix = glm::identity<glm::mat4>();
 };

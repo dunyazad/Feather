@@ -29,6 +29,13 @@ int main(int argc, char** argv)
 
 	Feather.AddOnInitializeCallback([&]() {
 
+#pragma region Joystick
+		{
+			auto entity = Feather.CreateEntity("Joystick");
+			auto component = Feather.CreateComponent<Joystick>(entity, Feather.GetHWND());
+		}
+#pragma endregion
+
 #pragma region Ground Plane
 		{
 			auto entity = Feather.CreateEntity("Ground Plane");
@@ -42,7 +49,7 @@ int main(int argc, char** argv)
 			component->AddVertices(vertices.data(), vertices.size());
 			component->AddNormals(normals.data(), normals.size());
 			component->AddColors(colors.data(), colors.size());
-			//component->AddUVs(uvs.data(), uvs.size());
+			component->AddUVs(uvs.data(), uvs.size());
 
 			component->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
 			component->AddShader(Feather.CreateShader("Flat", File("../../res/Shaders/Flat.vs"), File("../../res/Shaders/Flat.fs")));
@@ -50,12 +57,91 @@ int main(int argc, char** argv)
 		}
 #pragma endregion
 
-#pragma region Joystick
+#pragma region Cube 0
 		{
-			auto entity = Feather.CreateEntity("Joystick");
-			auto component = Feather.CreateComponent<Joystick>(entity, Feather.GetHWND());
+			auto entity = Feather.CreateEntity("Cube 0");
+			auto renderable = Feather.CreateComponent<Renderable>(entity);
+			renderable->Initialize(Renderable::GeometryMode::Triangles);
+			renderable->SetDrawingMode(Renderable::DrawingMode::WireFrameOverSolid);
+
+			auto [indices, vertices, normals, colors, uvs] =
+				GeometryBuilder::BuildBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, Color::green());
+			renderable->AddIndices(indices.data(), indices.size());
+			renderable->AddVertices(vertices.data(), vertices.size());
+			renderable->AddNormals(normals.data(), normals.size());
+			renderable->AddColors(colors.data(), colors.size());
+			renderable->AddUVs(uvs.data(), uvs.size());
+
+			renderable->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
+			renderable->AddShader(Feather.CreateShader("Flat", File("../../res/Shaders/Flat.vs"), File("../../res/Shaders/Flat.fs")));
+			renderable->SetActiveShaderIndex(0);
+
+			auto transform = Feather.CreateComponent<Transform>(entity);
+			transform->SetLocalTransformMatrix(glm::translate(glm::identity<glm::mat4>(), { 0.0f, 5.0f, 0.0f }));
+
+			Feather.CreateEventCallback<KeyEvent>(entity, [](Entity entity, const KeyEvent& event) {
+				auto cube = Feather.GetEntityByName("Cube 0");
+				auto transform = Feather.GetComponent<Transform>(cube); 
+				if (GLFW_KEY_U == event.keyCode)
+				{
+					transform->SetLocalTransformMatrix(glm::translate(transform->GetLocalTransformMatrix(), { 0.0f, 0.0f, -0.1f }));
+				}
+				else if (GLFW_KEY_O == event.keyCode)
+				{
+					transform->SetLocalTransformMatrix(glm::translate(transform->GetLocalTransformMatrix(), { 0.0f, 0.0f, 0.1f }));
+				}
+				else if (GLFW_KEY_K == event.keyCode)
+				{
+					transform->SetLocalTransformMatrix(glm::translate(transform->GetLocalTransformMatrix(), { 0.0f, -0.1f, 0.0f }));
+				}
+				else if (GLFW_KEY_I == event.keyCode)
+				{
+					transform->SetLocalTransformMatrix(glm::translate(transform->GetLocalTransformMatrix(), { 0.0f, 0.1f, 0.0f }));
+				}
+				else if (GLFW_KEY_J == event.keyCode)
+				{
+					transform->SetLocalTransformMatrix(glm::translate(transform->GetLocalTransformMatrix(), { -0.1f, 0.0f, 0.0f }));
+				}
+				else if (GLFW_KEY_L == event.keyCode)
+				{
+					transform->SetLocalTransformMatrix(glm::translate(transform->GetLocalTransformMatrix(), { 0.1f, 0.0f, 0.0f }));
+				}
+				});
 		}
 #pragma endregion
+
+#pragma region Cube 1
+		{
+			auto entity = Feather.CreateEntity("Cube 1");
+			auto renderable = Feather.CreateComponent<Renderable>(entity);
+			renderable->Initialize(Renderable::GeometryMode::Triangles);
+			renderable->SetDrawingMode(Renderable::DrawingMode::WireFrameOverSolid);
+
+			auto [indices, vertices, normals, colors, uvs] =
+				GeometryBuilder::BuildBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, Color::blue());
+			renderable->AddIndices(indices.data(), indices.size());
+			renderable->AddVertices(vertices.data(), vertices.size());
+			renderable->AddNormals(normals.data(), normals.size());
+			renderable->AddColors(colors.data(), colors.size());
+			renderable->AddUVs(uvs.data(), uvs.size());
+
+			renderable->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
+			renderable->AddShader(Feather.CreateShader("Flat", File("../../res/Shaders/Flat.vs"), File("../../res/Shaders/Flat.fs")));
+			renderable->SetActiveShaderIndex(0);
+
+			auto transform = Feather.CreateComponent<Transform>(entity);
+			transform->SetLocalTransformMatrix(glm::translate(glm::identity<glm::mat4>(), { 0.0f, 0.0f, 5.0f }));
+		}
+#pragma endregion
+
+		{
+			auto cube0 = Feather.GetEntityByName("Cube 0");
+			auto transform0 = Feather.GetComponent<Transform>(cube0);
+			auto cube1 = Feather.GetEntityByName("Cube 1");
+			auto transform1 = Feather.GetComponent<Transform>(cube1);
+			transform1->SetParent(transform0);
+		}
+
 
 #pragma region Camera
 		{
