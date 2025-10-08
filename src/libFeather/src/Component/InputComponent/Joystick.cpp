@@ -85,28 +85,28 @@ bool Joystick::ReadJoystickRawData(DIJOYSTATE2* outState)
     return true;
 }
 
-bool Joystick::ReadJoystick(ControllerInputState& controllerInputState)
+bool Joystick::ReadJoystick(JoystickEvent& joystickEvent)
 {
     DIJOYSTATE2 rawState;
 	if (!ReadJoystickRawData(&rawState)) return false;
 
-    controllerInputState.AxisX = (rawState.lX / 32767.5f) - 1.0f; // Roll
-    controllerInputState.AxisY = (rawState.lY / 32767.5f) - 1.0f; // Pitch
-    controllerInputState.AxisZ = (rawState.lZ / 32767.5f) - 1.0f; // Knob VRA
-    controllerInputState.RotX = (rawState.lRx / 32767.5f) - 1.0f; // Knob VRB
-    controllerInputState.RotY = (rawState.lRy / 32767.5f) - 1.0f; // Throttle Raw
-    controllerInputState.RotZ = (rawState.lRz / 32767.5f) - 1.0f; // Yaw
+    joystickEvent.AxisX = (rawState.lX / 32767.5f) - 1.0f; // Roll
+    joystickEvent.AxisY = (rawState.lY / 32767.5f) - 1.0f; // Pitch
+    joystickEvent.AxisZ = (rawState.lZ / 32767.5f) - 1.0f; // Knob VRA
+    joystickEvent.RotX = (rawState.lRx / 32767.5f) - 1.0f; // Knob VRB
+    joystickEvent.RotY = (rawState.lRy / 32767.5f) - 1.0f; // Throttle Raw
+    joystickEvent.RotZ = (rawState.lRz / 32767.5f) - 1.0f; // Yaw
 
-    controllerInputState.AxisX /= 0.708675f;
-    controllerInputState.AxisY /= 0.708675f;
-    controllerInputState.AxisZ /= 0.708675f;
-    controllerInputState.RotX /= 0.708675f;
-    controllerInputState.RotY /= 0.708675f;
-    controllerInputState.RotZ /= 0.708675f;
+    joystickEvent.AxisX /= 0.708675f;
+    joystickEvent.AxisY /= 0.708675f;
+    joystickEvent.AxisZ /= 0.708675f;
+    joystickEvent.RotX /= 0.708675f;
+    joystickEvent.RotY /= 0.708675f;
+    joystickEvent.RotZ /= 0.708675f;
 
     for (int i = 0; i < 16; i++)
     {
-        controllerInputState.Buttons[i] = rawState.rgbButtons[i] & 0x80 ? true : false;
+        joystickEvent.Buttons[i] = rawState.rgbButtons[i] & 0x80 ? true : false;
 	}
 
 	return true;

@@ -107,6 +107,12 @@ int main(int argc, char** argv)
 					transform->SetLocalTransformMatrix(glm::translate(transform->GetLocalTransformMatrix(), { 0.1f, 0.0f, 0.0f }));
 				}
 				});
+
+
+			Feather.CreateEventCallback<JoystickEvent>(entity, [](Entity entity, const JoystickEvent& event) {
+				printf("Joystick: AxisX=%f AxisY=%f AxisZ=%f RotX=%f RotY=%f RotZ=%f\n",
+					event.AxisX, event.AxisY, event.AxisZ, event.RotX, event.RotY, event.RotZ);
+				});
 		}
 #pragma endregion
 
