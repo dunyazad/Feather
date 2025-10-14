@@ -9,11 +9,10 @@
 #include <thread>
 #include <tuple>
 #include <vector>
-using namespace std;
 
 #define FLT_VALID(x) ((x) < 3.402823466e+36F)
 
-inline int safe_stoi(const string& input)
+inline int safe_stoi(const std::string& input)
 {
 	if (input.empty())
 	{
@@ -25,7 +24,7 @@ inline int safe_stoi(const string& input)
 	}
 }
 
-inline float safe_stof(const string& input)
+inline float safe_stof(const std::string& input)
 {
 	if (input.empty())
 	{
@@ -37,10 +36,10 @@ inline float safe_stof(const string& input)
 	}
 }
 
-inline vector<string> split(const string& input, const string& delimiters, bool includeEmptyString = false)
+inline std::vector<std::string> split(const std::string& input, const std::string& delimiters, bool includeEmptyString = false)
 {
-	vector<string> result;
-	string piece;
+	std::vector<std::string> result;
+	std::string piece;
 	for (auto c : input)
 	{
 		bool contains = false;
@@ -75,12 +74,12 @@ inline vector<string> split(const string& input, const string& delimiters, bool 
 }
 
 inline void ParseOneLine(
-	const string& line,
-	vector<float>& vertices,
-	vector<float>& uvs,
-	vector<float>& vertex_normals,
-	vector<float>& vertex_colors,
-	vector<uint32_t>& faces,
+	const std::string& line,
+	std::vector<float>& vertices,
+	std::vector<float>& uvs,
+	std::vector<float>& vertex_normals,
+	std::vector<float>& vertex_colors,
+	std::vector<uint32_t>& faces,
 	float scaleX, float scaleY, float scaleZ)
 {
 	if (line.empty())
@@ -161,8 +160,8 @@ inline void ParseOneLine(
 class HSerializable
 {
 public:
-	virtual bool Serialize(const string& filename) = 0;
-	virtual bool Deserialize(const string& filename) = 0;
+	virtual bool Serialize(const std::string& filename) = 0;
+	virtual bool Deserialize(const std::string& filename) = 0;
 
 	virtual inline void AddPoint(float x, float y, float z)
 	{
@@ -240,21 +239,21 @@ public:
 
 	virtual inline void SwapAxisYZ() = 0;
 
-	inline const vector<float>& GetPoints() const { return points; }
-	inline vector<float>& GetPoints() { return points; }
+	inline const std::vector<float>& GetPoints() const { return points; }
+	inline std::vector<float>& GetPoints() { return points; }
 
-	inline tuple<float, float, float> GetAABBMin() { return make_tuple(aabbMinX, aabbMinY, aabbMinZ); }
-	inline tuple<float, float, float> GetAABBMax() { return make_tuple(aabbMaxX, aabbMaxY, aabbMaxZ); }
-	inline tuple<float, float, float> GetAABBCenter()
+	inline std::tuple<float, float, float> GetAABBMin() { return std::make_tuple(aabbMinX, aabbMinY, aabbMinZ); }
+	inline std::tuple<float, float, float> GetAABBMax() { return std::make_tuple(aabbMaxX, aabbMaxY, aabbMaxZ); }
+	inline std::tuple<float, float, float> GetAABBCenter()
 	{
-		return make_tuple(
+		return std::make_tuple(
 			(aabbMinX + aabbMaxX) * 0.5f,
 			(aabbMinY + aabbMaxY) * 0.5f,
 			(aabbMinZ + aabbMaxZ) * 0.5f);
 	}
 
 protected:
-	vector<float> points;
+	std::vector<float> points;
 
 	float aabbMinX = FLT_MAX;
 	float aabbMinY = FLT_MAX;
@@ -268,7 +267,7 @@ protected:
 class XYZFormat : public HSerializable
 {
 public:
-	virtual bool Serialize(const string& filename)
+	virtual bool Serialize(const std::string& filename)
 	{
 		FILE* fp = nullptr;
 		auto err = fopen_s(&fp, filename.c_str(), "wb");
@@ -289,7 +288,7 @@ public:
 		return true;
 	}
 
-	virtual bool Deserialize(const string& filename)
+	virtual bool Deserialize(const std::string& filename)
 	{
 		FILE* fp = nullptr;
 		auto err = fopen_s(&fp, filename.c_str(), "rb");
@@ -321,7 +320,7 @@ public:
 class OFFFormat : public HSerializable
 {
 public:
-	virtual bool Serialize(const string& filename)
+	virtual bool Serialize(const std::string& filename)
 	{
 		FILE* fp = nullptr;
 		auto err = fopen_s(&fp, filename.c_str(), "wb");
@@ -416,7 +415,7 @@ public:
 		return true;
 	}
 
-	virtual bool Deserialize(const string& filename)
+	virtual bool Deserialize(const std::string& filename)
 	{
 		FILE* fp = nullptr;
 		auto err = fopen_s(&fp, filename.c_str(), "rb");
@@ -497,8 +496,8 @@ public:
 		return true;
 	}
 
-	inline const vector<unsigned int>& GetIndices() const { return indices; }
-	inline const vector<float>& GetColors() const { return colors; }
+	inline const std::vector<unsigned int>& GetIndices() const { return indices; }
+	inline const std::vector<float>& GetColors() const { return colors; }
 
 	virtual inline void AddIndex(unsigned int index) { indices.push_back(index); }
 
@@ -512,14 +511,14 @@ public:
 	virtual inline void SetColor(size_t index, float color) { if (index < colors.size() - 1) colors[index] = color; }
 
 protected:
-	vector<unsigned int> indices;
-	vector<float> colors;
+	std::vector<unsigned int> indices;
+	std::vector<float> colors;
 };
 
 class CustomMeshFormat : public HSerializable
 {
 public:
-	virtual bool Serialize(const string& filename)
+	virtual bool Serialize(const std::string& filename)
 	{
 		FILE* fp = nullptr;
 		auto err = fopen_s(&fp, filename.c_str(), "wb");
@@ -586,7 +585,7 @@ public:
 		return true;
 	}
 
-	virtual bool Deserialize(const string& filename)
+	virtual bool Deserialize(const std::string& filename)
 	{
 		FILE* fp = nullptr;
 		auto err = fopen_s(&fp, filename.c_str(), "rb");
@@ -660,8 +659,8 @@ public:
 		return true;
 	}
 
-	inline const vector<unsigned int>& GetIndices() const { return indices; }
-	inline const vector<float>& GetColors() const { return colors; }
+	inline const std::vector<unsigned int>& GetIndices() const { return indices; }
+	inline const std::vector<float>& GetColors() const { return colors; }
 
 	virtual inline void AddNormal(float x, float y, float z)
 	{
@@ -689,21 +688,21 @@ public:
 	virtual inline void SetColor(size_t index, float color) { if (index < colors.size() - 1) colors[index] = color; }
 
 protected:
-	vector<float> normals;
-	vector<unsigned int> indices;
-	vector<float> colors;
+	std::vector<float> normals;
+	std::vector<unsigned int> indices;
+	std::vector<float> colors;
 };
 
 class OBJFormat : public HSerializable
 {
 public:
-	virtual bool Serialize(const string& filename)
+	virtual bool Serialize(const std::string& filename)
 	{
 		std::ofstream ofs(filename);
-		stringstream ss;
+		std::stringstream ss;
 		ss.precision(6);
 
-		ss << "# cuTSDF::ResourceIO::OBJ" << endl;
+		ss << "# cuTSDF::ResourceIO::OBJ" << std::endl;
 		for (size_t i = 0; i < points.size() / 3; i++)
 		{
 			auto x = points[3 * i + 0];
@@ -712,7 +711,7 @@ public:
 
 			if (colors.size() == 0)
 			{
-				ss << "v " << x << " " << y << " " << z << endl;
+				ss << "v " << x << " " << y << " " << z << std::endl;
 			}
 			else if (colors.size() == points.size())
 			{
@@ -720,7 +719,7 @@ public:
 				auto g = colors[3 * i + 1];
 				auto b = colors[3 * i + 2];
 
-				ss << "v " << x << " " << y << " " << z << " " << r << " " << g << " " << b << endl;
+				ss << "v " << x << " " << y << " " << z << " " << r << " " << g << " " << b << std::endl;
 			}
 
 			if (normals.size() == points.size())
@@ -729,7 +728,7 @@ public:
 				auto y = normals[3 * i + 1];
 				auto z = normals[3 * i + 2];
 
-				ss << "vn " << x << " " << y << " " << z << endl;
+				ss << "vn " << x << " " << y << " " << z << std::endl;
 
 				//printf("%f %f %f\n", x, y, z);
 			}
@@ -740,7 +739,7 @@ public:
 			auto u = uvs[2 * i + 0];
 			auto v = uvs[2 * i + 1];
 
-			ss << "vt " << u << " " << v << endl;
+			ss << "vt " << u << " " << v << std::endl;
 		}
 
 		//for (size_t i = 0; i < normals.size() / 3; i++)
@@ -749,7 +748,7 @@ public:
 		//	auto y = normals[3 * i + 1];
 		//	auto z = normals[3 * i + 2];
 
-		//	ss << "vn " << x << " " << y << " " << z << endl;
+		//	ss << "vn " << x << " " << y << " " << z << std::endl;
 		//}
 
 		bool has_uv = uvs.size() != 0;
@@ -765,25 +764,25 @@ public:
 			//		ss << "f "
 			//			<< i + 1 << "/" << i + 1 << "/" << i + 1 << " "
 			//			<< i + 1 << "/" << i + 1 << "/" << i + 1 << " "
-			//			<< i + 1 << "/" << i + 1 << "/" << i + 1 << endl;
+			//			<< i + 1 << "/" << i + 1 << "/" << i + 1 << std::endl;
 			//	}
 			//	else if (has_uv)
 			//	{
 			//		ss << "f "
 			//			<< i + 1 << "/" << i + 1 << " "
 			//			<< i + 1 << "/" << i + 1 << " "
-			//			<< i + 1 << "/" << i + 1 << endl;
+			//			<< i + 1 << "/" << i + 1 << std::endl;
 			//	}
 			//	else if (has_vn)
 			//	{
 			//		ss << "f "
 			//			<< i + 1 << "//" << i + 1 << " "
 			//			<< i + 1 << "//" << i + 1 << " "
-			//			<< i + 1 << "//" << i + 1 << endl;
+			//			<< i + 1 << "//" << i + 1 << std::endl;
 			//	}
 			//	else
 			//	{
-			//		ss << "f " << i + 1 << " " << i + 1 << " " << i + 1 << endl;
+			//		ss << "f " << i + 1 << " " << i + 1 << " " << i + 1 << std::endl;
 			//	}
 
 			//	if (0 == i % 10000)
@@ -805,25 +804,25 @@ public:
 					ss << "f "
 						<< face[0] << "/" << face[0] << "/" << face[0] << " "
 						<< face[1] << "/" << face[1] << "/" << face[1] << " "
-						<< face[2] << "/" << face[2] << "/" << face[2] << endl;
+						<< face[2] << "/" << face[2] << "/" << face[2] << std::endl;
 				}
 				else if (has_uv)
 				{
 					ss << "f "
 						<< face[0] << "/" << face[0] << " "
 						<< face[1] << "/" << face[1] << " "
-						<< face[2] << "/" << face[2] << endl;
+						<< face[2] << "/" << face[2] << std::endl;
 				}
 				else if (has_vn)
 				{
 					ss << "f "
 						<< face[0] << "//" << face[0] << " "
 						<< face[1] << "//" << face[1] << " "
-						<< face[2] << "//" << face[2] << endl;
+						<< face[2] << "//" << face[2] << std::endl;
 				}
 				else
 				{
-					ss << "f " << face[0] << " " << face[1] << " " << face[2] << endl;
+					ss << "f " << face[0] << " " << face[1] << " " << face[2] << std::endl;
 				}
 
 				if (0 == i % 10000)
@@ -840,7 +839,7 @@ public:
 		return true;
 	}
 
-	virtual bool Deserialize(const string& filename)
+	virtual bool Deserialize(const std::string& filename)
 	{
 		std::ifstream ifs(filename);
 		if (false == ifs.is_open())
@@ -849,10 +848,10 @@ public:
 			return false;
 		}
 
-		stringstream buffer;
+		std::stringstream buffer;
 		buffer << ifs.rdbuf();
 
-		string line;
+		std::string line;
 		while (buffer.good())
 		{
 			getline(buffer, line);
@@ -862,9 +861,9 @@ public:
 		return true;
 	}
 
-	inline const vector<float>& GetNormals() const { return normals; }
-	inline const vector<unsigned int>& GetIndices() const { return indices; }
-	inline const vector<float>& GetColors() const { return colors; }
+	inline const std::vector<float>& GetNormals() const { return normals; }
+	inline const std::vector<unsigned int>& GetIndices() const { return indices; }
+	inline const std::vector<float>& GetColors() const { return colors; }
 
 	virtual inline void AddUV(float u, float v)
 	{
@@ -911,64 +910,64 @@ public:
 	virtual inline void SetColor(size_t index, float color) { if (index < colors.size() - 1) colors[index] = color; }
 
 protected:
-	vector<float> uvs;
-	vector<float> normals;
-	vector<unsigned int> indices;
-	vector<float> colors;
+	std::vector<float> uvs;
+	std::vector<float> normals;
+	std::vector<unsigned int> indices;
+	std::vector<float> colors;
 };
 
 class PLYFormat : public HSerializable
 {
 public:
-	virtual bool Serialize(const string& filename)
+	virtual bool Serialize(const std::string& filename)
 	{
 		std::ofstream ofs(filename);
-		stringstream ss;
+		std::stringstream ss;
 		ss.precision(6);
 
-		ss << "ply" << endl;
-		ss << "format ascii 1.0" << endl;
-		ss << "element vertex " << points.size() / 3 << endl;
-		ss << "property float x" << endl;
-		ss << "property float y" << endl;
-		ss << "property float z" << endl;
+		ss << "ply" << std::endl;
+		ss << "format ascii 1.0" << std::endl;
+		ss << "element vertex " << points.size() / 3 << std::endl;
+		ss << "property float x" << std::endl;
+		ss << "property float y" << std::endl;
+		ss << "property float z" << std::endl;
 
 		if (normals.size() == points.size())
 		{
-			ss << "property float nx" << endl;
-			ss << "property float ny" << endl;
-			ss << "property float nz" << endl;
+			ss << "property float nx" << std::endl;
+			ss << "property float ny" << std::endl;
+			ss << "property float nz" << std::endl;
 		}
 		if (colors.size() == points.size() || colors.size() / 4 == points.size() / 3)
 		{
-			ss << "property uchar red" << endl;
-			ss << "property uchar green" << endl;
-			ss << "property uchar blue" << endl;
+			ss << "property uchar red" << std::endl;
+			ss << "property uchar green" << std::endl;
+			ss << "property uchar blue" << std::endl;
 			if (useAlpha)
 			{
-				ss << "property uchar alpha" << endl;
+				ss << "property uchar alpha" << std::endl;
 			}
 		}
 		if (uvs.size() == points.size())
 		{
-			ss << "property float u" << endl;
-			ss << "property float v" << endl;
+			ss << "property float u" << std::endl;
+			ss << "property float v" << std::endl;
 		}
 
 		if (lineIndices.size() > 0)
 		{
-			ss << "element edge " << lineIndices.size() / 2 << endl;
-			ss << "property int vertex1" << endl;
-			ss << "property int vertex2" << endl;
+			ss << "element edge " << lineIndices.size() / 2 << std::endl;
+			ss << "property int vertex1" << std::endl;
+			ss << "property int vertex2" << std::endl;
 		}
 
 		if (triangleIndices.size() > 0)
 		{
-			ss << "element face " << triangleIndices.size() / 3 << endl;
-			ss << "property list uchar int vertex_indices" << endl;
+			ss << "element face " << triangleIndices.size() / 3 << std::endl;
+			ss << "property list uchar int vertex_indices" << std::endl;
 		}
 
-		ss << "end_header" << endl;
+		ss << "end_header" << std::endl;
 
 		for (size_t i = 0; i < points.size() / 3; i++)
 		{
@@ -1019,7 +1018,7 @@ public:
 				ss << u << " " << v << " ";
 			}
 
-			ss << endl;
+			ss << std::endl;
 
 			if (0 == i % 10000 && i != 0)
 			{
@@ -1036,7 +1035,7 @@ public:
 				auto i1 = lineIndices[i + 1];
 
 				//ss << i0 << " " << i1 << std::endl;
-				ss << "2 " << i0 << " " << i1 << endl;
+				ss << "2 " << i0 << " " << i1 << std::endl;
 
 				if (0 == i % 10000 && i != 0)
 				{
@@ -1054,7 +1053,7 @@ public:
 				auto i1 = triangleIndices[3 * i + 1];
 				auto i2 = triangleIndices[3 * i + 2];
 
-				ss << "3 " << i0 << " " << i1 << " " << i2 << endl;
+				ss << "3 " << i0 << " " << i1 << " " << i2 << std::endl;
 
 				if (0 == i % 10000 && i != 0)
 				{
@@ -1072,7 +1071,7 @@ public:
 		return true;
 	}
 
-	virtual bool Deserialize(const string& filename)
+	virtual bool Deserialize(const std::string& filename)
 	{
 		std::ifstream ifs(filename);
 		if (false == ifs.is_open())
@@ -1081,15 +1080,15 @@ public:
 			return false;
 		}
 
-		stringstream buffer;
+		std::stringstream buffer;
 		buffer << ifs.rdbuf();
 
-		string line;
-		vector<string> elementNames;
-		vector<size_t> elementCounts;
-		vector<bool> listTypeInfo;
-		vector<vector<string>> elementPropertyTypes;
-		vector<vector<string>> elementPropertyNames;
+		std::string line;
+		std::vector<std::string> elementNames;
+		std::vector<size_t> elementCounts;
+		std::vector<bool> listTypeInfo;
+		std::vector<std::vector<std::string>> elementPropertyTypes;
+		std::vector<std::vector<std::string>> elementPropertyNames;
 
 		if (buffer.good())
 		{
@@ -1103,7 +1102,7 @@ public:
 		while (buffer.good())
 		{
 			getline(buffer, line);
-			stringstream ss(line);
+			std::stringstream ss(line);
 			auto words = split(line, " \t");
 			if (words[0] == "format")
 			{
@@ -1119,8 +1118,8 @@ public:
 				auto index = elementNames.size() - 1;
 				if (elementPropertyTypes.size() <= index)
 				{
-					elementPropertyTypes.push_back(vector<string>());
-					elementPropertyNames.push_back(vector<string>());
+					elementPropertyTypes.push_back(std::vector<std::string>());
+					elementPropertyNames.push_back(std::vector<std::string>());
 
 					listTypeInfo.push_back(false);
 				}
@@ -1254,7 +1253,7 @@ public:
 		return true;
 	}
 
-	//virtual bool SerializeAsync(const string& filename)
+	//virtual bool SerializeAsync(const std::string& filename)
 	//{
 	//	async(launch::async, [&, filename]() {
 	//		Serialize(filename);
@@ -1262,14 +1261,14 @@ public:
 	//	return true;
 	//}
 
-	inline const vector<float>& GetNormals() const { return normals; }
-	inline const vector<unsigned int>& GetLineIndices() const { return lineIndices; }
-	inline const vector<unsigned int>& GetTriangleIndices() const { return triangleIndices; }
-	inline const vector<float>& GetColors() const { return colors; }
-	inline vector<int>& GetLabels() { return labels; }
-	inline const vector<int>& GetLabels() const { return labels; }
-	inline vector<int>& GetDeepLearningClasses() { return deepLearningClasses; }
-	inline const vector<int>& GetDeepLearningClasses() const { return deepLearningClasses; }
+	inline const std::vector<float>& GetNormals() const { return normals; }
+	inline const std::vector<unsigned int>& GetLineIndices() const { return lineIndices; }
+	inline const std::vector<unsigned int>& GetTriangleIndices() const { return triangleIndices; }
+	inline const std::vector<float>& GetColors() const { return colors; }
+	inline std::vector<int>& GetLabels() { return labels; }
+	inline const std::vector<int>& GetLabels() const { return labels; }
+	inline std::vector<int>& GetDeepLearningClasses() { return deepLearningClasses; }
+	inline const std::vector<int>& GetDeepLearningClasses() const { return deepLearningClasses; }
 	inline bool UseAlpha() const { return useAlpha; }
 
 	virtual inline void AddUV(float u, float v)
@@ -1462,13 +1461,13 @@ public:
 	}
 
 protected:
-	vector<float> uvs;
-	vector<float> normals;
-	vector<unsigned int> lineIndices;
-	vector<unsigned int> triangleIndices;
-	vector<float> colors;
-	vector<int> labels;
-	vector<int> deepLearningClasses;
+	std::vector<float> uvs;
+	std::vector<float> normals;
+	std::vector<unsigned int> lineIndices;
+	std::vector<unsigned int> triangleIndices;
+	std::vector<float> colors;
+	std::vector<int> labels;
+	std::vector<int> deepLearningClasses;
 	bool useAlpha = false;
 };
 
@@ -1477,9 +1476,9 @@ template<typename Point>
 class ALPFormat
 {
 public:
-	bool Serialize(const string& filename)
+	bool Serialize(const std::string& filename)
 	{
-		std::ofstream ofs(filename, ios::out | ios::binary);
+		std::ofstream ofs(filename, std::ios::out | std::ios::binary);
 		if (false == ofs.is_open())
 		{
 			printf("filename : %s is not open\n", filename.c_str());
@@ -1510,9 +1509,9 @@ public:
 		return true;
 	}
 
-	bool Deserialize(const string& filename)
+	bool Deserialize(const std::string& filename)
 	{
-		std::ifstream ifs(filename, ios::in | ios::binary);
+		std::ifstream ifs(filename, std::ios::in | std::ios::binary);
 		if (false == ifs.is_open())
 		{
 			printf("filename : %s is not open\n", filename.c_str());
@@ -1553,7 +1552,7 @@ public:
 
 	void AddPoint(const Point& point)
 	{
-		lock_guard<mutex> lock(points_mutex);
+		std::lock_guard<std::mutex> lock(points_mutex);
 		points.push_back(point);
 
 		aabbMinX = point.position.x < aabbMinX ? point.position.x : aabbMinX;
@@ -1565,9 +1564,9 @@ public:
 		aabbMaxZ = point.position.z > aabbMaxZ ? point.position.z : aabbMaxZ;
 	}
 
-	void AddPoints(const vector<Point>& inputPoints)
+	void AddPoints(const std::vector<Point>& inputPoints)
 	{
-		lock_guard<mutex> lock(points_mutex);
+		std::lock_guard<std::mutex> lock(points_mutex);
 		points.insert(points.end(), inputPoints.begin(), inputPoints.end());
 
 		for (auto& point : points)
@@ -1582,9 +1581,9 @@ public:
 		}
 	}
 
-	const vector<Point>& GetPoints() const
+	const std::vector<Point>& GetPoints() const
 	{
-		lock_guard<mutex> lock(points_mutex);
+		std::lock_guard<std::mutex> lock(points_mutex);
 		return points;
 	}
 
@@ -1628,19 +1627,19 @@ public:
 		alog("PLY %llu points loaded\n", points.size());
 	}
 
-	inline tuple<float, float, float> GetAABBMin() { return make_tuple(aabbMinX, aabbMinY, aabbMinZ); }
-	inline tuple<float, float, float> GetAABBMax() { return make_tuple(aabbMaxX, aabbMaxY, aabbMaxZ); }
-	inline tuple<float, float, float> GetAABBCenter()
+	inline std::tuple<float, float, float> GetAABBMin() { return std::make_tuple(aabbMinX, aabbMinY, aabbMinZ); }
+	inline std::tuple<float, float, float> GetAABBMax() { return std::make_tuple(aabbMaxX, aabbMaxY, aabbMaxZ); }
+	inline std::tuple<float, float, float> GetAABBCenter()
 	{
-		return make_tuple(
+		return std::make_tuple(
 			(aabbMinX + aabbMaxX) * 0.5f,
 			(aabbMinY + aabbMaxY) * 0.5f,
 			(aabbMinZ + aabbMaxZ) * 0.5f);
 	}
 
 protected:
-	mutable mutex points_mutex;
-	vector<Point> points;
+	mutable std::mutex points_mutex;
+	std::vector<Point> points;
 
 	float aabbMinX = FLT_MAX;
 	float aabbMinY = FLT_MAX;
@@ -1655,7 +1654,7 @@ class CSVFormat : public HSerializable
 {
 public:
 
-	virtual bool Serialize(const string& filename)
+	virtual bool Serialize(const std::string& filename)
 	{
 		FILE* fp = nullptr;
 		auto err = fopen_s(&fp, filename.c_str(), "wb");
@@ -1678,7 +1677,7 @@ public:
 		return true;
 	}
 
-	virtual bool Deserialize(const string& filename)
+	virtual bool Deserialize(const std::string& filename)
 	{
 		FILE* fp = nullptr;
 		auto err = fopen_s(&fp, filename.c_str(), "rb");

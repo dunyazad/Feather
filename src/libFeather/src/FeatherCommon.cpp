@@ -6,19 +6,19 @@
 
 namespace Time
 {
-    chrono::steady_clock::time_point Now()
+    std::chrono::steady_clock::time_point Now()
     {
-        return chrono::high_resolution_clock::now();
+        return std::chrono::high_resolution_clock::now();
     }
 
-    uint64_t Microseconds(chrono::steady_clock::time_point& from, chrono::steady_clock::time_point& now)
+    uint64_t Microseconds(std::chrono::steady_clock::time_point& from, std::chrono::steady_clock::time_point& now)
     {
         return std::chrono::duration_cast<std::chrono::microseconds>(now - from).count();
     }
 
-    chrono::steady_clock::time_point End(chrono::steady_clock::time_point& from, const string& message, int number)
+    std::chrono::steady_clock::time_point End(std::chrono::steady_clock::time_point& from, const std::string& message, int number)
     {
-        auto now = chrono::high_resolution_clock::now();
+        auto now = std::chrono::high_resolution_clock::now();
         if (-1 == number)
         {
             printf("[%s] %.4f ms from start\n", message.c_str(), (float)(Microseconds(from, now)) / 1000.0f);
@@ -30,22 +30,22 @@ namespace Time
         return now;
     }
 
-    string DateTime()
+    std::string DateTime()
     {
         auto t = std::time(nullptr);
         auto tm = *std::localtime(&t);
 
-        std::ostringstream oss;
+        std::stringstream oss;
         oss << std::put_time(&tm, "%Y%m%d_%H%M%S"); // Format: YYYYMMDD_HHMMSS
         return oss.str();
     }
 }
 
-string Miliseconds(const chrono::steady_clock::time_point beginTime, const char* tag)
+std::string Miliseconds(const std::chrono::steady_clock::time_point beginTime, const char* tag)
 {
-    auto now = chrono::high_resolution_clock::now();
-    auto timeSpan = chrono::duration_cast<chrono::nanoseconds>(now - beginTime).count();
-    stringstream ss;
+    auto now = std::chrono::high_resolution_clock::now();
+    auto timeSpan = std::chrono::duration_cast<std::chrono::nanoseconds>(now - beginTime).count();
+    std::stringstream ss;
     ss << "[[[ ";
     if (nullptr != tag)
     {

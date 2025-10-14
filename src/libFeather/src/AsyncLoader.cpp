@@ -9,6 +9,6 @@ AsyncLoader::~AsyncLoader()
 {
 }
 
-void AsyncLoader::LoadAsync(Renderable* renderable, const string& filename)
+void AsyncLoader::LoadAsync(Renderable* renderable, const std::string& filename)
 {
 }

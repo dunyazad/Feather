@@ -1,5 +1,4 @@
 #include <iostream>
-//using namespace std;
 
 #include <libFeather.h>
 
@@ -7,7 +6,7 @@ using VD = VisualDebugging;
 
 int main(int argc, char** argv)
 {
-	cout << "AppFeather" << endl;
+	std::cout << "AppFeather" << std::endl;
 
 	Feather.Initialize(1920, 1080);
 

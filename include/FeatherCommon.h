@@ -38,13 +38,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-//using namespace std;
 
 #include <Color.hpp>
 
 #include <omp.h>
 
 #include <entt/entt.hpp>
+#define _HAS_STD_BYTE 0
 
 using Entity = entt::entity;
 #define InvalidEntity ((Entity)ui32_max)
