@@ -25,6 +25,7 @@ set(source_list
     
     ${CMAKE_SOURCE_DIR}/include/AsyncLoader.h
     ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
+    ${CMAKE_SOURCE_DIR}/include/IVisualDebugging.h
     ${CMAKE_SOURCE_DIR}/include/VisualDebugging.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/Components.h
@@ -61,6 +62,7 @@ set(source_list
     src/AsyncLoader.cpp
     src/GeometryBuilder.cpp
     src/VisualDebugging.cpp
+    src/IVisualDebugging.cpp
     
     src/Component/Camera.cpp
     src/Component/CameraManipulator.cpp

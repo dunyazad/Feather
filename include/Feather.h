@@ -3,6 +3,7 @@
 #include <FeatherCommon.h>
 #include <File.h>
 #include <VisualDebugging.h>
+#include <IVisualDebugging.h>
 #include <Component/EventCallback.h>
 #include <FeatherWindow.h>
 
