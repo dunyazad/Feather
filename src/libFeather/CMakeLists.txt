@@ -15,6 +15,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/libFeather.h
     ${CMAKE_SOURCE_DIR}/include/TypeDefinitions.h
     ${CMAKE_SOURCE_DIR}/include/FeatherCommon.h
+    ${CMAKE_SOURCE_DIR}/include/glm_include.h
     ${CMAKE_SOURCE_DIR}/include/Feather.h
 
     ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h

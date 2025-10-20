@@ -1,9 +1,7 @@
 #pragma once
 
-#include <FeatherCommon.h>
-
-class DebuggingRenderable;
-class TextBlock;
+#include <TypeDefinitions.h>
+#include <Color.hpp>
 
 class IVisualDebugging
 {
