@@ -158,6 +158,52 @@ namespace Color
 		return a * (1.0f - t) + b * t;
 	}
 
+	/**
+	 * \brief HSV(Hue, Saturation, Value) 값을 RGBA glm::vec4로 변환합니다.
+	 * \param h Hue(색상) 값 (0.0f ~ 1.0f). 1.0f를 초과하면 순환합니다.
+	 * \param s Saturation(채도) 값 (0.0f ~ 1.0f).
+	 * \param v Value(명도) 값 (0.0f ~ 1.0f).
+	 * \param a Alpha(투명도) 값 (0.0f ~ 1.0f). 기본값은 1.0f입니다.
+	 * \return RGBA 형식의 glm::vec4
+	 */
+	inline glm::vec4 FromHSV(float h, float s, float v, float a = 1.0f)
+	{
+		float r = 0.0f, g = 0.0f, b = 0.0f;
+
+		// 채도(s)가 0이면 무채색(회색)입니다.
+		if (s <= 0.0f)
+		{
+			r = v;
+			g = v;
+			b = v;
+		}
+		else
+		{
+			// H 값을 [0, 1) 범위로 순환시킵니다.
+			h = glm::fract(h);
+
+			float h_i = glm::floor(h * 6.0f);
+			float f = (h * 6.0f) - h_i;
+			float p = v * (1.0f - s);
+			float q = v * (1.0f - f * s);
+			float t = v * (1.0f - (1.0f - f) * s);
+
+			int sector = static_cast<int>(h_i) % 6;
+
+			switch (sector)
+			{
+			case 0: r = v; g = t; b = p; break; // Red -> Yellow
+			case 1: r = q; g = v; b = p; break; // Yellow -> Green
+			case 2: r = p; g = v; b = t; break; // Green -> Cyan
+			case 3: r = p; g = q; b = v; break; // Cyan -> Blue
+			case 4: r = t; g = p; b = v; break; // Blue -> Magenta
+			case 5: r = v; g = p; b = q; break; // Magenta -> Red
+			}
+		}
+
+		return glm::vec4(r, g, b, a);
+	}
+
 	inline std::vector<glm::vec4> GetContrastingColors(size_t count)
 	{
 		// 함수가 여러 번 호출되더라도 색상 목록은 한 번만 생성되도록 static으로 선언합니다.
@@ -251,6 +297,52 @@ namespace Color
 			// 가장 멀리 떨어진 색상을 결과에 추가하고 사용됨으로 표시
 			result.push_back(allColors[bestIndex]);
 			usedIndices[bestIndex] = true;
+		}
+
+		return result;
+	}
+
+	inline std::vector<glm::vec4> InterpolateColors(const std::vector<glm::vec4>& colors, unsigned int count)
+	{
+		std::vector<glm::vec4> result;
+
+		if (colors.empty() || count == 0)
+			return result;
+
+		// 기준 색상이 하나뿐이면 그 색만 반복 반환
+		if (colors.size() == 1)
+		{
+			result.resize(count, colors[0]);
+			return result;
+		}
+
+		result.reserve(count);
+
+		// 구간 수
+		const size_t numSegments = colors.size() - 1;
+
+		// 전체 구간을 count개로 나누기
+		for (unsigned int i = 0; i < count; ++i)
+		{
+			// 전체 진행 비율 [0, 1]
+			float globalT = (count == 1) ? 0.0f : static_cast<float>(i) / static_cast<float>(count - 1);
+			globalT = glm::clamp(globalT, 0.0f, 1.0f);
+
+			// 어떤 구간에 속하는지 계산
+			float segmentF = globalT * numSegments;
+			size_t segmentIndex = static_cast<size_t>(segmentF);
+			float localT = segmentF - static_cast<float>(segmentIndex);
+
+			// 마지막 구간 경계 보정
+			if (segmentIndex >= numSegments)
+			{
+				result.push_back(colors.back());
+				continue;
+			}
+
+			// 보간
+			glm::vec4 c = colors[segmentIndex] * (1.0f - localT) + colors[segmentIndex + 1] * localT;
+			result.push_back(c);
 		}
 
 		return result;

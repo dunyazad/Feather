@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <optional>
 #include <queue>
 #include <random>
@@ -80,6 +81,7 @@ const std::string EmptyString = "";
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "implot.h"
+#include "imnodes.h"
 
 #define Feather libFeather::GetStaticInstance()
 

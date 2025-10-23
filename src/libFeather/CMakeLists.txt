@@ -41,6 +41,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/GUIComponents.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/Panel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/ControlPanel.h
+    ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/NodeEditorPanel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/StatusPanel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/TextBlock.h
 
@@ -74,6 +75,7 @@ set(source_list
 
     src/Component/GUIComponent/Panel.cpp
     src/Component/GUIComponent/ControlPanel.cpp
+    src/Component/GUIComponent/NodeEditorPanel.cpp
     src/Component/GUIComponent/StatusPanel.cpp
     src/Component/GUIComponent/TextBlock.cpp
 
@@ -100,6 +102,8 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.fs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Grid.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Grid.fs
 )
 
 # Define the library
@@ -117,6 +121,8 @@ add_library(libFeather
     ${implot_SOURCE_DIR}/implot.cpp
     ${implot_SOURCE_DIR}/implot_demo.cpp
     ${implot_SOURCE_DIR}/implot_items.cpp
+
+    ${imnodes_SOURCE_DIR}/imnodes.cpp
 )
 
 source_group("Source Files\\imgui\\imgui" FILES
@@ -138,6 +144,10 @@ source_group("Source Files\\imgui\\implot" FILES
     ${implot_SOURCE_DIR}/implot_items.cpp
 )
 
+source_group("Source Files\\imgui\\imnodes" FILES
+    ${imnodes_SOURCE_DIR}/imnodes.cpp
+)
+
 # Include directories
 target_include_directories(libFeather PUBLIC
     ${Feather_SOURCE_DIR}/External/glad/include/
@@ -147,6 +157,7 @@ target_include_directories(libFeather PUBLIC
     ${glfw_SOURCE_DIR}/include
     ${imgui_SOURCE_DIR}
     ${implot_SOURCE_DIR}
+    ${imnodes_SOURCE_DIR}
     ${entt_SOURCE_DIR}/single_include
     ${stb_SOURCE_DIR}
 )
@@ -157,6 +168,8 @@ target_compile_definitions(libFeather PUBLIC IMGUI_ENABLE_DOCKING IMGUI_DEFINE_M
 # Link dependencies
 target_link_libraries(libFeather
     glfw
+    imgui_build 
+    imnodes
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

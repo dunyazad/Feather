@@ -29,10 +29,14 @@ void GUISystem::Initialize()
 
     io.Fonts->AddFontFromFileTTF("../../res/Fonts/NanumGothic/NanumGothic.ttf", 18.0f, nullptr,
     io.Fonts->GetGlyphRangesKorean());
+
+    ImNodes::CreateContext();
 }
 
 void GUISystem::Terminate()
 {
+    ImNodes::DestroyContext();
+
     ImPlot::DestroyContext();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -49,6 +53,15 @@ void GUISystem::Update(ui32 frameNo, f32 timeDelta)
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    {
+        auto entities = Feather.GetRegistry().view<NodeEditorPanel>();
+        for (auto& entity : entities)
+        {
+            auto component = Feather.GetRegistry().get<NodeEditorPanel>(entity);
+            component.Render();
+        }
+    }
 
     {
         auto entities = Feather.GetRegistry().view<Panel>();

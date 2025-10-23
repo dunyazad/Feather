@@ -50,8 +50,9 @@ int main(int argc, char** argv)
 			component->AddColors(colors.data(), colors.size());
 			component->AddUVs(uvs.data(), uvs.size());
 
-			component->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
-			component->AddShader(Feather.CreateShader("Flat", File("../../res/Shaders/Flat.vs"), File("../../res/Shaders/Flat.fs")));
+			//component->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
+			//component->AddShader(Feather.CreateShader("Flat", File("../../res/Shaders/Flat.vs"), File("../../res/Shaders/Flat.fs")));
+			component->AddShader(Feather.CreateShader("Grid", File("../../res/Shaders/Grid.vs"), File("../../res/Shaders/Grid.fs")));
 			component->SetActiveShaderIndex(0);
 		}
 #pragma endregion
@@ -207,6 +208,13 @@ int main(int argc, char** argv)
 //			auto controlPanel = Feather.CreateComponent<ControlPanel>(entity, "Control Panel");
 //		}
 //#pragma endregion
+
+		#pragma region NodeEditor Panel
+		{
+			auto entity = Feather.CreateEntity("NodeEditor Panel");
+			auto controlPanel = Feather.CreateComponent<NodeEditorPanel>(entity, "NodeEditor Panel");
+		}
+		#pragma endregion
 		});
 
 	Feather.Run();

@@ -122,6 +122,8 @@ private:
 	~libFeather();
 
 	FeatherWindow* featherWindow = nullptr;
+	unsigned int consoleWindowIndex = 2;
+	unsigned int mainWindowIndex = 1;
 
 	std::vector<std::function<void()>> onInitializeCallbacks;
 	std::vector<std::function<void(f32)>> onUpdateCallbacks;

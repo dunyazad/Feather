@@ -30,6 +30,26 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
+if (NOT TARGET imgui_build)
+    add_library(imgui_build STATIC
+        ${imgui_SOURCE_DIR}/imgui.cpp
+        ${imgui_SOURCE_DIR}/imgui_draw.cpp
+        ${imgui_SOURCE_DIR}/imgui_tables.cpp
+        ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+        ${imgui_SOURCE_DIR}/imgui_demo.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+    )
+
+    target_include_directories(imgui_build PUBLIC
+        ${imgui_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}/backends
+    )
+
+    target_link_libraries(imgui_build PUBLIC glfw glad)
+endif()
+
+
 # implot
 FetchContent_Declare(
     implot
@@ -37,6 +57,39 @@ FetchContent_Declare(
     GIT_TAG        v0.15
 )
 FetchContent_MakeAvailable(implot)
+
+# imnodes
+include(FetchContent)
+FetchContent_Declare(
+    imnodes
+    GIT_REPOSITORY https://github.com/Nelarius/imnodes.git
+    GIT_TAG master
+)
+
+# CMake 3.30에서 FetchContent_Populate() 경고 방지
+# (이 정책 설정은 경고만 억제함 — 안전함)
+if(POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD)
+endif()
+
+FetchContent_GetProperties(imnodes)
+if(NOT imnodes_POPULATED)
+    FetchContent_Populate(imnodes)
+
+    add_library(imnodes STATIC
+        ${imnodes_SOURCE_DIR}/imnodes.cpp
+    )
+
+    # imnodes는 imgui를 include해야 하므로 둘 다 지정
+    target_include_directories(imnodes PUBLIC
+        ${imnodes_SOURCE_DIR}
+        ${imgui_SOURCE_DIR}
+    )
+
+    target_link_libraries(imnodes PUBLIC imgui_build)
+endif()
+
+
 
 # entt
 FetchContent_Declare(

@@ -48,9 +48,9 @@ void libFeather::Terminate()
 void libFeather::Run()
 {
 #ifdef _WINDOWS
-    MaximizeConsoleWindowOnMonitor(1);
+    MaximizeConsoleWindowOnMonitor(consoleWindowIndex);
     
-    MaximizeWindowOnMonitor(glfwGetWin32Window(featherWindow->GetGLFWwindow()), 2);
+    MaximizeWindowOnMonitor(glfwGetWin32Window(featherWindow->GetGLFWwindow()), mainWindowIndex);
 #endif
 
     for (auto& callback : onInitializeCallbacks)
