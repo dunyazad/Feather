@@ -117,6 +117,11 @@ public:
 	inline const glm::vec4& GetClearColor() const { return clearColor; }
 	inline void SetClearColor(const glm::vec4& color) { clearColor = color; }
 
+	inline unsigned int GetConsoleWindowIndex() const { return consoleWindowIndex; }
+	inline void SetConsoleWindowIndex(unsigned int index) { consoleWindowIndex = index; }
+	inline unsigned int GetMainWindowIndex() const { return mainWindowIndex; }
+	inline void SetMainWindowIndex(unsigned int index) { mainWindowIndex = index; }
+
 private:
 	libFeather();
 	~libFeather();
