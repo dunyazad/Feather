@@ -28,10 +28,10 @@ void show_editor(const char* editor_name, Editor& editor)
         const int node_id = ++editor.current_id;
         ImNodes::SetNodeScreenSpacePos(node_id, ImGui::GetMousePos());
         ImNodes::SnapNodeToGrid(node_id);
-        editor.nodes.push_back(Node(node_id, 0.f));
+        editor.nodes.push_back(EditorNode(node_id, 0.f));
     }
 
-    for (Node& node : editor.nodes)
+    for (EditorNode& node : editor.nodes)
     {
         ImNodes::BeginNode(node.id);
 
@@ -58,7 +58,7 @@ void show_editor(const char* editor_name, Editor& editor)
         ImNodes::EndNode();
     }
 
-    for (const Link& link : editor.links)
+    for (const NodeLink& link : editor.links)
     {
         ImNodes::Link(link.id, link.start_attr, link.end_attr);
     }
@@ -66,7 +66,7 @@ void show_editor(const char* editor_name, Editor& editor)
     ImNodes::EndNodeEditor();
 
     {
-        Link link;
+        NodeLink link;
         if (ImNodes::IsLinkCreated(&link.start_attr, &link.end_attr))
         {
             link.id = ++editor.current_id;
@@ -79,7 +79,7 @@ void show_editor(const char* editor_name, Editor& editor)
         if (ImNodes::IsLinkDestroyed(&link_id))
         {
             auto iter = std::find_if(
-                editor.links.begin(), editor.links.end(), [link_id](const Link& link) -> bool {
+                editor.links.begin(), editor.links.end(), [link_id](const NodeLink& link) -> bool {
                     return link.id == link_id;
                 });
             assert(iter != editor.links.end());

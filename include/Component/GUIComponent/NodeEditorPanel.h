@@ -2,15 +2,15 @@
 
 #include <FeatherCommon.h>
 
-struct Node
+struct EditorNode
 {
 	int   id;
 	float value;
 
-	Node(const int i, const float v) : id(i), value(v) {}
+	EditorNode(const int i, const float v) : id(i), value(v) {}
 };
 
-struct Link
+struct NodeLink
 {
 	int id;
 	int start_attr, end_attr;
@@ -19,8 +19,8 @@ struct Link
 struct Editor
 {
 	ImNodesEditorContext* context = nullptr;
-	std::vector<Node>     nodes;
-	std::vector<Link>     links;
+	std::vector<EditorNode>     nodes;
+	std::vector<NodeLink>     links;
 	int                   current_id = 0;
 };
 
