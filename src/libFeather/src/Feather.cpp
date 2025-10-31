@@ -2,6 +2,7 @@
 
 #include <Monitor.h>
 #include <FeatherWindow.h>
+#include <Buffer.h>
 #include <Component/Components.h>
 #include <Component/Shader.h>
 #include <System/Systems.h>
@@ -14,6 +15,9 @@ void libFeather::Initialize(ui32 width, ui32 height)
     featherWindow = new FeatherWindow();
     featherWindow->Initialize(width, height);
 
+    frameBuffer = new FrameBuffer();
+    frameBuffer->Initialize(width, height, true);
+
     inputSystem = new InputSystem(featherWindow);
     inputSystem->Initialize();
     eventSystem = new EventSystem(featherWindow);
@@ -24,6 +28,12 @@ void libFeather::Initialize(ui32 width, ui32 height)
     immediateModeRenderSystem->Initialize();
     guiSystem = new GUISystem(featherWindow);
     guiSystem->Initialize();
+
+    CreateShader("ScreenQuadShader",
+        File("../../res/Shaders/ScreenQuad.vs"),
+        File("../../res/Shaders/ScreenQuad.fs"));
+
+    SetupScreenQuad();
 
     /////////glfwSwapInterval(0);  // Disable V-Sync
 }
@@ -36,13 +46,44 @@ void libFeather::Terminate()
     }
     shaders.clear();
 
-    if (nullptr != inputSystem) delete inputSystem;
-    if (nullptr != eventSystem) delete eventSystem;
-    if (nullptr != renderSystem) delete renderSystem;
-    if (nullptr != immediateModeRenderSystem) delete immediateModeRenderSystem;
-    if (nullptr != guiSystem) delete guiSystem;
+    if (nullptr != frameBuffer)
+    {
+        frameBuffer->Terminate();
+        delete frameBuffer;
+		frameBuffer = nullptr;
+    }
 
-    if (nullptr != featherWindow) delete featherWindow;
+    if (nullptr != inputSystem)
+    {
+        delete inputSystem;
+        inputSystem = nullptr;
+    }
+    if (nullptr != eventSystem)
+    {
+        delete eventSystem;
+		eventSystem = nullptr;
+    }
+    if (nullptr != renderSystem)
+    {
+        delete renderSystem;
+		renderSystem = nullptr;
+    }
+    if (nullptr != immediateModeRenderSystem)
+    {
+        delete immediateModeRenderSystem;
+		immediateModeRenderSystem = nullptr;
+    }
+    if (nullptr != guiSystem)
+    {
+        delete guiSystem;
+        guiSystem = nullptr;
+    }
+
+    if (nullptr != featherWindow)
+    {
+        delete featherWindow;
+        featherWindow = nullptr;
+    }
 }
 
 void libFeather::Run()
@@ -63,6 +104,15 @@ void libFeather::Run()
 
     glClearColor(XYZW(clearColor));
 
+    Shader* screenShader = GetShader("ScreenQuadShader");
+    if (screenShader == nullptr)
+    {
+        printf("CRITICAL ERROR: 'screenQuadShader' not found!\n");
+        return;
+    }
+    screenShader->Use();
+    screenShader->UniformInt(screenShader->GetUniformLocation("screenTexture"), 0);
+
     while (!glfwWindowShouldClose(glfwGetCurrentContext()))
     {
         auto now = Time::Now();
@@ -72,6 +122,8 @@ void libFeather::Run()
         {
             callback(timeDelta);
         }
+
+        frameBuffer->Bind();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -83,11 +135,82 @@ void libFeather::Run()
         immediateModeRenderSystem->Update(frameNo, timeDelta);
         guiSystem->Update(frameNo, timeDelta);
 
+        frameBuffer->Unbind();
+
+        int fbWidth = 0, fbHeight = 0;
+        glfwGetFramebufferSize(featherWindow->GetGLFWwindow(), &fbWidth, &fbHeight);
+        glViewport(0, 0, fbWidth, fbHeight);
+
+        glDisable(GL_DEPTH_TEST);
+
+        glClearColor(XYZW(clearColor));
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        screenShader->Use();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, frameBuffer->GetColorTex());
+
+        DrawScreenQuad();
+
         glfwSwapBuffers(glfwGetCurrentContext());
 
         frameNo++;
         lastTime = now;
     }
+}
+
+void libFeather::SetupScreenQuad()
+{
+    float quadVertices[] = {
+        // positions   // texcoords
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
+    };
+
+    unsigned int indices[] = { 0, 1, 2, 0, 2, 3 };
+
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glGenBuffers(1, &quadEBO);
+
+    glBindVertexArray(quadVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // Position (layout = 0)
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // TexCoords (layout = 1)
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+}
+
+void libFeather::DrawScreenQuad()
+{
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO); // 안전하게 명시
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR)
+        printf("[DrawScreenQuad] GL ERROR: %d\n", err);
+}
+
+void libFeather::OnFrameBufferResize(int width, int height)
+{
+    frameBuffer->Resize(width, height);
+    glViewport(0, 0, width, height);
 }
 
 Entity libFeather::CreateEntity(const std::string& name)

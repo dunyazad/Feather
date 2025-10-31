@@ -18,6 +18,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/glm_include.h
     ${CMAKE_SOURCE_DIR}/include/Feather.h
 
+    ${CMAKE_SOURCE_DIR}/include/Buffer.h
     ${CMAKE_SOURCE_DIR}/include/FeatherWindow.h
     ${CMAKE_SOURCE_DIR}/include/File.h
     ${CMAKE_SOURCE_DIR}/include/Monitor.h
@@ -56,6 +57,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/System/RenderSystem.h
 
     src/Feather.cpp
+    src/Buffer.cpp
     src/FeatherCommon.cpp
     src/FeatherWindow.cpp
     src/File.cpp
@@ -65,6 +67,7 @@ set(source_list
     src/GeometryBuilder.cpp
     src/VisualDebugging.cpp
     src/IVisualDebugging.cpp
+    src/stb_impl.cpp
     
     src/Component/Camera.cpp
     src/Component/CameraManipulator.cpp
@@ -100,6 +103,8 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/res/Shaders/InstancingWithoutNormal.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.fs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/ScreenQuad.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/ScreenQuad.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Grid.vs

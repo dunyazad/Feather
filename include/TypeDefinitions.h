@@ -37,10 +37,29 @@ typedef double f64;
 #define f64_min (-DBL_MAX)
 #endif
 
+#ifndef PRIMITIVE_INVALID
+#define PRIMITIVE_INVALID
+#define invalid_i8 (i8_max)
+#define invalid_i16 (i16_max)
+#define invalid_i32 (i32_max)
+#define invalid_i64 (i64_max)
+
+#define invalid_ui8 (ui8_max)
+#define invalid_ui16 (ui16_max)
+#define invalid_ui32 (ui32_max)
+#define invalid_ui64 (ui64_max)
+
+#define invalid_f32 (f32_max)
+#define invalid_f64 (f64_max)
+#endif
+
 struct f2
 {
 	f32 x = 0.0f;
 	f32 y = 0.0f;
+
+	static f2 Zero() { return f2{ 0.0f, 0.0f }; }
+	static f2 Invalid() { return f2{ invalid_f32, invalid_f32 }; }
 };
 
 struct f3
@@ -48,6 +67,9 @@ struct f3
 	f32 x = 0.0f;
 	f32 y = 0.0f;
 	f32 z = 0.0f;
+
+	static f3 Zero() { return f3{ 0.0f, 0.0f, 0.0f }; }
+	static f3 Invalid() { return f3{ invalid_f32, invalid_f32, invalid_f32 }; }
 };
 
 struct f4
@@ -56,12 +78,18 @@ struct f4
 	f32 y = 0.0f;
 	f32 z = 0.0f;
 	f32 w = 0.0f;
+
+	static f4 Zero() { return f4{ 0.0f, 0.0f, 0.0f, 0.0f }; }
+	static f4 Invalid() { return f4{ invalid_f32, invalid_f32, invalid_f32, invalid_f32 }; }
 };
 
 struct d2
 {
 	f64 x = 0.0;
 	f64 y = 0.0;
+
+	static d2 Zero() { return d2{ 0.0, 0.0 }; }
+	static d2 Invalid() { return d2{ invalid_f64, invalid_f64 }; }
 };
 
 struct d3
@@ -69,6 +97,9 @@ struct d3
 	f64 x = 0.0;
 	f64 y = 0.0;
 	f64 z = 0.0;
+
+	static d3 Zero() { return d3{ 0.0, 0.0, 0.0 }; }
+	static d3 Invalid() { return d3{ invalid_f64, invalid_f64, invalid_f64 }; }
 };
 
 struct d4
@@ -77,6 +108,9 @@ struct d4
 	f64 y = 0.0;
 	f64 z = 0.0;
 	f64 w = 0.0;
+
+	static d4 Zero() { return d4{ 0.0, 0.0, 0.0, 0.0 }; }
+	static d4 Invalid() { return d4{ invalid_f64, invalid_f64, invalid_f64, invalid_f64 }; }
 };
 
 struct FrameEvent

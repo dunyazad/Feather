@@ -7,6 +7,8 @@
 #include <Component/EventCallback.h>
 #include <FeatherWindow.h>
 
+class FrameBuffer;
+
 class InputSystem;
 class EventSystem;
 class RenderSystem;
@@ -142,6 +144,12 @@ private:
 	std::unordered_map<Entity, std::string> entityNameMapping;
 	std::unordered_map<std::string, Shader*> shaders;
 
+	FrameBuffer*					frameBuffer = nullptr;
+
+	unsigned int quadVAO = 0;
+	unsigned int quadVBO = 0;
+	unsigned int quadEBO = 0;
+
 	InputSystem*					inputSystem = nullptr;
 	EventSystem*					eventSystem = nullptr;
 	RenderSystem*					renderSystem = nullptr;
@@ -149,4 +157,11 @@ private:
 	GUISystem*						guiSystem = nullptr;
 
 	glm::vec4 clearColor = Color::slategray();
+
+	void SetupScreenQuad();
+	void DrawScreenQuad();
+
+	void OnFrameBufferResize(int width, int height);
+
+	friend class FeatherWindow;
 };

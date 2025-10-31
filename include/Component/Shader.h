@@ -18,6 +18,7 @@ public:
 
     void Use();
 
+	inline GLuint GetProgram() const { return shaderProgram; }
     inline GLint GetUniformLocation(const std::string& name) { return glGetUniformLocation(shaderProgram, name.c_str()); }
     inline void UniformInt(GLint location, int i) { glUniform1i(location, i); }
     inline void UniformV3(GLint location, const glm::vec3& v) { glUniform3fv(location, 1, (float*)&v); }
