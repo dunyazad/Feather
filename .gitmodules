@@ -1,3 +1,9 @@
 [submodule "External/imnodes"]
 	path = External/imnodes
 	url = https://github.com/Nelarius/imnodes
+[submodule "External/stb_full"]
+	path = External/stb_full
+	url = https://github.com/dunyazad/stb_full.git
+[submodule "External/RxTx"]
+	path = External/RxTx
+	url = https://github.com/dunyazad/RxTx.git
