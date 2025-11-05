@@ -71,6 +71,8 @@ const std::string EmptyString = "";
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
+#include <RxTx/RxTx.h>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32  // Win32 관련 기능을 활성화

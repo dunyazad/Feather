@@ -1,5 +1,23 @@
 include(FetchContent)
 
+if(WIN32)
+    set(CMAKE_USE_LONG_PATHS ON CACHE BOOL "Enable long path support on Windows" FORCE)
+
+    # 일부 CMake 버전(3.30 이하)에서 FetchContent rule 깨짐 방지
+    if(POLICY CMP0169)
+        cmake_policy(SET CMP0169 OLD)
+    endif()
+endif()
+
+# RxTx
+include(FetchContent)
+FetchContent_Declare(
+    RxTx
+    GIT_REPOSITORY https://github.com/dunyazad/RxTx.git
+    GIT_TAG main
+)
+FetchContent_MakeAvailable(RxTx)
+
 # glad
 FetchContent_Declare(
     glad

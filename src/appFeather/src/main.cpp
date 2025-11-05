@@ -4,6 +4,8 @@
 
 using VD = VisualDebugging;
 
+using namespace libRxTx;
+
 static inline void DepthToColor(float d, unsigned char& r, unsigned char& g, unsigned char& b)
 {
 	d = std::clamp(d, 0.0f, 1.0f);
@@ -274,7 +276,50 @@ int main(int argc, char** argv)
 					}
 				}
 				});
+		}
 
+		{
+			// UDP Receiver
+			RxTx udp(Protocol::UDP);
+			udp.Init();
+			udp.SetMode(UdpMode::Broadcast);
+			udp.Bind(5000); // 자동 NIC 선택
+			udp.OnReceive([](const std::string& msg) {
+				std::cout << "[UDP Received] " << msg << std::endl;
+				});
+			udp.Start();
+
+			// UDP Sender
+			RxTx sender(Protocol::UDP);
+			sender.Init();
+			sender.SetMode(UdpMode::Broadcast);
+			sender.Bind(0); // 자동 포트 선택
+			sender.Start();
+			sender.SendToAll("Hello from SendToAll!");
+
+			// TCP Server
+			RxTx server(Protocol::TCP);
+			server.Init();
+			server.Bind(9000);
+			server.Listen();
+			server.OnConnect([](const std::string& ip) { std::cout << "[TCP] Connect: " << ip << std::endl; });
+			server.OnReceive([](const std::string& msg) { std::cout << "[TCP] Received: " << msg << std::endl; });
+			server.OnDisconnect([](const std::string& ip) { std::cout << "[TCP] Disconnect: " << ip << std::endl; });
+			server.Start();
+
+			// TCP Client
+			RxTx client(Protocol::TCP);
+			client.Init();
+			client.Connect("127.0.0.1", 9000);
+			client.Start();
+			client.SendPacket("Hello Packet TCP!");
+
+			std::this_thread::sleep_for(std::chrono::seconds(3));
+
+			udp.Stop();
+			sender.Stop();
+			server.Stop();
+			client.Stop();
 		}
 		});
 

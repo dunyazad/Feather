@@ -171,10 +171,11 @@ target_include_directories(libFeather PUBLIC
 target_compile_definitions(libFeather PUBLIC IMGUI_ENABLE_DOCKING IMGUI_DEFINE_MATH_OPERATORS)
 
 # Link dependencies
-target_link_libraries(libFeather
+target_link_libraries(libFeather PUBLIC 
     glfw
     imgui_build 
     imnodes
+    RxTx
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
