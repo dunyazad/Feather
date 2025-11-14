@@ -40,6 +40,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <robin_hood.h>
+
 #include <Color.hpp>
 
 #include <omp.h>

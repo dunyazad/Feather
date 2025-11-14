@@ -155,6 +155,7 @@ source_group("Source Files\\imgui\\imnodes" FILES
 
 # Include directories
 target_include_directories(libFeather PUBLIC
+    ${Feather_SOURCE_DIR}/External/robin_hood/
     ${Feather_SOURCE_DIR}/External/glad/include/
     ${Feather_SOURCE_DIR}/External/glm/
     ${CMAKE_SOURCE_DIR}/include/
