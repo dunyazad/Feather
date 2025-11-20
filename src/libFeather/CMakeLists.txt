@@ -24,6 +24,8 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Monitor.h
     ${CMAKE_SOURCE_DIR}/include/Serialization.hpp
     ${CMAKE_SOURCE_DIR}/include/Color.hpp
+    ${CMAKE_SOURCE_DIR}/include/Morton3D.hpp
+    ${CMAKE_SOURCE_DIR}/include/MarchingCubesTables.h
     
     ${CMAKE_SOURCE_DIR}/include/AsyncLoader.h
     ${CMAKE_SOURCE_DIR}/include/GeometryBuilder.h
@@ -103,6 +105,8 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/res/Shaders/InstancingWithoutNormal.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Line.fs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Mesh.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/Mesh.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/ScreenQuad.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/ScreenQuad.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.vs
