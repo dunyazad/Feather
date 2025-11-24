@@ -2,6 +2,9 @@
 #include <vector>
 #include <algorithm>
 #include <omp.h> // OpenMP
+#include <map>
+#include <tuple>
+#include <numeric>
 
 #include <libFeather.h>
 
@@ -178,6 +181,7 @@ int main(int argc, char** argv)
 			ply.Deserialize("D:\\Debug\\PLY\\input.ply");
 
 			AABB aabb{ {FLT_MAX, FLT_MAX, FLT_MAX}, {-FLT_MAX, -FLT_MAX, -FLT_MAX} };
+
 			auto lmin = glm::vec3(-10.0f, -10.0f, -10.0f);
 			auto lmax = glm::vec3(10.0f, 10.0f, 10.0f);
 
@@ -220,9 +224,15 @@ int main(int argc, char** argv)
 				points.push_back({ position, normal, color });
 			}
 
+			if (0 == points.size())
+			{
+				printf("Error, points.size() is 0\n");
+			}
+
 			TS(Total);
 
-			// 2. Build Dense TSDF Grid
+			// -----------------------------------------------------
+			// 2. Build Dense TSDF Grid (Fast Parallel Version)
 			// -----------------------------------------------------
 			struct TSDFVoxel
 			{
@@ -232,80 +242,103 @@ int main(int argc, char** argv)
 				glm::vec3 colorSum;
 			};
 
+			// Helper: OpenMP용 Atomic Float Add
+			auto AtomicAddFloat = [](float& target, float value) {
+#pragma omp atomic
+				target += value;
+				};
+
 			TS(Build_TSDF_Volume_Grid);
 
-			float voxelSize = 0.2f; // Grid 해상도
-			float trunc = 0.6f;     // Truncation distance
+			float voxelSize = 0.2f;
+			float trunc = 0.4f;
+			float truncSq = trunc * trunc; // 제곱 거리 비교용
 			int influenceRadius = (int)std::ceil(trunc / voxelSize);
 
 			glm::vec3 size = aabb.max - aabb.min;
-			int Nx = (int)(size.x / voxelSize) + 3;
-			int Ny = (int)(size.y / voxelSize) + 3;
-			int Nz = (int)(size.z / voxelSize) + 3;
+			// 그리드 크기에 약간의 여유를 더 줌 (+5)
+			int Nx = (int)(size.x / voxelSize) + 5;
+			int Ny = (int)(size.y / voxelSize) + 5;
+			int Nz = (int)(size.z / voxelSize) + 5;
 
-			// Dense Grid 할당 (0으로 초기화됨)
+			// 0.0f가 아닌 1.0f(외부)로 초기화하는 것이 Meshing때 깔끔함 (weight가 0일때 대비)
 			std::vector<TSDFVoxel> voxelGrid(Nx * Ny * Nz, { 0.0f, 0.0f, glm::vec3(0), glm::vec3(0) });
 
-			// TSDF 통합 (Integration)
-			// Race Condition 방지를 위해 Grid 쓰기는 Serial로 수행 (배열 접근이라 빠름)
-			for (const auto& pt : points)
+			// [최적화] 이웃 복셀 오프셋 미리 계산
+			struct Offset { int x, y, z; };
+			std::vector<Offset> neighborOffsets;
+			neighborOffsets.reserve((2 * influenceRadius + 1) * (2 * influenceRadius + 1) * (2 * influenceRadius + 1));
+
+			for (int z = -influenceRadius; z <= influenceRadius; ++z)
+				for (int y = -influenceRadius; y <= influenceRadius; ++y)
+					for (int x = -influenceRadius; x <= influenceRadius; ++x)
+						neighborOffsets.push_back({ x, y, z });
+
+
+			// [최적화] OpenMP 병렬 처리
+#pragma omp parallel for schedule(dynamic)
+			for (int i = 0; i < (int)points.size(); ++i)
 			{
-				// 포인트의 그리드 좌표
-				int pix = (int)std::floor((pt.position.x - aabb.min.x) / voxelSize);
-				int piy = (int)std::floor((pt.position.y - aabb.min.y) / voxelSize);
-				int piz = (int)std::floor((pt.position.z - aabb.min.z) / voxelSize);
+				const auto& pt = points[i];
 
-				// 주변 복셀 순회 및 업데이트
-				for (int z = -influenceRadius; z <= influenceRadius; ++z)
+				// 포인트의 그리드 좌표 (Floating point 연산 최소화)
+				glm::vec3 localPos = pt.position - aabb.min;
+				int pix = (int)(localPos.x / voxelSize);
+				int piy = (int)(localPos.y / voxelSize);
+				int piz = (int)(localPos.z / voxelSize);
+
+				// 미리 계산된 오프셋으로 주변 복셀 순회
+				for (const auto& off : neighborOffsets)
 				{
-					int iz = piz + z;
-					if (iz < 0 || iz >= Nz) continue;
+					int ix = pix + off.x;
+					int iy = piy + off.y;
+					int iz = piz + off.z;
 
-					for (int y = -influenceRadius; y <= influenceRadius; ++y)
-					{
-						int iy = piy + y;
-						if (iy < 0 || iy >= Ny) continue;
+					if (ix < 0 || ix >= Nx || iy < 0 || iy >= Ny || iz < 0 || iz >= Nz) continue;
 
-						for (int x = -influenceRadius; x <= influenceRadius; ++x)
-						{
-							int ix = pix + x;
-							if (ix < 0 || ix >= Nx) continue;
+					// 1D Index
+					int idx = (iz * Ny + iy) * Nx + ix;
 
-							// 1D Index 계산 (O(1))
-							int idx = (iz * Ny + iy) * Nx + ix;
+					// 복셀 중심 위치
+					glm::vec3 voxelCenter = aabb.min + glm::vec3(ix + 0.5f, iy + 0.5f, iz + 0.5f) * voxelSize;
 
-							// 복셀 중심 위치
-							glm::vec3 voxelCenter = aabb.min + glm::vec3(ix + 0.5f, iy + 0.5f, iz + 0.5f) * voxelSize;
+					glm::vec3 diff = voxelCenter - pt.position;
 
-							glm::vec3 diff = voxelCenter - pt.position;
-							float distRaw = glm::length(diff);
+					// 거리 제곱으로 먼저 비교
+					float distSq = glm::dot(diff, diff);
+					if (distSq > truncSq) continue;
 
-							if (distRaw > trunc) continue;
+					float distRaw = std::sqrt(distSq);
 
-							float sign = glm::dot(diff, pt.normal) < 0.0f ? -1.0f : 1.0f;
-							float sdf = sign * distRaw;
+					// TSDF 계산
+					float sign = glm::dot(diff, pt.normal) < 0.0f ? -1.0f : 1.0f;
+					float sdf = sign * distRaw;
+					float weight = 1.0f;
 
-							// Grid 업데이트
-							auto& v = voxelGrid[idx];
-							float weight = 1.0f;
+					// Atomic Update
+					auto& v = voxelGrid[idx];
 
-							v.distSum += sdf * weight;
-							v.weightSum += weight;
-							v.normalSum += pt.normal * weight;
-							v.colorSum += pt.color * weight;
-						}
-					}
+					AtomicAddFloat(v.distSum, sdf * weight);
+					AtomicAddFloat(v.weightSum, weight);
+
+					AtomicAddFloat(v.normalSum.x, pt.normal.x * weight);
+					AtomicAddFloat(v.normalSum.y, pt.normal.y * weight);
+					AtomicAddFloat(v.normalSum.z, pt.normal.z * weight);
+
+					AtomicAddFloat(v.colorSum.x, pt.color.x * weight);
+					AtomicAddFloat(v.colorSum.y, pt.color.y * weight);
+					AtomicAddFloat(v.colorSum.z, pt.color.z * weight);
 				}
 			}
 
-			printf("Grid Size = %d x %d x %d (%zu voxels)\n", Nx, Ny, Nz, voxelGrid.size());
+			printf("Grid Integration Done. Size = %d x %d x %d\n", Nx, Ny, Nz);
 
-			// TSDF 정규화 (병렬 처리 가능)
+			// 평균 계산 및 정규화
 #pragma omp parallel for
 			for (int i = 0; i < (int)voxelGrid.size(); ++i)
 			{
 				auto& v = voxelGrid[i];
-				if (v.weightSum > 0.0f)
+				if (v.weightSum > 0.0001f)
 				{
 					v.distSum /= v.weightSum;
 					v.normalSum = glm::normalize(v.normalSum);
@@ -314,8 +347,7 @@ int main(int argc, char** argv)
 				}
 				else
 				{
-					// 데이터가 없는 빈 공간은 Trunc Distance(1.0 or trunc)로 초기화
-					v.distSum = 1.0f;
+					v.distSum = 1.0f; // 외부로 설정
 				}
 			}
 			TE(Build_TSDF_Volume_Grid);
@@ -341,7 +373,6 @@ int main(int argc, char** argv)
 
 			TS(Build_Mesh_Grid);
 
-			// 스레드별 버퍼
 			struct ThreadBuffer {
 				std::vector<MCVertex> vertices;
 				std::vector<uint32_t> indices;
@@ -349,8 +380,6 @@ int main(int argc, char** argv)
 			int maxThreads = omp_get_max_threads();
 			std::vector<ThreadBuffer> threadBuffers(maxThreads);
 
-			// OpenMP Grid Loop
-			// 3중 루프를 collapse하여 하나의 큰 루프로 병렬화
 #pragma omp parallel for collapse(3) schedule(static)
 			for (int z = 0; z < Nz - 1; ++z)
 			{
@@ -360,16 +389,16 @@ int main(int argc, char** argv)
 					{
 						int tid = omp_get_thread_num();
 
-						// 큐브의 8개 코너에 대한 Grid Index 계산
+						// Grid Indices
 						int idx[8];
-						idx[0] = (z * Ny + y) * Nx + x;             // (x,   y,   z)
-						idx[1] = idx[0] + 1;                        // (x+1, y,   z)
-						idx[2] = idx[0] + Nx + 1;                   // (x+1, y+1, z)
-						idx[3] = idx[0] + Nx;                       // (x,   y+1, z)
-						idx[4] = idx[0] + Nx * Ny;                  // (x,   y,   z+1)
-						idx[5] = idx[4] + 1;                        // (x+1, y,   z+1)
-						idx[6] = idx[4] + Nx + 1;                   // (x+1, y+1, z+1)
-						idx[7] = idx[4] + Nx;                       // (x,   y+1, z+1)
+						idx[0] = (z * Ny + y) * Nx + x;
+						idx[1] = idx[0] + 1;
+						idx[2] = idx[0] + Nx + 1;
+						idx[3] = idx[0] + Nx;
+						idx[4] = idx[0] + Nx * Ny;
+						idx[5] = idx[4] + 1;
+						idx[6] = idx[4] + Nx + 1;
+						idx[7] = idx[4] + Nx;
 
 						float cubeVal[8];
 						glm::vec3 cubePos[8];
@@ -381,7 +410,6 @@ int main(int argc, char** argv)
 							{0,0,1}, {1,0,1}, {1,1,1}, {0,1,1}
 						};
 
-						// 데이터 Fetch (배열 접근이라 매우 빠름)
 						for (int j = 0; j < 8; ++j)
 						{
 							const auto& v = voxelGrid[idx[j]];
@@ -392,7 +420,6 @@ int main(int argc, char** argv)
 							cubePos[j] = aabb.min + glm::vec3(x + cornerOffsets[j][0], y + cornerOffsets[j][1], z + cornerOffsets[j][2]) * voxelSize;
 						}
 
-						// Marching Cubes Logic
 						int cubeIndex = 0;
 						if (cubeVal[0] < isoValue) cubeIndex |= 1;
 						if (cubeVal[1] < isoValue) cubeIndex |= 2;
@@ -478,30 +505,26 @@ int main(int argc, char** argv)
 							int b = triTable[cubeIndex][k + 1];
 							int c = triTable[cubeIndex][k + 2];
 
-							// [핵심 수정] 1. 생성될 삼각형의 기하학적 노멀 계산
+							// 1. 삼각형 노멀 계산
 							glm::vec3 triNormal = glm::cross(vP[b] - vP[a], vP[c] - vP[a]);
 
-							// [핵심 수정] 2. 복셀에 저장된 원본 포인트들의 평균 노멀 가져오기
+							// 2. 저장된 평균 노멀
 							glm::vec3 storedNormal(0.0f);
 							int validNormals = 0;
 							for (int j = 0; j < 8; ++j) {
-								// 데이터가 존재했던 복셀의 노멀만 합산 (weightSum > 0 등 체크하면 더 좋음)
 								if (glm::length(cubeNorm[j]) > 0.01f) {
 									storedNormal += cubeNorm[j];
 									validNormals++;
 								}
 							}
 
-							// [핵심 수정] 3. 방향 비교 (Back-Face Removal)
-							// 저장된 노멀이 없으면(validNormals==0) 일단 그림 (혹은 제거 선택)
+							// 3. Back-Face Removal
 							if (validNormals > 0) {
-								// 삼각형 노멀과 원본 노멀이 반대 방향(음수)이면 "뒷면"이므로 생성 스킵
 								if (glm::dot(triNormal, storedNormal) < 0.0f) {
-									continue;
+									continue; // 뒷면 제거
 								}
 							}
 
-							// --- 통과된 삼각형만 버퍼에 추가 ---
 							auto& buf = threadBuffers[tid];
 							uint32_t bi = (uint32_t)buf.vertices.size();
 
@@ -517,7 +540,6 @@ int main(int argc, char** argv)
 				}
 			}
 
-			// Merge Thread Buffers
 			size_t totalVertices = 0;
 			size_t totalIndices = 0;
 			for (const auto& buf : threadBuffers) {
@@ -543,28 +565,12 @@ int main(int argc, char** argv)
 
 			// ====================================================
 			// 0. Vertex Welding (정점 병합)
-			// Half-Edge를 만들려면 정점이 공유되어야 합니다.
 			// ====================================================
 			std::vector<MCVertex> weldedVertices;
 			std::vector<uint32_t> weldedIndices;
 
-			// Vec3 비교를 위한 엡실론
-			auto isSame = [](const glm::vec3& a, const glm::vec3& b) {
-				return glm::length(a - b) < 0.0001f;
-				};
-
-			// 위치 해싱을 위해 정수를 키로 사용 (간단한 공간 해싱)
-			struct Vec3Hash {
-				size_t operator()(const glm::vec3& v) const {
-					return std::hash<float>()(v.x) ^ std::hash<float>()(v.y) ^ std::hash<float>()(v.z);
-				}
-			};
-
-			// 병합을 위한 맵 (Key: Position, Value: New Index)
-			// 편의상 느린 검색 대신 정밀도를 위해 간단히 구현 (실제론 Octree나 Grid Hash 권장)
-			// 여기서는 성능을 위해 정밀도 손실을 감수하고 map 사용
 			std::map<std::tuple<int, int, int>, uint32_t> vMap;
-			float scale = 10000.0f; // 소수점 4자리까지 구분
+			float scale = 10000.0f;
 
 			for (size_t i = 0; i < mesh.vertices.size(); ++i)
 			{
@@ -596,13 +602,10 @@ int main(int argc, char** argv)
 			// 1. Half-Edge Data Structure Definition
 			// ====================================================
 			struct HalfEdge {
-				uint32_t targetVertex; // 이 엣지가 가리키는 정점 인덱스
-				int twinEdge = -1;     // 짝꿍 엣지 인덱스 (-1이면 Border)
-				// int nextEdge;       // Loop 순회용 (지금은 Border 추출만 하므로 생략 가능)
+				uint32_t targetVertex;
+				int twinEdge = -1;
 			};
 
-			// (StartVertex, EndVertex) -> EdgeIndex 맵
-			// 키를 uint64_t로 패킹: (Start << 32) | End
 			std::unordered_map<uint64_t, int> edgeMap;
 			std::vector<HalfEdge> halfEdges;
 
@@ -618,21 +621,17 @@ int main(int argc, char** argv)
 					uint32_t u = idx[j];
 					uint32_t v = idx[(j + 1) % 3];
 
-					// 현재 엣지 생성 (u -> v)
 					int currentEdgeIdx = (int)halfEdges.size();
-					halfEdges.push_back({ v, -1 }); // twin은 아직 모름
+					halfEdges.push_back({ v, -1 });
 
-					// 맵에 등록
 					uint64_t key = ((uint64_t)u << 32) | v;
 					edgeMap[key] = currentEdgeIdx;
 
-					// Twin 찾기 (v -> u 가 이미 존재하는지 확인)
 					uint64_t twinKey = ((uint64_t)v << 32) | u;
 					auto it = edgeMap.find(twinKey);
 					if (it != edgeMap.end())
 					{
 						int twinEdgeIdx = it->second;
-						// 서로 연결
 						halfEdges[currentEdgeIdx].twinEdge = twinEdgeIdx;
 						halfEdges[twinEdgeIdx].twinEdge = currentEdgeIdx;
 					}
@@ -641,16 +640,15 @@ int main(int argc, char** argv)
 
 			// ====================================================
 			// 3. Extract Borders
-			// Twin이 없는 엣지가 바로 Border입니다.
 			// ====================================================
 			std::vector<glm::vec3> borderLines;
-			std::vector<glm::vec3> borderColors; // 시각화용
+			std::vector<glm::vec3> borderColors;
 
 			for (auto const& [key, edgeIdx] : edgeMap)
 			{
 				const auto& he = halfEdges[edgeIdx];
 
-				if (he.twinEdge == -1) // Twin이 없다 == 경계선이다
+				if (he.twinEdge == -1)
 				{
 					uint32_t u = (uint32_t)(key >> 32);
 					uint32_t v = (uint32_t)(key & 0xFFFFFFFF);
@@ -658,7 +656,6 @@ int main(int argc, char** argv)
 					borderLines.push_back(weldedVertices[u].pos);
 					borderLines.push_back(weldedVertices[v].pos);
 
-					// 빨간색으로 표시
 					borderColors.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
 					borderColors.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
 				}
@@ -669,14 +666,13 @@ int main(int argc, char** argv)
 			TE(Total);
 
 			// ====================================================
-			// 4. Visualize Borders (Create a Lines Entity)
+			// 4. Visualize Borders
 			// ====================================================
 			if (!borderLines.empty())
 			{
 				auto borderEntity = Feather.CreateEntity("BorderLines");
 				auto lineRenderable = Feather.CreateComponent<Renderable>(borderEntity);
 
-				// GL_LINES 모드로 설정
 				lineRenderable->Initialize(Renderable::GeometryMode::Lines);
 
 				lineRenderable->AddShader(
@@ -691,13 +687,10 @@ int main(int argc, char** argv)
 				lineRenderable->AddVertices(borderLines);
 				lineRenderable->AddColors(borderColors);
 
-				// 인덱스는 순서대로 0, 1, 2, 3...
 				std::vector<uint32_t> lineIndices(borderLines.size());
 				std::iota(lineIndices.begin(), lineIndices.end(), 0);
 				lineRenderable->AddIndices(lineIndices);
 			}
-
-
 
 			// 4. Create Renderable
 			auto meshEntity = Feather.CreateEntity("TSDFMesh");
@@ -736,7 +729,6 @@ int main(int argc, char** argv)
 			meshRenderable->AddColors(outCols);
 			meshRenderable->AddIndices(outIdx);
 
-			// Key Events for Rendering Modes
 			Feather.CreateEventCallback<KeyEvent>(meshEntity, [](Entity entity, const KeyEvent& event) {
 				auto renderable = Feather.GetComponent<Renderable>(entity);
 				if (nullptr == renderable) return;
