@@ -20,10 +20,9 @@ void Shader::Initialize(const File& vsFile, const File& fsFile)
 
     Initialize(vs, "", fs);
 
-    printf("[Shader] Loading VS: %s, FS: %s\n", vsFile.GetFileName().c_str(), fsFile.GetFileName().c_str());
+    //printf("[Shader] Loading VS: %s, FS: %s\n", vsFile.GetFileName().c_str(), fsFile.GetFileName().c_str());
 
-    printf("[DEBUG] VS size = %zu, FS size = %zu\n", vsFile.GetFileLength(), fsFile.GetFileLength());
-
+    //printf("[DEBUG] VS size = %d, FS size = %d\n", vsFile.GetFileLength(), fsFile.GetFileLength());
 }
 
 void Shader::Initialize(const File& vsFile, const File& gsFile, const File& fsFile)

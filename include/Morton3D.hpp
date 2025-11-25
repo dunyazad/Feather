@@ -82,13 +82,16 @@ public:
 private:
     static uint64_t Part1By2(uint32_t x)
     {
-        x &= 0x1fffff;
-        x = (x | (x << 32)) & 0x1f00000000ffff;
-        x = (x | (x << 16)) & 0x1f0000ff0000ff;
-        x = (x | (x << 8)) & 0x100f00f00f00f00f;
-        x = (x | (x << 4)) & 0x10c30c30c30c30c3;
-        x = (x | (x << 2)) & 0x1249249249249249;
-        return x;
+        uint64_t r = x;
+
+        r &= 0x1fffff;
+        r = (r | (r << 32)) & 0x1f00000000ffff;
+        r = (r | (r << 16)) & 0x1f0000ff0000ff;
+        r = (r | (r << 8)) & 0x100f00f00f00f00f;
+        r = (r | (r << 4)) & 0x10c30c30c30c30c3;
+        r = (r | (r << 2)) & 0x1249249249249249;
+
+        return r;
     }
 
     static uint32_t Compact1By2(uint64_t x)

@@ -354,33 +354,38 @@ ui32 Renderable::GetIndex(ui32 bufferIndex)
 	return indices[bufferIndex];
 }
 
-glm::vec3& Renderable::GetVertex(ui32 bufferIndex)
+const glm::vec3& Renderable::GetVertex(ui32 bufferIndex)
 {
-	if (bufferIndex >= vertices.size()) return glm::vec3();
+	static glm::vec3 s_default(0.0f);
+	if (bufferIndex >= vertices.size()) return s_default;
 	return vertices[bufferIndex];
 }
 
-glm::vec3& Renderable::GetNormal(ui32 bufferIndex)
+const glm::vec3& Renderable::GetNormal(ui32 bufferIndex)
 {
-	if (bufferIndex >= normals.size()) return glm::vec3();
+	static glm::vec3 s_default(0.0f);
+	if (bufferIndex >= normals.size()) return s_default;
 	return normals[bufferIndex];
 }
 
-glm::vec3& Renderable::GetColor3(ui32 bufferIndex)
+const glm::vec3& Renderable::GetColor3(ui32 bufferIndex)
 {
-	if (bufferIndex >= colors3.size()) return glm::vec3();
+	static glm::vec3 s_default(0.0f);
+	if (bufferIndex >= colors3.size()) return s_default;
 	return colors3[bufferIndex];
 }
 
-glm::vec4& Renderable::GetColor4(ui32 bufferIndex)
+const glm::vec4& Renderable::GetColor4(ui32 bufferIndex)
 {
-	if (bufferIndex >= colors4.size()) return glm::vec4();
+	static glm::vec4 s_default(0.0f);
+	if (bufferIndex >= colors4.size()) return s_default;
 	return colors4[bufferIndex];
 }
 
-glm::vec2& Renderable::GetUV(ui32 bufferIndex)
+const glm::vec2& Renderable::GetUV(ui32 bufferIndex)
 {
-	if (bufferIndex >= uvs.size()) return glm::vec2();
+	static glm::vec2 s_default(0.0f);
+	if (bufferIndex >= uvs.size()) return s_default;
 	return uvs[bufferIndex];
 }
 

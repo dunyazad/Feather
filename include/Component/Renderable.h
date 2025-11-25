@@ -199,11 +199,11 @@ public:
 	ui32 AddUV(const glm::vec2& uv);
 
 	ui32 GetIndex(ui32 bufferIndex);
-	glm::vec3& GetVertex(ui32 bufferIndex);
-	glm::vec3& GetNormal(ui32 bufferIndex);
-	glm::vec3& GetColor3(ui32 bufferIndex);
-	glm::vec4& GetColor4(ui32 bufferIndex);
-	glm::vec2& GetUV(ui32 bufferIndex);
+	const glm::vec3& GetVertex(ui32 bufferIndex);
+	const glm::vec3& GetNormal(ui32 bufferIndex);
+	const glm::vec3& GetColor3(ui32 bufferIndex);
+	const glm::vec4& GetColor4(ui32 bufferIndex);
+	const glm::vec2& GetUV(ui32 bufferIndex);
 
 	void SetIndex(ui32 bufferIndex, ui32 index);
 	void SetVertex(ui32 bufferIndex, const glm::vec3& vertex);
