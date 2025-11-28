@@ -13,24 +13,22 @@ out vec4 FragColor;
 
 void main()
 {
-    // gl_FrontFacing: true if front face, false if back face
-    vec3 normal = vNormal;
+    vec3 lightDir = normalize(cameraPos - vFragPos);
+    vec3 normal = normalize(vNormal);
+
     if (!gl_FrontFacing)
     {
-        normal = -normal; // Flip normal for back faces
+        normal = -normal;
     }
 
-    vec3 lightDir = normalize(cameraPos - vFragPos);
-    float lighting = max(dot(normalize(normal), lightDir), 0.2);
+    float lighting = max(dot(normal, lightDir), 0.2);
 
-    vec4 baseColor;
     if (useSolidColor == 0)
     {
-        baseColor = vColor;
+        FragColor = vec4(vColor.rgb * lighting, vColor.a);
     }
     else
     {
-        baseColor = vec4(solidColor, 1.0);
+        FragColor = vec4(solidColor * lighting, 1.0f);
     }
-    FragColor = baseColor * lighting;
 }

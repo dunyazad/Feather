@@ -14,15 +14,14 @@
 struct Configuration
 {
 	const float voxelSize = 0.2f;
-	const float truncationDistance = std::max(voxelSize * 2.0f, 1.0f);
 
 	// 필터링 범위 (데이터 노이즈 제거용)
-	glm::vec3 filterMin = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-	glm::vec3 filterMax = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+	//glm::vec3 filterMin = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	//glm::vec3 filterMax = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
 	//glm::vec3 filterMin = glm::vec3(-20.0f, -20.0f, -20.0f);
 	//glm::vec3 filterMax = glm::vec3(20.0f, 20.0f, 20.0f);
-	//glm::vec3 filterMin = glm::vec3(-10.0f, -10.0f, -10.0f);
-	//glm::vec3 filterMax = glm::vec3(10.0f, 10.0f, 10.0f);
+	glm::vec3 filterMin = glm::vec3(-10.0f, -10.0f, -10.0f);
+	glm::vec3 filterMax = glm::vec3(10.0f, 10.0f, 10.0f);
 } Configuration;
 
 using VD = VisualDebugging;
@@ -39,6 +38,7 @@ struct PointAccelerator
 	glm::ivec3 dim = glm::ivec3(0);
 	float cellSize = 1.0f;
 
+	// 포인트를 격자에 분배하여 검색 속도 향상
 	void Initialize(const std::vector<glm::vec3>& points, float range)
 	{
 		if (points.empty()) return;
@@ -50,18 +50,20 @@ struct PointAccelerator
 			maxP = glm::max(maxP, p);
 		}
 
-		cellSize = range;
+		// 2. 검색 범위만큼 여유를 둠
+		cellSize = range; // 셀 크기를 검색 반경과 맞춤
 		minP -= glm::vec3(cellSize * 0.1f);
 		maxP += glm::vec3(cellSize * 0.1f);
 
 		origin = minP;
 		glm::vec3 size = maxP - minP;
-		dim = glm::ivec3(glm::ceil(size / cellSize)) + glm::ivec3(1);
+		dim = glm::ivec3(glm::ceil(size / cellSize)) + glm::ivec3(1); // 넉넉하게
 
 		size_t totalCells = (size_t)dim.x * dim.y * dim.z;
 		cells.clear();
 		cells.resize(totalCells);
 
+		// 3. 점들을 셀에 넣기
 		for (uint32_t i = 0; i < points.size(); ++i)
 		{
 			glm::ivec3 idx = glm::ivec3((points[i] - origin) / cellSize);
@@ -72,12 +74,14 @@ struct PointAccelerator
 		}
 	}
 
+	// 특정 위치(pos)에서 가장 가까운 점 찾기
 	float GetNearest(const glm::vec3& pos, const std::vector<glm::vec3>& points, uint32_t& outIdx, float maxDist)
 	{
 		glm::ivec3 centerIdx = glm::ivec3((pos - origin) / cellSize);
 		float minDistSq = maxDist * maxDist;
 		outIdx = -1;
 
+		// 인접한 3x3x3 셀만 검사
 		for (int dz = -1; dz <= 1; ++dz) {
 			for (int dy = -1; dy <= 1; ++dy) {
 				for (int dx = -1; dx <= 1; ++dx) {
@@ -101,7 +105,7 @@ struct PointAccelerator
 				}
 			}
 		}
-		return minDistSq;
+		return minDistSq; // 거리 제곱 반환
 	}
 };
 
@@ -122,6 +126,7 @@ struct FastVolume
 	glm::vec3 origin = glm::zero<glm::vec3>();
 	float voxelSize = 0.2f;
 
+	// 특정 좌표의 복셀 가져오기 (인덱싱 계산만 하므로 매우 빠름)
 	const VoxelData* GetVoxel(int x, int y, int z) const
 	{
 		if (x < 0 || x >= dim.x || y < 0 || y >= dim.y || z < 0 || z >= dim.z) return nullptr;
@@ -135,16 +140,18 @@ struct FastVolume
 
 		TS(Volume_Allocation);
 
+		// 1. 전체 영역(AABB) 계산
 		glm::vec3 minP(FLT_MAX), maxP(-FLT_MAX);
 		for (const auto& p : points) {
 			minP = glm::min(minP, p);
 			maxP = glm::max(maxP, p);
 		}
 
-		//float truncDist = std::max(voxelSize * 6.0f, 1.0f);
-		float truncDist = Configuration.truncationDistance;
+		// Truncation Distance 설정 (부드러운 표면을 위해 넉넉하게 잡음)
+		float truncDist = std::max(voxelSize * 6.0f, 1.0f);
 		float padding = truncDist + voxelSize * 2.0f;
 
+		// 그리드 원점 및 크기 계산
 		origin = glm::floor((minP - glm::vec3(padding)) / voxelSize) * voxelSize;
 		glm::vec3 endP = glm::ceil((maxP + glm::vec3(padding)) / voxelSize) * voxelSize;
 		glm::vec3 size = endP - origin;
@@ -152,11 +159,13 @@ struct FastVolume
 
 		size_t totalVoxels = (size_t)dim.x * dim.y * dim.z;
 
+		// 메모리 과다 사용 방지
 		if (totalVoxels > 500'000'000) {
 			printf("Error: Volume too large (%zu voxels). Increase voxelSize.\n", totalVoxels);
 			return;
 		}
 
+		// 초기화 (유효하지 않음으로 설정)
 		voxels.clear();
 		voxels.resize(totalVoxels, { truncDist, glm::vec3(1.0f), glm::vec3(0,1,0), false });
 
@@ -187,6 +196,7 @@ struct FastVolume
 						uint32_t nearestIdx = -1;
 						float distSq = accel.GetNearest(vPos, points, nearestIdx, truncDist);
 
+						// 범위 내에 점이 발견됨
 						if (nearestIdx != -1)
 						{
 							float dist = std::sqrt(distSq);
@@ -239,6 +249,8 @@ struct MeshGenerator
 		const glm::ivec3 corners[8] = { {0,0,0}, {1,0,0}, {1,0,1}, {0,0,1}, {0,1,0}, {1,1,0}, {1,1,1}, {0,1,1} };
 		const int edgePairs[12][2] = { {0,1}, {1,2}, {2,3}, {3,0}, {4,5}, {5,6}, {6,7}, {7,4}, {0,4}, {1,5}, {2,6}, {3,7} };
 
+		// 1. Generate Surface Net Vertices (Parallelizable per row, but map needs lock. Keep single for simplicity or gather vector first)
+		// 여기서는 단일 스레드로 진행해도 충분히 빠름 (복셀 수보다 적음)
 		for (int z = 0; z < vol.dim.z - 1; ++z) {
 			for (int y = 0; y < vol.dim.y - 1; ++y) {
 				for (int x = 0; x < vol.dim.x - 1; ++x) {
@@ -260,6 +272,7 @@ struct MeshGenerator
 						if (dists[i] < isoLevel) insideCount++;
 					}
 
+					// 셀 전체가 내부/외부거나, 데이터가 부족하면 스킵
 					if (!allValid || insideCount == 0 || insideCount == 8) continue;
 
 					glm::vec3 avgPos(0.0f), avgColor(0.0f), avgNormal(0.0f);
@@ -291,6 +304,7 @@ struct MeshGenerator
 			}
 		}
 
+		// 2. Generate Quads (Strict Validity Check -> Open Surface)
 		for (int z = 0; z < vol.dim.z - 1; ++z) {
 			for (int y = 0; y < vol.dim.y - 1; ++y) {
 				for (int x = 0; x < vol.dim.x - 1; ++x) {
@@ -454,6 +468,9 @@ struct MeshGenerator
 
 	void Visualize(bool showMesh, bool showHoles)
 	{
+		// ... (이전 코드의 Visualize 함수와 동일, 내용 복사해서 사용하세요) ...
+		// 편의를 위해 핵심 부분만 다시 적어드립니다.
+
 		if (showMesh)
 		{
 			std::vector<glm::vec3> v, n, c;
@@ -472,9 +489,7 @@ struct MeshGenerator
 
 			// Shader setup (same as before)
 			meshRenderable->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
-			//meshRenderable->AddShader(Feather.CreateShader("Flat", File("../../res/Shaders/Flat.vs"), File("../../res/Shaders/Flat.fs")));
-			//meshRenderable->AddShader(Feather.CreateShader("Line", File("../../res/Shaders/Line.vs"), File("../../res/Shaders/Line.fs")));
-			meshRenderable->AddShader(Feather.CreateShader("TwoSide", File("../../res/Shaders/TwoSide.vs"), File("../../res/Shaders/TwoSide.fs")));
+			meshRenderable->AddShader(Feather.CreateShader("Flat", File("../../res/Shaders/Flat.vs"), File("../../res/Shaders/Flat.fs")));
 			meshRenderable->SetActiveShaderIndex(0);
 
 			meshRenderable->AddVertices(v);
@@ -497,55 +512,6 @@ struct MeshGenerator
 			for (const auto& edge : holeEdges) {
 				VD::AddLine("Holes", edge.first, edge.second, Color::red());
 			}
-		}
-	}
-
-	void ExportPLY(const std::string& filename)
-	{
-		PLYFormat ply;
-
-		std::unordered_map<GridKey, uint32_t, GridKeyHash> vMap;
-		float tol = 0.0001f;
-
-		for (const auto& t : triangles)
-		{
-			uint32_t faceIndices[3];
-
-			for (int i = 0; i < 3; ++i)
-			{
-				GridKey key = {
-					(int)(t.v[i].x / tol),
-					(int)(t.v[i].y / tol),
-					(int)(t.v[i].z / tol)
-				};
-
-				if (vMap.find(key) == vMap.end())
-				{
-					uint32_t newIdx = (uint32_t)vMap.size();
-					vMap[key] = newIdx;
-
-					ply.AddPoint(t.v[i].x, t.v[i].y, t.v[i].z);
-					ply.AddNormal(t.n[i].x, t.n[i].y, t.n[i].z);
-					ply.AddColor(t.c[i].x, t.c[i].y, t.c[i].z);
-
-					faceIndices[i] = newIdx;
-				}
-				else
-				{
-					faceIndices[i] = vMap[key];
-				}
-			}
-
-			ply.AddFace(faceIndices[0], faceIndices[1], faceIndices[2]);
-		}
-
-		if (ply.Serialize(filename))
-		{
-			printf("Exported PLY: %s (Verts: %zu, Tris: %zu)\n", filename.c_str(), vMap.size(), triangles.size());
-		}
-		else
-		{
-			printf("Failed to export PLY: %s\n", filename.c_str());
 		}
 	}
 };
@@ -597,8 +563,7 @@ int main(int argc, char** argv)
 		{
 			{
 				PLYFormat ply;
-				//if (false == ply.Deserialize("D:\\Debug\\PLY\\inputA.ply")) {
-				if (false == ply.Deserialize("D:\\Debug\\PLY\\Compound.ply")) {
+				if (false == ply.Deserialize("D:\\Debug\\PLY\\inputA.ply")) {
 					printf("Failed to load PLY file.\n");
 					return;
 				}
@@ -687,8 +652,6 @@ int main(int argc, char** argv)
 				TE(TOTAL);
 
 				meshGen.Visualize(true, true);
-
-				meshGen.ExportPLY("D:\\Debug\\PLY\\output_mesh.ply");
 			}
 
 			{

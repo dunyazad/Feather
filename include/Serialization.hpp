@@ -1261,9 +1261,11 @@ public:
 	//	return true;
 	//}
 
+	inline std::vector<float>& GetNormals() { return normals; }
 	inline const std::vector<float>& GetNormals() const { return normals; }
 	inline const std::vector<unsigned int>& GetLineIndices() const { return lineIndices; }
 	inline const std::vector<unsigned int>& GetTriangleIndices() const { return triangleIndices; }
+	inline std::vector<float>& GetColors() { return colors; }
 	inline const std::vector<float>& GetColors() const { return colors; }
 	inline std::vector<int>& GetLabels() { return labels; }
 	inline const std::vector<int>& GetLabels() const { return labels; }
@@ -1458,6 +1460,88 @@ public:
 			aabbMaxY = aabbMaxZ;
 			aabbMaxZ = temp;
 		}
+	}
+
+	void FilterWithinAABB(
+		float minX, float minY, float minZ,
+		float maxX, float maxY, float maxZ)
+	{
+		std::vector<float> filteredPoints;
+		std::vector<float> filteredNormals;
+		std::vector<float> filteredColors;
+		std::vector<float> filteredUVs;
+		std::vector<int> filteredLabels;
+		std::vector<int> filteredDeepLearningClasses;
+
+		bool hasNormals = (normals.size() == points.size());
+		bool hasColorsRGB = (colors.size() == points.size());
+		bool hasColorsRGBA = (!hasColorsRGB && colors.size() / 4 == points.size() / 3);
+		bool hasUVs = (uvs.size() / 2 == points.size() / 3);
+		bool hasLabels = (labels.size() == points.size() / 3);
+		bool hasDLClasses = (deepLearningClasses.size() == points.size() / 3);
+
+		size_t numPoints = points.size() / 3;
+
+		for (size_t i = 0; i < numPoints; i++)
+		{
+			auto x = points[i * 3 + 0];
+			auto y = points[i * 3 + 1];
+			auto z = points[i * 3 + 2];
+
+			if (x >= minX && x <= maxX &&
+				y >= minY && y <= maxY &&
+				z >= minZ && z <= maxZ)
+			{
+				filteredPoints.push_back(x);
+				filteredPoints.push_back(y);
+				filteredPoints.push_back(z);
+
+				if (hasNormals)
+				{
+					filteredNormals.push_back(normals[i * 3 + 0]);
+					filteredNormals.push_back(normals[i * 3 + 1]);
+					filteredNormals.push_back(normals[i * 3 + 2]);
+				}
+
+				if (hasColorsRGB)
+				{
+					filteredColors.push_back(colors[i * 3 + 0]);
+					filteredColors.push_back(colors[i * 3 + 1]);
+					filteredColors.push_back(colors[i * 3 + 2]);
+				}
+				else if (hasColorsRGBA)
+				{
+					filteredColors.push_back(colors[i * 4 + 0]);
+					filteredColors.push_back(colors[i * 4 + 1]);
+					filteredColors.push_back(colors[i * 4 + 2]);
+					filteredColors.push_back(colors[i * 4 + 3]);
+				}
+
+				if (hasUVs)
+				{
+					filteredUVs.push_back(uvs[i * 2 + 0]);
+					filteredUVs.push_back(uvs[i * 2 + 1]);
+				}
+
+				if (hasLabels)
+				{
+					filteredLabels.push_back(labels[i]);
+				}
+
+				if (hasDLClasses)
+				{
+					filteredDeepLearningClasses.push_back(deepLearningClasses[i]);
+				}
+			}
+		}
+
+		if (hasNormals) normals = filteredNormals;
+		if (hasColorsRGB || hasColorsRGBA) colors = filteredColors;
+		if (hasUVs) uvs = filteredUVs;
+		if (hasLabels) labels = filteredLabels;
+		if (hasDLClasses) deepLearningClasses = filteredDeepLearningClasses;
+
+		points = filteredPoints;
 	}
 
 protected:

@@ -111,6 +111,8 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/res/Shaders/ScreenQuad.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Texturing.fs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/TwoSide.vs
+    ${CMAKE_SOURCE_DIR}/res/Shaders/TwoSide.fs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Grid.vs
     ${CMAKE_SOURCE_DIR}/res/Shaders/Grid.fs
 )

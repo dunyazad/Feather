@@ -31,6 +31,19 @@ public:
         z = Compact1By2(code >> 2);
     }
 
+    static glm::ivec3 KeyToIndex(uint64_t code)
+    {
+        uint32_t x = Compact1By2(code);
+        uint32_t y = Compact1By2(code >> 1);
+        uint32_t z = Compact1By2(code >> 2);
+        return glm::ivec3(x, y, z);
+	}
+
+    static uint64_t IndexToKey(const glm::ivec3& index)
+    {
+        return Encode(index);
+	}
+
     // Convert world position ¡æ voxel index
     static glm::ivec3 PositionToIndex(
         const glm::vec3& p,
