@@ -6,6 +6,7 @@ Shader::Shader()
 
 Shader::~Shader()
 {
+    Terminate();
 }
 
 void Shader::Initialize(const File& vsFile, const File& fsFile)
@@ -19,10 +20,6 @@ void Shader::Initialize(const File& vsFile, const File& fsFile)
     fsFile.Read(fs.data(), fsFile.GetFileLength());
 
     Initialize(vs, "", fs);
-
-    //printf("[Shader] Loading VS: %s, FS: %s\n", vsFile.GetFileName().c_str(), fsFile.GetFileName().c_str());
-
-    //printf("[DEBUG] VS size = %d, FS size = %d\n", vsFile.GetFileLength(), fsFile.GetFileLength());
 }
 
 void Shader::Initialize(const File& vsFile, const File& gsFile, const File& fsFile)
@@ -51,7 +48,7 @@ void Shader::Initialize(const std::string& vs, const std::string& gs, const std:
     glCompileShader(vertexShader);
     CheckShaderCompileErrors(vertexShader, "VERTEX");
 
-    GLuint geometryShader;
+    GLuint geometryShader = 0;
     if (false == gs.empty())
     {
         geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
@@ -87,10 +84,10 @@ void Shader::Initialize(const std::string& vs, const std::string& gs, const std:
 
 void Shader::Terminate()
 {
-    if (UINT_MAX != shaderProgram)
+    if (ui32_max != shaderProgram) // 헤더의 초기값과 맞춤 (UINT_MAX or ui32_max)
     {
         glDeleteProgram(shaderProgram);
-        shaderProgram = UINT_MAX;
+        shaderProgram = ui32_max;
     }
 }
 
@@ -98,23 +95,27 @@ void Shader::CheckShaderCompileErrors(GLuint shader, const std::string& type)
 {
     GLint success;
     GLchar infoLog[1024];
-    if (type == "VERTEX" || type == "FRAGMENT") {
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success) {
-            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-            std::cerr << type << " Shader compilation failed: " << infoLog << std::endl;
-        }
-    }
-    else if (type == "PROGRAM") {
+
+    if (type == "PROGRAM")
+    {
         glGetProgramiv(shader, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(shader, 1024, NULL, infoLog);
             std::cerr << "Shader Program linking failed: " << infoLog << std::endl;
         }
     }
+    else // VERTEX, GEOMETRY, FRAGMENT 등 쉐이더 컴파일 오류
+    {
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+            std::cerr << type << " Shader compilation failed: " << infoLog << std::endl;
+        }
+    }
 }
 
 void Shader::Use()
 {
-    glUseProgram(shaderProgram);
+    if (shaderProgram != ui32_max)
+        glUseProgram(shaderProgram);
 }

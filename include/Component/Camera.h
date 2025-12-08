@@ -2,28 +2,83 @@
 
 #include <FeatherCommon.h>
 
-struct ProjectionInfoOrthogonal
-{
-	f32 left, right, bottom, top, zNear, zFar;
-};
-
-struct ProjectionInfoPerspective
-{
-	f32 fovy, aspectRatio, zNear, zFar;
-};
-
-class CameraBase
+class Camera
 {
 public:
-	enum ProjectionMode { Perspective, Orghogonal };
+	enum ProjectionMode
+	{
+		Perspective,
+		Orthogonal
+	};
+
+	class PerspectiveSettings
+	{
+	public:
+		inline bool IsDirty() const { return dirty; }
+
+		inline f32 GetFovy() const { return fovy * (f32)RAD2DEG; }
+		inline void SetFovy(f32 fovy) { this->fovy = fovy; dirty = true; }
+		
+		inline f32 GetAspectRatio() const { return aspectRatio; }
+		inline void SetAspectRatio(f32 aspectRatio) { this->aspectRatio = aspectRatio; dirty = true; }
+
+		inline f32 GetZNear() const { return zNear; }
+		inline void SetZNear(f32 zNear) { this->zNear = zNear; dirty = true; }
+
+		inline f32 GetZFar() const { return zFar; }
+		inline void SetZFar(f32 zFar) { this->zFar = zFar; dirty = true; }
+
+	private:
+		bool dirty = true;
+		f32 fovy = 45.0f * (f32)DEG2RAD;
+		f32 aspectRatio = 1.0f;
+		f32 zNear = 0.01f;
+		f32 zFar = 1000.0f;
+	};
+
+	// 직교 투영용 설정값
+	class OrthogonalSettings
+	{
+	public:
+		inline bool IsDirty() const { return dirty; }
+		
+		inline f32 GetLeft() const { return left; }
+		inline void SetLeft(f32 left) { this->left = left; dirty = true; }
+		
+		inline f32 GetRight() const { return right; }
+		inline void SetRight(f32 right) { this->right = right; dirty = true; }
+		
+		inline f32 GetBottom() const { return bottom; }
+		inline void SetBottom(f32 bottom) { this->bottom = bottom; dirty = true; }
+		
+		inline f32 GetTop() const { return top; }
+		inline void SetTop(f32 top) { this->top = top; dirty = true; }
+		
+		inline f32 GetZNear() const { return zNear; }
+		inline void SetZNear(f32 zNear) { this->zNear = zNear; dirty = true; }
+
+		inline f32 GetZFar() const { return zFar; }
+		inline void SetZFar(f32 zFar) { this->zFar = zFar; dirty = true; }
+
+	private:
+		bool dirty = true;
+		f32 left = -10.0f;
+		f32 right = 10.0f;
+		f32 bottom = -10.0f;
+		f32 top = 10.0f;
+		f32 zNear = -1000.0f;
+		f32 zFar = 1000.0f;
+	};
 
 public:
-	CameraBase();
-	virtual ~CameraBase();
+	Camera();
+	~Camera();
 
-	virtual void Update(ui32 frameNo, f32 timeDelta) = 0;
+	void Update(ui32 frameNo, f32 timeDelta);
+	Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight);
 
-	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight) = 0;
+	void SetProjectionMode(ProjectionMode mode);
+	inline ProjectionMode GetProjectionMode() const { return mode; }
 
 	inline bool IsDirty() const { return dirty; }
 	inline void SetDirty(bool isDirty) { dirty = isDirty; }
@@ -39,61 +94,20 @@ public:
 	inline const glm::mat4& GetProjectionMatrix() { return projectionMatrix; }
 	inline const glm::mat4& GetViewMatrix() { return viewMatrix; }
 
-	ProjectionMode projectionMode = Perspective;
+	inline PerspectiveSettings& GetPerspectiveSettings() { dirty = true; return perspectiveSettings; }
+	inline OrthogonalSettings& GetOrthogonalSettings() { dirty = true; return orthogonalSettings; }
 
-protected:
+private:
 	bool dirty = true;
+	ProjectionMode mode = Perspective;
 
-	glm::mat4 projectionMatrix = glm::identity<glm::mat4>();
-	glm::mat4 viewMatrix = glm::identity<glm::mat4>();
+	PerspectiveSettings perspectiveSettings;
+	OrthogonalSettings orthogonalSettings;
 
 	glm::vec3 eye = glm::vec3(0.0f, 0.0f, 50.0f);
 	glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-};
 
-class PerspectiveCamera : public CameraBase
-{
-public:
-	PerspectiveCamera();
-	virtual ~PerspectiveCamera();
-
-	virtual void Update(ui32 frameNo, f32 timeDelta);
-
-	inline f32 GetFOVY() { return fovy; }
-	inline f32 GetAspectRatio() { return aspectRatio; }
-	inline f32 GetNear() { return zNear; }
-	inline f32 GetFar() { return zFar; }
-
-	inline void SetFOVY(f32 fovy) { this->fovy = fovy; dirty = true; }
-	inline void SetAspectRatio(f32 aspectRatio) { this->aspectRatio = aspectRatio; dirty = true; }
-	inline void SetNear(f32 zNear) { this->zNear = zNear; dirty = true; }
-	inline void SetFar(f32 zFar) { this->zFar = zFar; dirty = true; }
-
-	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight);
-
-protected:
-	f32 fovy = 45.0f * (f32)DEG2RAD;
-	f32 aspectRatio = 1.0f;
-	f32 zNear = 0.01f;
-	f32 zFar = 1000.0f;
-};
-
-class OrthogonalCamera : public CameraBase
-{
-public:
-	OrthogonalCamera();
-	virtual ~OrthogonalCamera();
-
-	virtual void Update(ui32 frameNo, f32 timeDelta);
-
-	virtual Ray ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight);
-
-protected:
-	f32 left = -1.0f;
-	f32 right = 1.0f;
-	f32 bottom = -1.0f;
-	f32 top = 1.0f;
-	f32 zNear = 0.1f;
-	f32 zFar = 10000.0f;
+	glm::mat4 projectionMatrix = glm::identity<glm::mat4>();
+	glm::mat4 viewMatrix = glm::identity<glm::mat4>();
 };

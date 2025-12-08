@@ -1,90 +1,100 @@
-#include <Component/Camera.h>
+#include <Component/Camera.h> 
 #include <Feather.h>
 #include <FeatherWindow.h>
 
-CameraBase::CameraBase() {}
-CameraBase::~CameraBase() {}
-
-PerspectiveCamera::PerspectiveCamera()
-    : CameraBase()
+Camera::Camera()
 {
-    auto window = Feather.GetFeatherWindow();
-    aspectRatio = (f32)window->GetWidth() / (f32)window->GetHeight();
+	auto window = Feather.GetFeatherWindow();
+	if (window)
+	{
+		perspectiveSettings.SetAspectRatio((f32)window->GetWidth() / (f32)window->GetHeight());
+	}
+
+	mode = Perspective;
+	dirty = true;
 }
 
-PerspectiveCamera::~PerspectiveCamera() {}
-
-void PerspectiveCamera::Update(ui32 frameNo, f32 timeDelta)
+Camera::~Camera()
 {
-    if (dirty)
-    {
-        projectionMatrix = glm::perspective(fovy, aspectRatio, zNear, zFar);
-
-        viewMatrix = glm::lookAt(eye, target, up);
-
-        dirty = false;
-    }
 }
 
-Ray PerspectiveCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight)
+void Camera::SetProjectionMode(ProjectionMode newMode)
 {
-    float x = (2.0f * mouseX) / (float)screenWidth - 1.0f;
-    float y = 1.0f - (2.0f * mouseY) / (float)screenHeight;
-
-    glm::vec4 ray_begin = glm::vec4(x, y, -1.0f, 1.0f);
-    glm::vec4 ray_end = glm::vec4(x, y, 1.0f, 1.0f);
-
-    auto inv = glm::inverse(projectionMatrix * viewMatrix);
-    auto begin = inv * ray_begin;
-    auto end = inv * ray_end;
-
-    begin.w = 1 / begin.w;
-    begin.x *= begin.w;
-    begin.y *= begin.w;
-    begin.z *= begin.w;
-
-    end.w = 1 / end.w;
-    end.x *= end.w;
-    end.y *= end.w;
-    end.z *= end.w;
-
-    auto origin = glm::vec3(begin);
-    auto dir = glm::normalize(glm::vec3(end) - glm::vec3(begin));
-
-    return { origin, dir };
+	if (mode != newMode)
+	{
+		mode = newMode;
+		dirty = true;
+	}
 }
 
-OrthogonalCamera::OrthogonalCamera() : CameraBase() {}
-OrthogonalCamera::~OrthogonalCamera() {}
-
-void OrthogonalCamera::Update(ui32 frameNo, f32 timeDelta)
+void Camera::Update(ui32 frameNo, f32 timeDelta)
 {
-    if (dirty)
-    {
-        projectionMatrix = glm::ortho(left, right, bottom, top);
+	if(perspectiveSettings.IsDirty())
+	{
+		this->dirty = true;
+	}
 
-        viewMatrix = glm::lookAt(eye, target, up);
+	if(orthogonalSettings.IsDirty())
+	{
+		this->dirty = true;
+	}
 
-        dirty = false;
-    }
+	if (dirty)
+	{
+		if (mode == Perspective)
+		{
+			projectionMatrix = glm::perspective(
+				perspectiveSettings.GetFovy(),
+				perspectiveSettings.GetAspectRatio(),
+				perspectiveSettings.GetZNear(),
+				perspectiveSettings.GetZFar()
+			);
+		}
+		else // Orthogonal
+		{
+			projectionMatrix = glm::ortho(
+				orthogonalSettings.GetLeft(),
+				orthogonalSettings.GetRight(),
+				orthogonalSettings.GetBottom(),
+				orthogonalSettings.GetTop(),
+				orthogonalSettings.GetZNear(),
+				orthogonalSettings.GetZFar()
+			);
+		}
+
+		viewMatrix = glm::lookAt(eye, target, up);
+
+		dirty = false;
+	}
 }
 
-Ray OrthogonalCamera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight)
+Ray Camera::ScreenPointToRay(float mouseX, float mouseY, int screenWidth, int screenHeight)
 {
-    float x_ndc = (2.0f * mouseX) / screenWidth - 1.0f;
-    float y_ndc = 1.0f - (2.0f * mouseY) / screenHeight;
+	// 행렬이 업데이트되지 않았을 경우를 대비해 필요하면 Update 호출 (선택 사항)
+	// if (dirty) Update(0, 0.0f);
 
-    glm::vec4 clip(x_ndc, y_ndc, 0.0f, 1.0f);
+	// 1. NDC 좌표 계산 (-1 ~ 1)
+	float x = (2.0f * mouseX) / (float)screenWidth - 1.0f;
+	float y = 1.0f - (2.0f * mouseY) / (float)screenHeight;
 
-    glm::mat4 invProj = glm::inverse(projectionMatrix);
-    glm::vec4 view = invProj * clip;
-    view.w = 1.0f;
+	// 2. Ray의 시작점(Near)과 끝점(Far)을 NDC 상에서 정의
+	glm::vec4 ray_begin = glm::vec4(x, y, -1.0f, 1.0f);
+	glm::vec4 ray_end = glm::vec4(x, y, 1.0f, 1.0f);
 
-    glm::mat4 invView = glm::inverse(viewMatrix);
-    glm::vec4 world = invView * view;
-    glm::vec3 origin(world.x / world.w, world.y / world.w, world.z / world.w);
+	// 3. 역행렬을 이용해 World 좌표로 변환
+	// (Perspective와 Orthogonal 모두 동일한 수식으로 동작합니다)
+	auto inv = glm::inverse(projectionMatrix * viewMatrix);
 
-    glm::vec3 dir = glm::normalize(target - eye);
+	auto begin = inv * ray_begin;
+	auto end = inv * ray_end;
 
-    return { origin, dir };
+	// 4. Perspective Divide (w로 나누기)
+	begin /= begin.w;
+	end /= end.w;
+
+	// 5. Ray 구성
+	glm::vec3 origin = glm::vec3(begin);
+	glm::vec3 dir = glm::normalize(glm::vec3(end) - glm::vec3(begin));
+
+	return { origin, dir };
 }

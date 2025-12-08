@@ -66,10 +66,10 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	glEnable(GL_DEPTH_TEST);
 
 	auto& registry = Feather.GetRegistry();
-	auto entites = registry.view<PerspectiveCamera>();
+	auto entites = registry.view<Camera>();
 	for (auto& entity : entites)
 	{
-		auto& camera = entites.get<PerspectiveCamera>(entity);
+		auto& camera = entites.get<Camera>(entity);
 
 		const auto& projection = camera.GetProjectionMatrix();
 		glMatrixMode(GL_PROJECTION);

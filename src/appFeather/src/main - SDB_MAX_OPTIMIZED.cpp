@@ -12,12 +12,10 @@
 
 struct Configuration
 {
-    const float voxelSize = 0.15f;
+    const float voxelSize = 0.2f;
     const int sdfOffset = 1;
-    //glm::vec3 filterMin = glm::vec3(-10.0f, -10.0f, -10.0f);
-    //glm::vec3 filterMax = glm::vec3(10.0f, 10.0f, 10.0f);
-    glm::vec3 filterMin = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-    glm::vec3 filterMax = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    glm::vec3 filterMin = glm::vec3(-10.0f, -10.0f, -10.0f);
+    glm::vec3 filterMax = glm::vec3(10.0f, 10.0f, 10.0f);
 } Configuration;
 
 using VD = VisualDebugging;
@@ -76,6 +74,7 @@ struct SparseDataBlock
         return &it->second->voxels[lz * VpB * VpB + ly * VpB + lx];
     }
 
+    // [최적화] IO 분리: 이미 로드된 데이터를 받아 처리 (재로딩 방지)
     void FromPointsData(const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& normals, const std::vector<glm::vec3>& colors, const glm::vec3& aabbMin)
     {
         // 1. Setup Grid Origin
@@ -272,15 +271,6 @@ struct SparseDataBlock
             });
         TE(Occupy);
     }
-
-    void Visualize()
-    {
-        for (const auto& pair : dataBlocks) {
-            const auto& block = pair.second;
-            glm::vec3 blockMax = block->blockMin + glm::vec3(blockSize);
-            VD::AddWiredBox("DataBlocks", { block->blockMin, blockMax }, Color::yellow());
-        }
-	}
 };
 
 struct Triangle { glm::vec3 v[3]; glm::vec3 n[3]; glm::vec3 c[3]; };
@@ -530,8 +520,7 @@ int main(int argc, char** argv)
 {
     std::cout << "AppFeather - Final Optimized" << std::endl;
     Feather.Initialize(1920, 1080);
-    Feather.SetConsoleWindowIndex(3);
-    Feather.SetMainWindowIndex(2);
+    Feather.SetConsoleWindowIndex(3); Feather.SetMainWindowIndex(2);
     auto w = Feather.GetFeatherWindow();
 
     // AppMain & Camera Setup
@@ -540,16 +529,15 @@ int main(int argc, char** argv)
         Feather.CreateEventCallback<KeyEvent>(appMain, [](Entity entity, const KeyEvent& event) {
             if (GLFW_KEY_ESCAPE == event.keyCode) glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
             else if (GLFW_KEY_SPACE == event.keyCode && event.action == 0) Feather.GetImmediateModeRenderSystem()->ToggleEnable();
-            else if (GLFW_KEY_BACKSPACE == event.keyCode && event.action == 0) VD::ToggleVisibility("DataBlocks");
             });
     }
     {
         Entity cam = Feather.CreateEntity("Camera");
-        auto pcam = Feather.CreateComponent<Camera>(cam);
+        auto pcam = Feather.CreateComponent<PerspectiveCamera>(cam);
         auto pcamMan = Feather.CreateComponent<CameraManipulatorTrackball>(cam);
         pcamMan->SetCamera(pcam);
         Feather.CreateEventCallback<FrameBufferResizeEvent>(cam, [pcam](Entity entity, const FrameBufferResizeEvent& event) {
-            pcam->GetPerspectiveSettings().SetAspectRatio((f32)Feather.GetFeatherWindow()->GetWidth() / (f32)Feather.GetFeatherWindow()->GetHeight());
+            pcam->SetAspectRatio((f32)Feather.GetFeatherWindow()->GetWidth() / (f32)Feather.GetFeatherWindow()->GetHeight());
             });
         Feather.CreateEventCallback<KeyEvent>(cam, [](Entity entity, const KeyEvent& event) { Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnKey(event); });
         Feather.CreateEventCallback<MousePositionEvent>(cam, [](Entity entity, const MousePositionEvent& event) { Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnMousePosition(event); });
@@ -569,7 +557,7 @@ int main(int argc, char** argv)
             // 1. Load PLY Once (IO Optimization)
             TS(PLYLoading);
             PLYFormat ply;
-            if (!ply.Deserialize("D:\\Debug\\PLY\\input.ply")) { printf("Failed to load PLY.\n"); return; }
+            if (!ply.Deserialize("D:\\Debug\\PLY\\inputA.ply")) { printf("Failed to load PLY.\n"); return; }
 
             // Manual Filtering to avoid internal copy
             std::vector<glm::vec3> points, normals, colors;
@@ -611,46 +599,11 @@ int main(int argc, char** argv)
             TE(MeshGeneration);
 
             meshGen.Visualize(true, true);
-            //meshGen.ExportPLY("D:\\Debug\\PLY\\output.ply");
-
-            sdb.Visualize();
+            meshGen.ExportPLY("D:\\Debug\\PLY\\output.ply");
 
             alog("Total DataBlocks : %s\n", FormatWithCommas(sdb.dataBlocks.size()).c_str());
             alog("DataBlock Size : %zd\n", sizeof(DataBlock));
             alog("Total Memory : %s bytes\n", FormatWithCommas(sdb.dataBlocks.size() * sizeof(DataBlock)).c_str());
-
-            {
-                size_t blockCount = sdb.dataBlocks.size();
-                size_t blockSizeBytes = sizeof(DataBlock);
-                size_t totalBytes = blockCount * blockSizeBytes;
-
-                auto formatBytes = [&](size_t bytes) {
-                    double kb = bytes / 1024.0;
-                    double mb = bytes / (1024.0 * 1024.0);
-                    double gb = bytes / (1024.0 * 1024.0 * 1024.0);
-
-                    char buf[256];
-                    if (gb >= 1.0)
-                        sprintf(buf, "%.2f GB", gb);
-                    else if (mb >= 1.0)
-                        sprintf(buf, "%.2f MB", mb);
-                    else if (kb >= 1.0)
-                        sprintf(buf, "%.2f KB", kb);
-                    else
-                        sprintf(buf, "%zu bytes", bytes);
-                    return std::string(buf);
-                    };
-
-                alog("========================================\n");
-                alog("SparseDataBlock Memory Report\n");
-                alog("  Total Blocks : %s\n", FormatWithCommas(blockCount).c_str());
-                alog("  Block Size   : %s (%zu bytes)\n",
-                    formatBytes(blockSizeBytes).c_str(), blockSizeBytes);
-                alog("  Total Memory : %s\n",
-                    formatBytes(totalBytes).c_str());
-                alog("========================================\n");
-            }
-
 
             // Status Panel
             {

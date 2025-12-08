@@ -14,7 +14,7 @@ TextBlock::~TextBlock()
 void TextBlock::Render()
 {
     Entity entity = Feather.GetEntityByName("Camera");
-    auto camera = Feather.GetComponent<PerspectiveCamera>(entity);
+    auto camera = Feather.GetComponent<Camera>(entity);
 
     const glm::mat4& proj = camera->GetProjectionMatrix();
     const glm::mat4& view = camera->GetViewMatrix();

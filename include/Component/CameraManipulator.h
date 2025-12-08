@@ -1,8 +1,18 @@
 #pragma once
 
 #include <FeatherCommon.h>
+#include <vector>
+#include <set>
+#include <unordered_set>
+#include <tuple>
 
-class CameraBase;
+// Forward declaration
+class Camera;
+struct Event;
+struct MousePositionEvent;
+struct MouseButtonEvent;
+struct MouseWheelEvent;
+struct KeyEvent;
 
 class CameraManipulatorBase
 {
@@ -17,27 +27,26 @@ public:
 	virtual void JumpToNextCameraHistory() = 0;
 	virtual void Reset() = 0;
 
-	inline CameraBase* SetCamera() const { return camera; }
-	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
+	inline Camera* GetCamera() const { return camera; }
+	inline void SetCamera(Camera* camera) { this->camera = camera; }
 
 protected:
-	CameraBase* camera = nullptr;
+	Camera* camera = nullptr;
 };
 
-class CameraManipulatorOrbit
+class CameraManipulatorOrbit : public CameraManipulatorBase
 {
 public:
 	CameraManipulatorOrbit();
-	~CameraManipulatorOrbit();
-	
-	//virtual void OnEvent(const Event& event) override;
+	virtual ~CameraManipulatorOrbit();
 
-	//void OnMousePosition(const Event& event);
-	//void OnMouseButtonPress(const Event& event);
-	//void OnMouseButtonRelease(const Event& event);
-	//void OnMouseWheel(const Event& event);
-	//void OnKeyPress(const Event& event);
-	//void OnKeyRelease(const Event& event);
+	// Base implementation stubs (to be implemented if needed)
+	virtual void PushCameraHistory() override {}
+	virtual void PopCameraHistory() override {}
+	virtual void JumpCameraHistory(i32 index) override {}
+	virtual void JumpToPreviousCameraHistory() override {}
+	virtual void JumpToNextCameraHistory() override {}
+	virtual void Reset() override {}
 
 	inline f32 GetAzimuth() { return azimuth; }
 	inline void SetAzimuth(f32 azimuth) { this->azimuth = azimuth; }
@@ -50,17 +59,12 @@ public:
 	inline f32 GetMouseWheelSensitivity() { return mouseWheelSensitivity; }
 	inline void SetMouseWheelSensitivity(f32 mouseWheelSensitivity) { this->mouseWheelSensitivity = mouseWheelSensitivity; }
 
-	inline CameraBase* SetCamera() const { return camera; }
-	inline void SetCamera(CameraBase* camera) { this->camera = camera; }
-
 protected:
-	CameraBase* camera = nullptr;
-
 	std::set<i32> pressedKeys;
 
-	f64 lastMousePositionX = UINT32_MAX;
-	f64 lastMousePositionY = UINT32_MAX;
-	
+	f64 lastMousePositionX = 0.0;
+	f64 lastMousePositionY = 0.0;
+
 	bool isLButtonPressed = false;
 	bool isMButtonPressed = false;
 	bool isRButtonPressed = false;
@@ -74,7 +78,7 @@ protected:
 };
 
 
-class CameraManipulatorTrackball
+class CameraManipulatorTrackball : public CameraManipulatorBase
 {
 public:
 	CameraManipulatorTrackball();
@@ -92,20 +96,18 @@ public:
 	void OnMouseWheel(const MouseWheelEvent& event);
 	void OnKey(const KeyEvent& event);
 
-	void PushCameraHistory();
-	void PopCameraHistory();
-	void JumpCameraHistory(i32 index);
-	void JumpToPreviousCameraHistory();
-	void JumpToNextCameraHistory();
-	void Reset();
+	virtual void PushCameraHistory() override;
+	virtual void PopCameraHistory() override;
+	virtual void JumpCameraHistory(i32 index) override;
+	virtual void JumpToPreviousCameraHistory() override;
+	virtual void JumpToNextCameraHistory() override;
+	virtual void Reset() override;
 	void MakeDefault();
 
-	inline CameraBase* GetCamera() const { return camera; }
-	inline void SetCamera(CameraBase* camera) { this->camera = camera; PushCameraHistory(); }
+	// Override to push history when setting camera
+	inline void SetCamera(Camera* camera) { this->camera = camera; if (camera) PushCameraHistory(); }
 
 private:
-	CameraBase* camera = nullptr;
-
 	float lastMousePositionX = 0.0f;
 	float lastMousePositionY = 0.0f;
 
@@ -122,6 +124,7 @@ private:
 
 	std::unordered_set<int> pressedKeys;
 
+	// History now stores radius as well
 	std::vector<std::tuple<glm::vec3, glm::vec3, glm::vec3, f32>> cameraHistory;
-	i32 cameraHistoryIndex = 0;
+	size_t cameraHistoryIndex = 0;
 };
