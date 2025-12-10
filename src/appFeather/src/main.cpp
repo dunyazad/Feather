@@ -12,7 +12,7 @@
 
 struct Configuration
 {
-    const float voxelSize = 0.15f;
+    const float voxelSize = 0.1f;
     const int sdfOffset = 1;
     //glm::vec3 filterMin = glm::vec3(-10.0f, -10.0f, -10.0f);
     //glm::vec3 filterMax = glm::vec3(10.0f, 10.0f, 10.0f);
@@ -54,7 +54,6 @@ struct SparseDataBlock
     glm::vec3 gridOrigin = glm::zero<glm::vec3>();
     std::unordered_map<DataBlockKey, std::unique_ptr<DataBlock>> dataBlocks;
 
-    // Helper: Block Size Cache
     float blockSize = voxelSize * VpB;
 
     Voxel* GetVoxelByIndex(int gx, int gy, int gz)
@@ -78,7 +77,6 @@ struct SparseDataBlock
 
     void FromPointsData(const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& normals, const std::vector<glm::vec3>& colors, const glm::vec3& aabbMin)
     {
-        // 1. Setup Grid Origin
         gridOrigin.x = std::floor(aabbMin.x / blockSize) * blockSize;
         gridOrigin.y = std::floor(aabbMin.y / blockSize) * blockSize;
         gridOrigin.z = std::floor(aabbMin.z / blockSize) * blockSize;
@@ -87,15 +85,10 @@ struct SparseDataBlock
 
         float truncDist = std::max(voxelSize * 4.0f, 0.15f);
 
-        // Prepare Parallel Indices
         size_t numPoints = points.size();
         std::vector<size_t> indices(numPoints);
         std::iota(indices.begin(), indices.end(), 0);
 
-        // ------------------------------------------------------------------
-        // Pass 1: Smart Allocation (Parallel + Boundary Check)
-        // 포인트가 블록 경계에 있을 때만 이웃 블록을 할당하여 메모리 절약
-        // ------------------------------------------------------------------
         {
             TS(Pass1_Alloc);
 
@@ -117,7 +110,6 @@ struct SparseDataBlock
                     int centerGy = (int)std::floor(vecFromOrigin.y / voxelSize);
                     int centerGz = (int)std::floor(vecFromOrigin.z / voxelSize);
 
-                    // 현재 포인트가 속한 중심 블록
                     int bx = centerGx / VpB;
                     int by = centerGy / VpB;
                     int bz = centerGz / VpB;
@@ -126,12 +118,8 @@ struct SparseDataBlock
                     auto key = Morton3D::EncodeFromVec3(blockMin + glm::vec3(voxelSize * 0.1f), gridOrigin, blockSize);
                     localKeys.push_back({ key, blockMin });
 
-                    // [최적화] Boundary Check
-                    // 포인트가 블록 경계(truncDist) 근처에 있을 때만 해당 방향의 이웃 블록 추가
                     glm::vec3 localP = p - blockMin;
 
-                    // 각 축별로 경계 침범 여부 확인 (-방향, +방향)
-                    // truncDist 여유분을 두어 SDF가 퍼질 수 있는 공간 확보
                     float margin = truncDist + voxelSize * 0.5f;
 
                     bool nearX_Neg = localP.x < margin;
@@ -143,7 +131,6 @@ struct SparseDataBlock
 
                     if (nearX_Neg || nearX_Pos || nearY_Neg || nearY_Pos || nearZ_Neg || nearZ_Pos)
                     {
-                        // 필요한 이웃만 선별적으로 추가
                         int dx_min = nearX_Neg ? -1 : 0;
                         int dx_max = nearX_Pos ? 1 : 0;
                         int dy_min = nearY_Neg ? -1 : 0;
@@ -171,7 +158,6 @@ struct SparseDataBlock
                     }
                 });
 
-            // 정렬 및 중복 제거 (매우 빠름)
             std::sort(std::execution::par, keysToAllocate.begin(), keysToAllocate.end(),
                 [](const KeyPair& a, const KeyPair& b) { return a.first < b.first; });
 
@@ -180,7 +166,6 @@ struct SparseDataBlock
 
             keysToAllocate.erase(last, keysToAllocate.end());
 
-            // 실제 메모리 할당
             for (const auto& kv : keysToAllocate)
             {
                 if (dataBlocks.find(kv.first) == dataBlocks.end())
@@ -193,9 +178,6 @@ struct SparseDataBlock
             TE(Pass1_Alloc);
         }
 
-        // ------------------------------------------------------------------
-        // Pass 2: Update Voxels (Parallel)
-        // ------------------------------------------------------------------
         std::for_each(std::execution::par, indices.begin(), indices.end(), [&](size_t i)
             {
                 auto p = points[i];
@@ -208,11 +190,9 @@ struct SparseDataBlock
                 int centerGy = (int)std::floor(vecFromOrigin.y / voxelSize);
                 int centerGz = (int)std::floor(vecFromOrigin.z / voxelSize);
 
-                // Thread-Local Cache
                 DataBlockKey lastKey = (DataBlockKey)-1;
                 DataBlock* cachedBlock = nullptr;
 
-                // 3x3x3 이웃 블록 순회
                 for (int dz = -1; dz <= 1; ++dz) {
                     for (int dy = -1; dy <= 1; ++dy) {
                         for (int dx = -1; dx <= 1; ++dx) {
@@ -220,7 +200,6 @@ struct SparseDataBlock
                             int gy = centerGy + dy;
                             int gz = centerGz + dz;
 
-                            // 거리 체크로 불필요한 연산 방지
                             glm::vec3 voxelCenter = gridOrigin + glm::vec3((gx + 0.5f) * voxelSize, (gy + 0.5f) * voxelSize, (gz + 0.5f) * voxelSize);
                             float dist = glm::distance(p, voxelCenter);
                             if (dist > truncDist) continue;
@@ -251,7 +230,6 @@ struct SparseDataBlock
                                 float weight = 1.0f - (dist / truncDist);
                                 float sdf = glm::clamp(glm::dot(voxelCenter - p, n), -truncDist, truncDist);
 
-                                // Block 단위 Lock 사용
                                 std::lock_guard<std::mutex> lock(targetBlock->blockMutex);
                                 Voxel& voxel = targetBlock->voxels[lz * VpB * VpB + ly * VpB + lx];
 
@@ -278,7 +256,20 @@ struct SparseDataBlock
         for (const auto& pair : dataBlocks) {
             const auto& block = pair.second;
             glm::vec3 blockMax = block->blockMin + glm::vec3(blockSize);
-            VD::AddWiredBox("DataBlocks", { block->blockMin, blockMax }, Color::yellow());
+            VD::AddWiredBox("Blocks", { block->blockMin, blockMax }, Color::yellow());
+
+            for (int z = 0; z < VpB; ++z) {
+                for (int y = 0; y < VpB; ++y) {
+                    for (int x = 0; x < VpB; ++x) {
+                        const Voxel& voxel = block->voxels[z * VpB * VpB + y * VpB + x];
+                        if (voxel.valid) {
+                            glm::vec3 vMin = block->blockMin + glm::vec3((float)x * voxelSize, (float)y * voxelSize, (float)z * voxelSize);
+                            glm::vec3 vMax = vMin + glm::vec3(voxelSize);
+                            VD::AddWiredBox("Voxels", { vMin, vMax }, Color::red());
+                        }
+                    }
+                }
+			}
         }
 	}
 };
@@ -300,16 +291,13 @@ struct MeshGenerator
         holeEdges.clear();
         float isoLevel = 0.0f;
 
-        // Block Iteration Vector (병렬 처리용)
         std::vector<DataBlock*> blocks;
         blocks.reserve(sdb.dataBlocks.size());
         for (auto& pair : sdb.dataBlocks) blocks.push_back(pair.second.get());
 
-        // Memory Reservation
         size_t estTris = blocks.size() * 96;
         triangles.reserve(estTris);
 
-        // Concurrent Map for Vertices
         std::unordered_map<GridKey, SNVertex, GridKeyHash> snVertices;
         snVertices.reserve(estTris * 0.6f);
         snVertices.max_load_factor(0.7f);
@@ -319,9 +307,6 @@ struct MeshGenerator
         const glm::ivec3 corners[8] = { {0,0,0}, {1,0,0}, {1,0,1}, {0,0,1}, {0,1,0}, {1,1,0}, {1,1,1}, {0,1,1} };
         const int edgePairs[12][2] = { {0,1}, {1,2}, {2,3}, {3,0}, {4,5}, {5,6}, {6,7}, {7,4}, {0,4}, {1,5}, {2,6}, {3,7} };
 
-        // -------------------------------------------------------
-        // Pass 1: Generate Vertices (Parallel)
-        // -------------------------------------------------------
         std::for_each(std::execution::par, blocks.begin(), blocks.end(), [&](DataBlock* block)
             {
                 std::vector<std::pair<GridKey, SNVertex>> localVerts;
@@ -380,9 +365,6 @@ struct MeshGenerator
                 }
             });
 
-        // -------------------------------------------------------
-        // Pass 2: Generate Quads (Parallel)
-        // -------------------------------------------------------
         std::for_each(std::execution::par, blocks.begin(), blocks.end(), [&](DataBlock* block)
             {
                 std::vector<Triangle> localTris;
@@ -441,12 +423,14 @@ struct MeshGenerator
 
     void Visualize(bool showMesh, bool showHoles)
     {
-        if (showMesh) {
+        if (showMesh)
+        {
             std::vector<glm::vec3> v, n, c; std::vector<uint32_t> ind;
             size_t cnt = triangles.size() * 3;
             v.reserve(cnt); n.reserve(cnt); c.reserve(cnt); ind.reserve(cnt);
             uint32_t i = 0;
-            for (const auto& t : triangles) {
+            for (const auto& t : triangles)
+            {
                 v.push_back(t.v[0]); v.push_back(t.v[1]); v.push_back(t.v[2]);
                 n.push_back(t.n[0]); n.push_back(t.n[1]); n.push_back(t.n[2]);
                 c.push_back(t.c[0]); c.push_back(t.c[1]); c.push_back(t.c[2]);
@@ -472,7 +456,6 @@ struct MeshGenerator
     void ExportPLY(const std::string& filename)
     {
         PLYFormat ply;
-        // Fast Export
         for (const auto& t : triangles) {
             ply.AddPoint(t.v[0].x, t.v[0].y, t.v[0].z); ply.AddNormal(t.n[0].x, t.n[0].y, t.n[0].z); ply.AddColor(t.c[0].x, t.c[0].y, t.c[0].z);
             ply.AddPoint(t.v[1].x, t.v[1].y, t.v[1].z); ply.AddNormal(t.n[1].x, t.n[1].y, t.n[1].z); ply.AddColor(t.c[1].x, t.c[1].y, t.c[1].z);
@@ -484,7 +467,6 @@ struct MeshGenerator
     }
 
     void DetectHoles() {
-        // 기존 구현과 동일
         float tol = 0.0001f;
         std::map<std::pair<int, int>, int> edges;
         std::unordered_map<GridKey, int, GridKeyHash> vMap;
@@ -534,13 +516,14 @@ int main(int argc, char** argv)
     Feather.SetMainWindowIndex(2);
     auto w = Feather.GetFeatherWindow();
 
-    // AppMain & Camera Setup
     {
         auto appMain = Feather.CreateEntity("AppMain");
         Feather.CreateEventCallback<KeyEvent>(appMain, [](Entity entity, const KeyEvent& event) {
             if (GLFW_KEY_ESCAPE == event.keyCode) glfwSetWindowShouldClose(Feather.GetFeatherWindow()->GetGLFWwindow(), true);
             else if (GLFW_KEY_SPACE == event.keyCode && event.action == 0) Feather.GetImmediateModeRenderSystem()->ToggleEnable();
-            else if (GLFW_KEY_BACKSPACE == event.keyCode && event.action == 0) VD::ToggleVisibility("DataBlocks");
+            else if (GLFW_KEY_F1 == event.keyCode && event.action == 0) VD::ToggleVisibility("Blocks");
+            else if (GLFW_KEY_F2 == event.keyCode && event.action == 0) VD::ToggleVisibility("Voxels");
+            else if (GLFW_KEY_F3 == event.keyCode && event.action == 0) VD::ToggleVisibility("Points");
             });
     }
     {
@@ -566,12 +549,10 @@ int main(int argc, char** argv)
 
     Feather.AddOnInitializeCallback([&]()
         {
-            // 1. Load PLY Once (IO Optimization)
             TS(PLYLoading);
             PLYFormat ply;
             if (!ply.Deserialize("D:\\Debug\\PLY\\input.ply")) { printf("Failed to load PLY.\n"); return; }
 
-            // Manual Filtering to avoid internal copy
             std::vector<glm::vec3> points, normals, colors;
             size_t rawCount = ply.GetPoints().size() / 3;
             points.reserve(rawCount);
@@ -596,12 +577,10 @@ int main(int argc, char** argv)
             }
             TE(PLYLoading);
 
-            // 2. Process
             auto [minx, miny, minz] = ply.GetAABBMin();
             glm::vec3 aabbMin(minx - 1.0f, miny - 1.0f, minz - 1.0f);
 
             SparseDataBlock sdb;
-            // Pass data directly (No double loading)
             sdb.FromPointsData(points, normals, colors, aabbMin);
 
             TS(MeshGeneration);
@@ -652,7 +631,6 @@ int main(int argc, char** argv)
             }
 
 
-            // Status Panel
             {
                 auto gui = Feather.GetRegistry().create();
                 auto statusPanel = Feather.GetRegistry().emplace<StatusPanel>(gui);
