@@ -68,9 +68,14 @@ struct SparseDataBlock
         auto it = dataBlocks.find(key);
         if (it == dataBlocks.end()) return nullptr;
 
-        int lx = gx % VpB; if (lx < 0) lx += VpB;
-        int ly = gy % VpB; if (ly < 0) ly += VpB;
-        int lz = gz % VpB; if (lz < 0) lz += VpB;
+        int lx = gx % VpB;
+        if (lx < 0) lx += VpB;
+        
+        int ly = gy % VpB;
+        if (ly < 0) ly += VpB;
+        
+        int lz = gz % VpB;
+        if (lz < 0) lz += VpB;
 
         return &it->second->voxels[lz * VpB * VpB + ly * VpB + lx];
     }
@@ -138,9 +143,12 @@ struct SparseDataBlock
                         int dz_min = nearZ_Neg ? -1 : 0;
                         int dz_max = nearZ_Pos ? 1 : 0;
 
-                        for (int dz = dz_min; dz <= dz_max; ++dz) {
-                            for (int dy = dy_min; dy <= dy_max; ++dy) {
-                                for (int dx = dx_min; dx <= dx_max; ++dx) {
+                        for (int dz = dz_min; dz <= dz_max; ++dz)
+                        {
+                            for (int dy = dy_min; dy <= dy_max; ++dy)
+                            {
+                                for (int dx = dx_min; dx <= dx_max; ++dx)
+                                {
                                     if (dx == 0 && dy == 0 && dz == 0) continue;
 
                                     glm::vec3 nbMin = gridOrigin + glm::vec3((float)(bx + dx) * blockSize, (float)(by + dy) * blockSize, (float)(bz + dz) * blockSize);
@@ -193,9 +201,12 @@ struct SparseDataBlock
                 DataBlockKey lastKey = (DataBlockKey)-1;
                 DataBlock* cachedBlock = nullptr;
 
-                for (int dz = -1; dz <= 1; ++dz) {
-                    for (int dy = -1; dy <= 1; ++dy) {
-                        for (int dx = -1; dx <= 1; ++dx) {
+                for (int dz = -1; dz <= 1; ++dz)
+                {
+                    for (int dy = -1; dy <= 1; ++dy)
+                    {
+                        for (int dx = -1; dx <= 1; ++dx)
+                        {
                             int gx = centerGx + dx;
                             int gy = centerGy + dy;
                             int gz = centerGz + dz;
@@ -213,16 +224,22 @@ struct SparseDataBlock
                             auto key = Morton3D::EncodeFromVec3(blockMin + glm::vec3(voxelSize * 0.1f), gridOrigin, currBlockSize);
 
                             DataBlock* targetBlock = nullptr;
-                            if (key == lastKey && cachedBlock) targetBlock = cachedBlock;
-                            else {
+                            if (key == lastKey && cachedBlock)
+                            {
+                                targetBlock = cachedBlock;
+                            }
+                            else
+                            {
                                 auto it = dataBlocks.find(key);
-                                if (it != dataBlocks.end()) {
+                                if (it != dataBlocks.end())
+                                {
                                     targetBlock = it->second.get();
                                     lastKey = key; cachedBlock = targetBlock;
                                 }
                             }
 
-                            if (targetBlock) {
+                            if (targetBlock)
+                            {
                                 int lx = gx % VpB; if (lx < 0) lx += VpB;
                                 int ly = gy % VpB; if (ly < 0) ly += VpB;
                                 int lz = gz % VpB; if (lz < 0) lz += VpB;
@@ -233,10 +250,12 @@ struct SparseDataBlock
                                 std::lock_guard<std::mutex> lock(targetBlock->blockMutex);
                                 Voxel& voxel = targetBlock->voxels[lz * VpB * VpB + ly * VpB + lx];
 
-                                if (voxel.weight <= 0.0001f) {
+                                if (voxel.weight <= 0.0001f)
+                                {
                                     voxel.signedDistance = sdf; voxel.color = c; voxel.normal = n; voxel.weight = weight; voxel.valid = true;
                                 }
-                                else {
+                                else
+                                {
                                     float newW = voxel.weight + weight;
                                     voxel.signedDistance = (voxel.signedDistance * voxel.weight + sdf * weight) / newW;
                                     voxel.color = (voxel.color * voxel.weight + c * weight) / newW;
@@ -253,16 +272,21 @@ struct SparseDataBlock
 
     void Visualize()
     {
-        for (const auto& pair : dataBlocks) {
+        for (const auto& pair : dataBlocks)
+        {
             const auto& block = pair.second;
             glm::vec3 blockMax = block->blockMin + glm::vec3(blockSize);
             VD::AddWiredBox("Blocks", { block->blockMin, blockMax }, Color::yellow());
 
-            for (int z = 0; z < VpB; ++z) {
-                for (int y = 0; y < VpB; ++y) {
-                    for (int x = 0; x < VpB; ++x) {
+            for (int z = 0; z < VpB; ++z)
+            {
+                for (int y = 0; y < VpB; ++y)
+                {
+                    for (int x = 0; x < VpB; ++x)
+                    {
                         const Voxel& voxel = block->voxels[z * VpB * VpB + y * VpB + x];
-                        if (voxel.valid) {
+                        if (voxel.valid)
+                        {
                             glm::vec3 vMin = block->blockMin + glm::vec3((float)x * voxelSize, (float)y * voxelSize, (float)z * voxelSize);
                             glm::vec3 vMax = vMin + glm::vec3(voxelSize);
                             VD::AddWiredBox("Voxels", { vMin, vMax }, Color::red());
@@ -281,9 +305,32 @@ struct MeshGenerator
     std::vector<Triangle> triangles;
     std::vector<std::pair<glm::vec3, glm::vec3>> holeEdges;
 
-    struct GridKey { int x, y, z; bool operator==(const GridKey& o) const { return x == o.x && y == o.y && z == o.z; } };
-    struct GridKeyHash { size_t operator()(const GridKey& k) const { return ((std::hash<int>()(k.x) ^ (std::hash<int>()(k.y) << 1)) >> 1) ^ (std::hash<int>()(k.z) << 1); } };
-    struct SNVertex { glm::vec3 pos; glm::vec3 normal; glm::vec3 color; };
+    struct GridKey
+    {
+        int x = 0;
+        int y = 0;
+        int z = 0;
+    
+        bool operator==(const GridKey& o) const
+        {
+            return x == o.x && y == o.y && z == o.z;
+        }
+    };
+
+    struct GridKeyHash
+    {
+        size_t operator()(const GridKey& k) const
+        {
+            return ((std::hash<int>()(k.x) ^ (std::hash<int>()(k.y) << 1)) >> 1) ^ (std::hash<int>()(k.z) << 1);
+        }
+    };
+
+    struct SNVertex
+    {
+        glm::vec3 pos;
+        glm::vec3 normal;
+        glm::vec3 color;
+    };
 
     void Generate(SparseDataBlock& sdb)
     {
@@ -317,17 +364,25 @@ struct MeshGenerator
                 int startGy = (int)(diff.y / sdb.voxelSize + 0.5f);
                 int startGz = (int)(diff.z / sdb.voxelSize + 0.5f);
 
-                for (int z = 0; z < VpB; ++z) {
-                    for (int y = 0; y < VpB; ++y) {
-                        for (int x = 0; x < VpB; ++x) {
+                for (int z = 0; z < VpB; ++z)
+                {
+                    for (int y = 0; y < VpB; ++y)
+                    {
+                        for (int x = 0; x < VpB; ++x)
+                        {
                             int gx = startGx + x; int gy = startGy + y; int gz = startGz + z;
 
                             float dists[8]; glm::vec3 colors[8], normals[8];
                             int insideCount = 0; bool allValid = true;
 
-                            for (int i = 0; i < 8; ++i) {
+                            for (int i = 0; i < 8; ++i)
+                            {
                                 const auto* v = sdb.GetVoxelByIndex(gx + corners[i].x, gy + corners[i].y, gz + corners[i].z);
-                                if (!v || !v->valid) { allValid = false; break; }
+                                if (!v || !v->valid)
+                                {
+                                    allValid = false;
+                                    break;
+                                }
                                 dists[i] = v->signedDistance; colors[i] = v->color; normals[i] = v->normal;
                                 if (dists[i] < isoLevel) insideCount++;
                             }
@@ -336,9 +391,11 @@ struct MeshGenerator
 
                             glm::vec3 avgPos(0.0f), avgColor(0.0f), avgNormal(0.0f);
                             int intersections = 0;
-                            for (int e = 0; e < 12; ++e) {
+                            for (int e = 0; e < 12; ++e)
+                            {
                                 int idx1 = edgePairs[e][0]; int idx2 = edgePairs[e][1];
-                                if ((dists[idx1] < isoLevel) != (dists[idx2] < isoLevel)) {
+                                if ((dists[idx1] < isoLevel) != (dists[idx2] < isoLevel))
+                                {
                                     float t = (isoLevel - dists[idx1]) / (dists[idx2] - dists[idx1]);
                                     glm::vec3 p1 = sdb.gridOrigin + glm::vec3(gx + corners[idx1].x, gy + corners[idx1].y, gz + corners[idx1].z) * sdb.voxelSize;
                                     glm::vec3 p2 = sdb.gridOrigin + glm::vec3(gx + corners[idx2].x, gy + corners[idx2].y, gz + corners[idx2].z) * sdb.voxelSize;
@@ -349,7 +406,8 @@ struct MeshGenerator
                                 }
                             }
 
-                            if (intersections > 0) {
+                            if (intersections > 0)
+                            {
                                 SNVertex v;
                                 v.pos = avgPos / (float)intersections;
                                 v.color = avgColor / (float)intersections;
@@ -359,7 +417,8 @@ struct MeshGenerator
                         }
                     }
                 }
-                if (!localVerts.empty()) {
+                if (!localVerts.empty())
+                {
                     std::lock_guard<std::mutex> lock(vertexMutex);
                     for (const auto& kv : localVerts) snVertices[kv.first] = kv.second;
                 }
@@ -375,16 +434,20 @@ struct MeshGenerator
                 int startGy = (int)(diff.y / sdb.voxelSize + 0.5f);
                 int startGz = (int)(diff.z / sdb.voxelSize + 0.5f);
 
-                for (int z = 0; z < VpB; ++z) {
-                    for (int y = 0; y < VpB; ++y) {
-                        for (int x = 0; x < VpB; ++x) {
+                for (int z = 0; z < VpB; ++z)
+                {
+                    for (int y = 0; y < VpB; ++y)
+                    {
+                        for (int x = 0; x < VpB; ++x)
+                        {
                             int gx = startGx + x; int gy = startGy + y; int gz = startGz + z;
                             const auto* vCurr = sdb.GetVoxelByIndex(gx, gy, gz);
                             if (!vCurr || !vCurr->valid) continue;
                             bool bCurr = vCurr->signedDistance < isoLevel;
 
                             auto AddQuadLoc = [&](const GridKey& k1, const GridKey& k2, const GridKey& k3, const GridKey& k4, bool flip) {
-                                if (snVertices.count(k1) && snVertices.count(k2) && snVertices.count(k3) && snVertices.count(k4)) {
+                                if (snVertices.count(k1) && snVertices.count(k2) && snVertices.count(k3) && snVertices.count(k4))
+                                {
                                     const auto& v0 = flip ? snVertices[k4] : snVertices[k1];
                                     const auto& v1 = flip ? snVertices[k3] : snVertices[k2];
                                     const auto& v2 = flip ? snVertices[k2] : snVertices[k3];
@@ -414,7 +477,8 @@ struct MeshGenerator
                         }
                     }
                 }
-                if (!localTris.empty()) {
+                if (!localTris.empty())
+                {
                     std::lock_guard<std::mutex> lock(triMutex);
                     triangles.insert(triangles.end(), localTris.begin(), localTris.end());
                 }
@@ -448,7 +512,8 @@ struct MeshGenerator
                 if (ev.action == 0 && ev.keyCode == GLFW_KEY_GRAVE_ACCENT) Feather.GetComponent<Renderable>(e)->NextDrawingMode();
                 });
         }
-        if (showHoles) {
+        if (showHoles)
+        {
             for (const auto& edge : holeEdges) VD::AddLine("Holes", edge.first, edge.second, Color::red());
         }
     }
@@ -456,7 +521,8 @@ struct MeshGenerator
     void ExportPLY(const std::string& filename)
     {
         PLYFormat ply;
-        for (const auto& t : triangles) {
+        for (const auto& t : triangles)
+        {
             ply.AddPoint(t.v[0].x, t.v[0].y, t.v[0].z); ply.AddNormal(t.n[0].x, t.n[0].y, t.n[0].z); ply.AddColor(t.c[0].x, t.c[0].y, t.c[0].z);
             ply.AddPoint(t.v[1].x, t.v[1].y, t.v[1].z); ply.AddNormal(t.n[1].x, t.n[1].y, t.n[1].z); ply.AddColor(t.c[1].x, t.c[1].y, t.c[1].z);
             ply.AddPoint(t.v[2].x, t.v[2].y, t.v[2].z); ply.AddNormal(t.n[2].x, t.n[2].y, t.n[2].z); ply.AddColor(t.c[2].x, t.c[2].y, t.c[2].z);
@@ -466,7 +532,8 @@ struct MeshGenerator
         if (ply.Serialize(filename)) printf("Exported PLY: %s (Tris: %zu)\n", filename.c_str(), triangles.size());
     }
 
-    void DetectHoles() {
+    void DetectHoles()
+    {
         float tol = 0.0001f;
         std::map<std::pair<int, int>, int> edges;
         std::unordered_map<GridKey, int, GridKeyHash> vMap;
@@ -475,26 +542,32 @@ struct MeshGenerator
         std::vector<int> triIndices; triIndices.reserve(triangles.size() * 3);
         std::vector<glm::vec3> tempVerts; tempVerts.reserve(triangles.size());
 
-        for (const auto& t : triangles) {
-            for (int i = 0; i < 3; ++i) {
+        for (const auto& t : triangles)
+        {
+            for (int i = 0; i < 3; ++i)
+            {
                 GridKey key = { (int)(t.v[i].x / tol), (int)(t.v[i].y / tol), (int)(t.v[i].z / tol) };
-                if (vMap.find(key) == vMap.end()) {
+                if (vMap.find(key) == vMap.end())
+                {
                     vMap[key] = vCount++;
                     tempVerts.push_back(t.v[i]);
                 }
                 triIndices.push_back(vMap[key]);
             }
         }
-        for (size_t i = 0; i < triIndices.size(); i += 3) {
+        for (size_t i = 0; i < triIndices.size(); i += 3)
+        {
             int idx[3] = { triIndices[i], triIndices[i + 1], triIndices[i + 2] };
-            for (int k = 0; k < 3; ++k) {
+            for (int k = 0; k < 3; ++k)
+            {
                 int a = idx[k]; int b = idx[(k + 1) % 3];
                 if (a > b) std::swap(a, b);
                 edges[{a, b}]++;
             }
         }
         holeEdges.clear();
-        for (auto& kv : edges) {
+        for (auto& kv : edges)
+        {
             if (kv.second == 1) holeEdges.push_back({ tempVerts[kv.first.first], tempVerts[kv.first.second] });
         }
     }
@@ -538,7 +611,8 @@ int main(int argc, char** argv)
         Feather.CreateEventCallback<MousePositionEvent>(cam, [](Entity entity, const MousePositionEvent& event) { Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnMousePosition(event); });
         Feather.CreateEventCallback<MouseButtonEvent>(cam, [&](Entity entity, const MouseButtonEvent& event) {
             Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnMouseButton(event);
-            if (event.button == 0 && event.action == 0) {
+            if (event.button == 0 && event.action == 0)
+            {
                 int w, h; glfwGetFramebufferSize(Feather.GetFeatherWindow()->GetGLFWwindow(), &w, &h);
                 float d = 0; glReadPixels((int)event.xpos, h - (int)event.ypos - 1, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &d);
                 printf("Depth: %f\n", d);
@@ -551,7 +625,11 @@ int main(int argc, char** argv)
         {
             TS(PLYLoading);
             PLYFormat ply;
-            if (!ply.Deserialize("D:\\Debug\\PLY\\input.ply")) { printf("Failed to load PLY.\n"); return; }
+            if (!ply.Deserialize("D:\\Debug\\PLY\\input.ply"))
+            {
+                printf("Failed to load PLY.\n");
+                return;
+            }
 
             std::vector<glm::vec3> points, normals, colors;
             size_t rawCount = ply.GetPoints().size() / 3;
@@ -562,14 +640,17 @@ int main(int argc, char** argv)
             auto& rawPts = ply.GetPoints(); auto& rawNorms = ply.GetNormals(); auto& rawCols = ply.GetColors();
             bool hasN = !rawNorms.empty(); bool hasC = !rawCols.empty(); bool useAlpha = ply.UseAlpha();
 
-            for (size_t i = 0; i < rawCount; ++i) {
+            for (size_t i = 0; i < rawCount; ++i)
+            {
                 float x = rawPts[i * 3], y = rawPts[i * 3 + 1], z = rawPts[i * 3 + 2];
                 if (x >= Configuration.filterMin.x && x <= Configuration.filterMax.x &&
                     y >= Configuration.filterMin.y && y <= Configuration.filterMax.y &&
-                    z >= Configuration.filterMin.z && z <= Configuration.filterMax.z) {
+                    z >= Configuration.filterMin.z && z <= Configuration.filterMax.z)
+                {
                     points.push_back({ x,y,z });
                     if (hasN) normals.push_back({ rawNorms[i * 3], rawNorms[i * 3 + 1], rawNorms[i * 3 + 2] });
-                    if (hasC) {
+                    if (hasC)
+                    {
                         if (useAlpha) colors.push_back({ rawCols[i * 4], rawCols[i * 4 + 1], rawCols[i * 4 + 2] });
                         else colors.push_back({ rawCols[i * 3], rawCols[i * 3 + 1], rawCols[i * 3 + 2] });
                     }
