@@ -313,3 +313,9 @@ Shader* libFeather::GetShader(const std::string& name)
     if (0 != shaders.count(name)) return shaders[name];
     else return nullptr;
 }
+
+bool libFeather::IsKeyPressed(int keyCode)
+{
+    return eventSystem->IsKeyPressed(keyCode);
+}
+

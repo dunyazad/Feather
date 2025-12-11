@@ -129,8 +129,6 @@ void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 
 			settings.SetFovy(fovyDeg * DEG2RAD);
 			camera->SetDirty(true);
-
-			printf("Shift Pressed\n");
 		}
 		else
 		{
@@ -146,8 +144,6 @@ void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 
 			glm::vec3 viewDir = glm::normalize(eye - target);
 			camera->SetEye(target + viewDir * radius);
-
-			printf("Shift Not Pressed\n");
 		}
 	}
 	else if (camera->GetProjectionMode() == Camera::Orthogonal)

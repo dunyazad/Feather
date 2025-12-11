@@ -127,6 +127,8 @@ public:
 
 	inline FrameBuffer* GetFrameBuffer() const { return frameBuffer; }
 
+	bool IsKeyPressed(int keyCode);
+
 private:
 	libFeather();
 	~libFeather();

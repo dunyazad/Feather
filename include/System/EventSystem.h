@@ -19,6 +19,8 @@ public:
 
 	//void DispatchEvent(const Event& event);
 
+	bool IsKeyPressed(int keyCode) const;
+
 private:
 	static std::vector<EventSystem*> s_instances;
 	FeatherWindow* window = nullptr;
@@ -32,4 +34,6 @@ private:
 
 	static f64 lastMousePositionX;
 	static f64 lastMousePositionY;
+
+	static std::map<int, bool> s_keyStates;
 };

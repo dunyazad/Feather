@@ -8,6 +8,8 @@ std::vector<EventSystem*> EventSystem::s_instances;
 f64 EventSystem::lastMousePositionX = 0.0f;
 f64 EventSystem::lastMousePositionY = 0.0f;
 
+std::map<int, bool> EventSystem::s_keyStates;
+
 EventSystem::EventSystem(FeatherWindow* window)
 	: window(window)
 {
@@ -37,8 +39,20 @@ void EventSystem::Update(ui32 frameNo, f32 timeDelta)
 	dispatcher.update();
 }
 
+bool EventSystem::IsKeyPressed(int keyCode) const
+{
+	auto it = s_keyStates.find(keyCode);
+	if (it != s_keyStates.end())
+	{
+		return it->second;
+	}
+	return false;
+}
+
 void EventSystem::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	s_keyStates[key] = (action != GLFW_RELEASE);
+
 	auto& dispatcher = Feather.GetDispatcher();
 	dispatcher.enqueue<KeyEvent>({ key, scancode, action, mods });
 }

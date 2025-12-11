@@ -1610,19 +1610,18 @@ int main(int argc, char** argv)
 
                 Ray ray{ rayOrigin, rayDir };
 
-                // Picking 실행
-                // 0.15f는 선택 반경입니다. 점 크기에 맞춰 조절하세요.
                 auto result = sgrid.Pick(pc.positions, ray, GeometricProcessingPipeline::Configuration::pointVisualizationRadius);
 
                 if (result.hasHit)
                 {
-                    // 점 시각화 (빨간색)
                     glm::vec3 p = pc.positions[result.pointIndex];
                     VD::AddSphere("PickedPoint", p, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
-					manipulator->SetCenter(p);
+                    if (Feather.IsKeyPressed(GLFW_KEY_LEFT_CONTROL) || Feather.IsKeyPressed(GLFW_KEY_RIGHT_CONTROL))
+                    {
+                        manipulator->SetCenter(p);
+                    }
 
-                    // 셀 시각화 (파란색 박스)
                     glm::vec3 cellMin = sgrid.aabb.min + glm::vec3(
                         (float)result.gx * sgrid.cellSize,
                         (float)result.gy * sgrid.cellSize,
