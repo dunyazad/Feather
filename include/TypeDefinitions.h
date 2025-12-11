@@ -221,8 +221,8 @@ struct Ray
 
 struct AABB
 {
-	glm::vec3 min;
-	glm::vec3 max;
+	glm::vec3 min = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+	glm::vec3 max = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
 	inline bool Intersects(const AABB& other) const
 	{

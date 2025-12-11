@@ -63,7 +63,6 @@ void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event
 
 	if (isMButtonPressed)
 	{
-		// Panning
 		float panX = -dx * mousePanningSensitivity;
 		float panY = dy * mousePanningSensitivity;
 
@@ -74,7 +73,8 @@ void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event
 		glm::vec3 eye = camera->GetEye();
 		glm::vec3 target = camera->GetTarget();
 
-		// Scale panning speed by radius for natural feel
+		this->radius = glm::length(eye - target);
+
 		glm::vec3 offset = screenRight * panX * radius * mouseSensitivity * 10.0f +
 			screenUp * panY * radius * mouseSensitivity * 10.0f;
 
@@ -114,12 +114,10 @@ void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 
 	bool isShiftPressed = (0 != pressedKeys.count(GLFW_KEY_LEFT_SHIFT) || 0 != pressedKeys.count(GLFW_KEY_RIGHT_SHIFT));
 
-	// 1. Perspective Zoom (Radius or FOV)
 	if (camera->GetProjectionMode() == Camera::Perspective)
 	{
 		if (isShiftPressed)
 		{
-			// Change FOV
 			auto& settings = camera->GetPerspectiveSettings();
 			f32 fovyDeg = settings.GetFovy() * RAD2DEG;
 
@@ -131,10 +129,11 @@ void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 
 			settings.SetFovy(fovyDeg * DEG2RAD);
 			camera->SetDirty(true);
+
+			printf("Shift Pressed\n");
 		}
 		else
 		{
-			// Change Distance (Dolly)
 			if (event.yoffset < 0) radius *= 1.1f;
 			else if (event.yoffset > 0) radius *= 0.9f;
 
@@ -147,28 +146,28 @@ void CameraManipulatorTrackball::OnMouseWheel(const MouseWheelEvent& event)
 
 			glm::vec3 viewDir = glm::normalize(eye - target);
 			camera->SetEye(target + viewDir * radius);
+
+			printf("Shift Not Pressed\n");
 		}
 	}
-	// 2. Orthogonal Zoom (Scale View Volume)
 	else if (camera->GetProjectionMode() == Camera::Orthogonal)
 	{
-		// For Ortho, moving the camera (radius) doesn't zoom. We must scale bounds.
 		float scaleFactor = (event.yoffset > 0) ? 0.9f : 1.1f;
 
 		auto& ortho = camera->GetOrthogonalSettings();
+
+		float currentWidth = ortho.GetRight() - ortho.GetLeft();
+		float minSize = 0.01f;
+
+		if (currentWidth < minSize && scaleFactor < 1.0f)
+		{
+			return;
+		}
 
 		ortho.SetTop(ortho.GetTop() * scaleFactor);
 		ortho.SetBottom(ortho.GetBottom() * scaleFactor);
 		ortho.SetLeft(ortho.GetLeft() * scaleFactor);
 		ortho.SetRight(ortho.GetRight() * scaleFactor);
-
-		// Optional: Clamp minimum zoom to prevent flipping or zero
-		float minSize = 0.01f;
-		if (abs(ortho.GetRight() - ortho.GetLeft()) < minSize)
-		{
-			// Prevent getting too small
-			// Logic to reset to minSize could go here if needed
-		}
 
 		camera->SetDirty(true);
 	}
