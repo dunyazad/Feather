@@ -5,3 +5,4 @@
 #include<Component/GUIComponent/NodeEditorPanel.h>
 #include<Component/GUIComponent/StatusPanel.h>
 #include<Component/GUIComponent/TextBlock.h>
+#include<Component/GUIComponent/TreeViewPanel.h>

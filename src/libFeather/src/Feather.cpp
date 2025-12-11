@@ -125,9 +125,12 @@ void libFeather::Run()
 
         frameBuffer->Bind();
 
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glfwPollEvents();
 
 		inputSystem->Update(frameNo, timeDelta);
         eventSystem->Update(frameNo, timeDelta);
@@ -136,6 +139,8 @@ void libFeather::Run()
         guiSystem->Update(frameNo, timeDelta);
 
         frameBuffer->Unbind();
+
+        glfwPollEvents();
 
         int fbWidth = 0, fbHeight = 0;
         glfwGetFramebufferSize(featherWindow->GetGLFWwindow(), &fbWidth, &fbHeight);

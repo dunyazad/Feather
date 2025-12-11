@@ -107,6 +107,8 @@ public:
 	// Override to push history when setting camera
 	inline void SetCamera(Camera* camera) { this->camera = camera; if (camera) PushCameraHistory(); }
 
+	void SetCenterFromScreenPoint(float x, float y, float depth, int screenWidth, int screenHeight);
+
 private:
 	float lastMousePositionX = 0.0f;
 	float lastMousePositionY = 0.0f;

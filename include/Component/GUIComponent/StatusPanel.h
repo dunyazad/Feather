@@ -21,4 +21,7 @@ public:
 
     ui32 mouseX = 0;
     ui32 mouseY = 0;
+
+	f64 usedMemory = 0.0f;
+	f64 totalMemory = 0.0f;
 };

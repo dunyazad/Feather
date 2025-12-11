@@ -64,10 +64,7 @@ struct PointCloudClusterer
     struct PointGridKey
     {
         int x, y, z;
-        bool operator==(const PointGridKey& o) const
-        {
-            return x == o.x && y == o.y && z == o.z;
-        }
+        bool operator==(const PointGridKey& o) const { return x == o.x && y == o.y && z == o.z; }
     };
 
     struct PointGridKeyHash
@@ -109,74 +106,96 @@ struct PointCloudClusterer
             grid[key].push_back(i);
         }
 
-        // 2. Calculate Divergences (Parallel)
-        std::vector<int> indices(numPoints);
-        std::iota(indices.begin(), indices.end(), 0);
+        {
+#include <execution>
+#include <algorithm>
+#include <vector>
+#include <numeric> // for std::iota
 
-        std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+            // ...
+
+                // 1. Build Spatial Index (Grid) - Keep Sequential
+                // Note: Inserting into std::unordered_map is NOT thread-safe without locks.
+                // Since building the grid is usually fast, we keep this part sequential.
+            std::unordered_map<PointGridKey, std::vector<int>, PointGridKeyHash> grid;
+            grid.reserve(numPoints);
+
+            for (int i = 0; i < (int)numPoints; ++i)
             {
-                glm::vec3 currPos = points[i];
-                glm::vec3 currNorm = normals[i];
-                glm::vec3 avgNormal = currNorm;
-                int neighborCount = 1;
+                PointGridKey key = {
+                    (int)std::floor(points[i].x / cellSize),
+                    (int)std::floor(points[i].y / cellSize),
+                    (int)std::floor(points[i].z / cellSize)
+                };
+                grid[key].push_back(i);
+            }
 
-                int gx = (int)std::floor(currPos.x / cellSize);
-                int gy = (int)std::floor(currPos.y / cellSize);
-                int gz = (int)std::floor(currPos.z / cellSize);
+            // 2. Calculate Divergences (Parallel)
+            // Create a range of indices [0, numPoints) to iterate over in parallel
+            std::vector<int> indices(numPoints);
+            std::iota(indices.begin(), indices.end(), 0);
 
-                for (int dz = -1; dz <= 1; ++dz)
+            std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
                 {
-                    for (int dy = -1; dy <= 1; ++dy)
+                    glm::vec3 currPos = points[i];
+                    glm::vec3 currNorm = normals[i];
+                    glm::vec3 avgNormal = currNorm;
+                    int neighborCount = 1;
+
+                    int gx = (int)std::floor(currPos.x / cellSize);
+                    int gy = (int)std::floor(currPos.y / cellSize);
+                    int gz = (int)std::floor(currPos.z / cellSize);
+
+                    // Search 3x3x3 neighbor cells 
+                    for (int dz = -1; dz <= 1; ++dz)
                     {
-                        for (int dx = -1; dx <= 1; ++dx)
+                        for (int dy = -1; dy <= 1; ++dy)
                         {
-                            auto it = grid.find({ gx + dx, gy + dy, gz + dz });
-                            if (it == grid.end()) continue;
-
-                            for (int neighborIdx : it->second)
+                            for (int dx = -1; dx <= 1; ++dx)
                             {
-                                if (i == neighborIdx) continue;
+                                // Accessing grid (read-only) is thread-safe
+                                auto it = grid.find({ gx + dx, gy + dy, gz + dz });
+                                if (it == grid.end()) continue;
 
-                                float distSq = glm::distance2(currPos, points[neighborIdx]);
-                                if (distSq <= radius * radius)
+                                for (int neighborIdx : it->second)
                                 {
-                                    avgNormal += normals[neighborIdx];
-                                    neighborCount++;
+                                    if (i == neighborIdx) continue;
+
+                                    float distSq = glm::distance2(currPos, points[neighborIdx]);
+                                    if (distSq <= radius * radius)
+                                    {
+                                        avgNormal += normals[neighborIdx];
+                                        neighborCount++;
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                if (neighborCount > 1)
-                {
-                    avgNormal = glm::normalize(avgNormal);
-                    float dotVal = glm::clamp(glm::dot(currNorm, avgNormal), -1.0f, 1.0f);
-                    pointDivergences[i] = 1.0f - dotVal;
-                }
-            });
+                    if (neighborCount > 1)
+                    {
+                        avgNormal = glm::normalize(avgNormal);
+                        // Calculate difference (0.0: match, 1.0: 90 deg diff)
+                        float dotVal = glm::clamp(glm::dot(currNorm, avgNormal), -1.0f, 1.0f);
 
-        // --- Pass 1: Mark High Divergence Points (Noise/Edge Filtering) ---
-        // Mark points with high divergence as NOISE (-2) so they are ignored in Pass 2.
-        std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
-            {
-                //if (pointDivergences[i] > maxDivergence)
-                if (0 > pointDivergences[i] || maxDivergence < pointDivergences[i])
-                {
-                    pointClusterIds[i] = -2; // Mark as Noise/High Divergence
-                }
-            });
+                        // Writing to pointDivergences[i] is thread-safe (non-overlapping)
+                        pointDivergences[i] = 1.0f - dotVal;
+                    }
+                });
+        }
 
-        // --- Pass 2: Main Clustering (Region Growing on Smooth Points) ---
         int currentClusterId = 0;
         std::queue<int> q;
 
         for (int i = 0; i < (int)numPoints; ++i)
         {
-            // Skip if already visited (>= 0) or marked as noise (-2)
+            // 이미 방문했거나, Divergence가 너무 높은(엣지/노이즈) 포인트는 시드로 쓰지 않음 (선택 사항)
             if (pointClusterIds[i] != -1) continue;
 
-            // Start new cluster
+            // 시드 포인트의 Divergence가 허용치보다 높으면 클러스터링 시작 안 함 (노이즈 필터링 효과)
+            if (pointDivergences[i] > maxDivergence) continue;
+
+            // 새로운 클러스터 시작
             pointClusterIds[i] = currentClusterId;
             q.push(i);
 
@@ -187,7 +206,9 @@ struct PointCloudClusterer
 
                 glm::vec3 currPos = points[currIdx];
                 glm::vec3 currNorm = normals[currIdx];
+                float currDiv = pointDivergences[currIdx];
 
+                // 인접 그리드 셀 탐색
                 int gx = (int)std::floor(currPos.x / cellSize);
                 int gy = (int)std::floor(currPos.y / cellSize);
                 int gz = (int)std::floor(currPos.z / cellSize);
@@ -203,19 +224,23 @@ struct PointCloudClusterer
 
                             for (int neighborIdx : it->second)
                             {
-                                // Critical Check:
-                                // If neighbor is already visited OR marked as noise (-2), skip it.
-                                // This effectively removes the "different label" (noise) points.
                                 if (pointClusterIds[neighborIdx] != -1) continue;
 
                                 float distSq = glm::distance2(currPos, points[neighborIdx]);
                                 if (distSq > radius * radius) continue;
 
-                                // Normal Similarity Check
+                                // [Check 1] 법선 방향 유사성 (기존 로직)
                                 float dotVal = glm::dot(currNorm, normals[neighborIdx]);
                                 if (dotVal < thresholdDot) continue;
 
-                                // Add to current cluster
+                                // [Check 2] Divergence Threshold Check (새 로직)
+                                // 이웃 포인트가 너무 거칠면(엣지면) 확장을 멈춤
+                                if (pointDivergences[neighborIdx] > maxDivergence) continue;
+
+                                // [Check 3] Divergence Similarity (선택 사항: 비슷한 거칠기끼리 묶기)
+                                // 평평한 곳은 평평한 곳끼리, 약간 굽은 곳은 굽은 곳끼리
+                                // if (std::abs(currDiv - pointDivergences[neighborIdx]) > 0.05f) continue;
+
                                 pointClusterIds[neighborIdx] = currentClusterId;
                                 q.push(neighborIdx);
                             }
@@ -226,7 +251,7 @@ struct PointCloudClusterer
             currentClusterId++;
         }
 
-        // Generate Colors
+        // 색상 생성
         clusterColors.resize(currentClusterId);
         std::srand(0);
         for (int i = 0; i < currentClusterId; ++i)
@@ -234,173 +259,31 @@ struct PointCloudClusterer
             clusterColors[i] = glm::vec3((float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX);
         }
 
-        alog("Point Clustering Done. Found %d valid clusters (Noise ignored).\n", currentClusterId);
+        alog("Point Clustering Done. Found %d clusters from %zu points.\n", currentClusterId, numPoints);
         TE(PointClustering);
-    }
-
-    // Add this function inside struct PointCloudClusterer
-
-    void Process_UnionAndFind(
-        const std::vector<glm::vec3>& points,
-        const std::vector<glm::vec3>& normals,
-        float radius,
-        float angleThresholdDeg)
-    {
-        TS(PointClustering_UnionFind);
-        size_t numPoints = points.size();
-        pointClusterIds.assign(numPoints, -1);
-
-        if (points.empty() || normals.empty()) return;
-
-        float thresholdDot = cos(glm::radians(angleThresholdDeg));
-        float cellSize = radius;
-        float radiusSq = radius * radius;
-
-        // 1. Initialize Union-Find (Disjoint Set)
-        // parent[i] stores the parent index of point i. 
-        // If parent[i] == i, it is a root.
-        std::vector<int> parent(numPoints);
-        std::iota(parent.begin(), parent.end(), 0);
-
-        // Helper Lambda: Find with Path Compression
-        std::function<int(int)> findRoot = [&](int i) -> int {
-            if (parent[i] == i) return i;
-            return parent[i] = findRoot(parent[i]);
-            };
-
-        // Helper Lambda: Union
-        auto unionSets = [&](int i, int j) {
-            int rootA = findRoot(i);
-            int rootB = findRoot(j);
-            if (rootA != rootB)
-            {
-                // Simple union: assign one root to another
-                // (Rank optimization could be added here for extra speed)
-                parent[rootB] = rootA;
-            }
-            };
-
-        // 2. Build Spatial Index (Grid)
-        std::unordered_map<PointGridKey, std::vector<int>, PointGridKeyHash> grid;
-        grid.reserve(numPoints);
-
-        for (int i = 0; i < (int)numPoints; ++i)
-        {
-            PointGridKey key = {
-                (int)std::floor(points[i].x / cellSize),
-                (int)std::floor(points[i].y / cellSize),
-                (int)std::floor(points[i].z / cellSize)
-            };
-            grid[key].push_back(i);
-        }
-
-        // 3. Process Logic: Check neighbors and Union
-        // We iterate through all points and connect them with valid neighbors.
-        // To avoid double checking, we can enforce i < neighborIdx or just check all.
-        // Given the grid optimization, checking all close neighbors is fast enough.
-
-        // This loop can be parallelized if we use atomic CAS for Union, 
-        // but for simplicity and stability, we run it serially here.
-        for (int i = 0; i < (int)numPoints; ++i)
-        {
-            glm::vec3 currPos = points[i];
-            glm::vec3 currNorm = normals[i];
-
-            int gx = (int)std::floor(currPos.x / cellSize);
-            int gy = (int)std::floor(currPos.y / cellSize);
-            int gz = (int)std::floor(currPos.z / cellSize);
-
-            // Search 3x3x3 grid neighborhood
-            for (int dz = -1; dz <= 1; ++dz)
-            {
-                for (int dy = -1; dy <= 1; ++dy)
-                {
-                    for (int dx = -1; dx <= 1; ++dx)
-                    {
-                        auto it = grid.find({ gx + dx, gy + dy, gz + dz });
-                        if (it == grid.end()) continue;
-
-                        for (int neighborIdx : it->second)
-                        {
-                            // Optimization: Process each pair only once
-                            if (i >= neighborIdx) continue;
-
-                            float distSq = glm::distance2(currPos, points[neighborIdx]);
-                            if (distSq > radiusSq) continue;
-
-                            float dotVal = glm::dot(currNorm, normals[neighborIdx]);
-                            if (dotVal < thresholdDot) continue;
-
-                            // Condition met: Union the two points
-                            unionSets(i, neighborIdx);
-                        }
-                    }
-                }
-            }
-        }
-
-        // 4. Resolve Clusters (Labeling)
-        // Map root indices to sequential Cluster IDs (0, 1, 2, ...)
-        std::unordered_map<int, int> rootToClusterId;
-        int currentClusterCount = 0;
-
-        for (int i = 0; i < (int)numPoints; ++i)
-        {
-            int root = findRoot(i);
-
-            if (rootToClusterId.find(root) == rootToClusterId.end())
-            {
-                rootToClusterId[root] = currentClusterCount++;
-            }
-            pointClusterIds[i] = rootToClusterId[root];
-        }
-
-        // 5. Generate Colors for new clusters
-        clusterColors.resize(currentClusterCount);
-        std::srand(0);
-        for (int i = 0; i < currentClusterCount; ++i)
-        {
-            clusterColors[i] = glm::vec3(
-                (float)rand() / RAND_MAX,
-                (float)rand() / RAND_MAX,
-                (float)rand() / RAND_MAX
-            );
-        }
-
-        alog("Union-Find Clustering Done. Found %d clusters.\n", currentClusterCount);
-        TE(PointClustering_UnionFind);
     }
 
     void Visualize(const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& normals, const std::vector<glm::vec3>& colors)
     {
         if (points.empty() || pointClusterIds.empty()) return;
 
+        auto contrastingColors = Color::GetContrastingColors(64);
+
         size_t count = points.size();
         for (size_t i = 0; i < count; ++i)
         {
-            int clusterId = pointClusterIds[i];
-
-            // Render valid clusters
-            if (clusterId >= 0 && clusterId < (int)clusterColors.size())
+            if (pointClusterIds[i] != -1 && pointClusterIds[i] < (int)clusterColors.size())
             {
-                // Option A: Use original colors
-                // auto color = colors[i];
+				//auto color = contrastingColors[pointClusterIds[i] % colors.size()];
+				//color.a = 1.0f;
 
-                // Option B: Use cluster colors for debugging
-                auto color = clusterColors[clusterId];
-
+                //auto color = contrastingColors[i % 64];
+                auto color = colors[i];
                 VD::AddSphere("Points", points[i], normals[i], 0.05f, glm::vec4(color, 1.0f));
             }
-            // Render Noise/High Divergence points (Optional)
-            else if (clusterId == -2)
-            {
-                // Make noise visible as small red dots, or comment out to hide completely
-                // VD::AddSphere("Points", points[i], normals[i], 0.02f, glm::vec4(1.0f, 0.0f, 0.0f, 0.5f)); 
-            }
-            // Unclustered valid points (Should represent error or isolated points)
             else
             {
-                // VD::AddSphere("Points", points[i], normals[i], 0.05f, Color::white());
+                VD::AddSphere("Points", points[i], normals[i], 0.05f, Color::red());
             }
         }
     }
@@ -418,6 +301,7 @@ struct PointCloudClusterer
             v.push_back(points[i]);
             n.push_back(normals[i]);
 
+            // Divergence: 0(Blue) -> 0.1(Red) 매핑
             float val = glm::clamp(pointDivergences[i] * 10.0f, 0.0f, 1.0f);
             c.push_back(glm::mix(glm::vec3(0, 0, 1), glm::vec3(1, 0, 0), val));
 
@@ -436,195 +320,6 @@ struct PointCloudClusterer
     {
         auto ent = Feather.GetEntityByName("ClusteredPoints");
         if (ent != entt::null) Feather.GetComponent<Renderable>(ent)->ToggleVisible();
-    }
-};
-
-struct PointCloudCurvatureEstimator
-{
-    // 결과 저장: 0.0 (평면) ~ 1.0 (급격한 굴곡/엣지)
-    std::vector<float> curvatures;
-
-    struct GridKey
-    {
-        int x, y, z;
-        bool operator==(const GridKey& o) const { return x == o.x && y == o.y && z == o.z; }
-    };
-
-    struct GridKeyHash
-    {
-        size_t operator()(const GridKey& k) const
-        {
-            return ((std::hash<int>()(k.x) ^ (std::hash<int>()(k.y) << 1)) >> 1) ^ (std::hash<int>()(k.z) << 1);
-        }
-    };
-
-    // 3x3 대칭 행렬의 고유값 계산 (Closed-form solution for 3x3 Symmetric Matrix)
-    // 반환값: vec3(lambda1, lambda2, lambda3) 정렬되지 않음
-    glm::vec3 ComputeEigenValuesSymmetric(const glm::mat3& M)
-    {
-        double m = (M[0][0] + M[1][1] + M[2][2]) / 3.0;
-        double p = (glm::pow(M[0][0] - m, 2.0) + glm::pow(M[1][1] - m, 2.0) + glm::pow(M[2][2] - m, 2.0) +
-            2.0 * (glm::pow(M[0][1], 2.0) + glm::pow(M[0][2], 2.0) + glm::pow(M[1][2], 2.0))) / 6.0;
-
-        double q = glm::determinant(M - glm::mat3(m)) / 2.0;
-        double phi = 0.0;
-
-        if (p > 1e-6)
-        {
-            phi = glm::atan(glm::sqrt(p * p * p - q * q), q) / 3.0;
-        }
-
-        if (phi < 0) phi += 3.14159265358979323846 / 3.0; // Correct range
-
-        double eig1 = m + 2.0 * std::sqrt(p) * std::cos(phi);
-        double eig2 = m + 2.0 * std::sqrt(p) * std::cos(phi + 2.0 * 3.14159265358979323846 / 3.0);
-        double eig3 = 3.0 * m - eig1 - eig2;
-
-        return glm::vec3((float)eig1, (float)eig2, (float)eig3);
-    }
-
-    void Process(const std::vector<glm::vec3>& points, float radius)
-    {
-        TS(ComputeCurvature);
-        size_t numPoints = points.size();
-        curvatures.assign(numPoints, 0.0f);
-
-        if (points.empty()) return;
-
-        float cellSize = radius;
-        float radiusSq = radius * radius;
-
-        // 1. Build Spatial Grid (이전 코드 재사용)
-        std::unordered_map<GridKey, std::vector<int>, GridKeyHash> grid;
-        grid.reserve(numPoints);
-
-        for (int i = 0; i < (int)numPoints; ++i)
-        {
-            GridKey key = {
-                (int)std::floor(points[i].x / cellSize),
-                (int)std::floor(points[i].y / cellSize),
-                (int)std::floor(points[i].z / cellSize)
-            };
-            grid[key].push_back(i);
-        }
-
-        std::vector<int> indices(numPoints);
-        std::iota(indices.begin(), indices.end(), 0);
-
-        // 2. Compute Surface Variation (Parallel)
-        std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
-            {
-                glm::vec3 currPos = points[i];
-
-                // Collect Neighbors
-                std::vector<int> neighbors;
-                neighbors.reserve(32);
-
-                int gx = (int)std::floor(currPos.x / cellSize);
-                int gy = (int)std::floor(currPos.y / cellSize);
-                int gz = (int)std::floor(currPos.z / cellSize);
-
-                glm::vec3 centroid(0.0f);
-
-                for (int dz = -1; dz <= 1; ++dz)
-                {
-                    for (int dy = -1; dy <= 1; ++dy)
-                    {
-                        for (int dx = -1; dx <= 1; ++dx)
-                        {
-                            auto it = grid.find({ gx + dx, gy + dy, gz + dz });
-                            if (it == grid.end()) continue;
-
-                            for (int idx : it->second)
-                            {
-                                if (glm::distance2(currPos, points[idx]) <= radiusSq)
-                                {
-                                    neighbors.push_back(idx);
-                                    centroid += points[idx];
-                                }
-                            }
-                        }
-                    }
-                }
-
-                size_t k = neighbors.size();
-                if (k < 4) // 점이 너무 적으면 곡률 계산 불가 (최소 4개 권장)
-                {
-                    curvatures[i] = 0.0f;
-                    return;
-                }
-
-                // Compute Centroid
-                centroid /= (float)k;
-
-                // Compute Covariance Matrix (3x3 Symmetric)
-                // Cov = Sum( (p - centroid) * (p - centroid)^T )
-                float xx = 0, xy = 0, xz = 0;
-                float yy = 0, yz = 0, zz = 0;
-
-                for (int idx : neighbors)
-                {
-                    glm::vec3 r = points[idx] - centroid;
-                    xx += r.x * r.x;
-                    xy += r.x * r.y;
-                    xz += r.x * r.z;
-                    yy += r.y * r.y;
-                    yz += r.y * r.z;
-                    zz += r.z * r.z;
-                }
-
-                glm::mat3 cov;
-                cov[0][0] = xx; cov[0][1] = xy; cov[0][2] = xz;
-                cov[1][0] = xy; cov[1][1] = yy; cov[1][2] = yz;
-                cov[2][0] = xz; cov[2][1] = yz; cov[2][2] = zz;
-
-                cov /= (float)k;
-
-                // Compute Eigenvalues
-                glm::vec3 evals = ComputeEigenValuesSymmetric(cov);
-
-                // Sort Eigenvalues (lambda0 <= lambda1 <= lambda2)
-                // 3개라 단순 비교 정렬
-                float lambda0 = evals.x, lambda1 = evals.y, lambda2 = evals.z;
-                if (lambda0 > lambda1) std::swap(lambda0, lambda1);
-                if (lambda1 > lambda2) std::swap(lambda1, lambda2);
-                if (lambda0 > lambda1) std::swap(lambda0, lambda1);
-
-                // Avoid division by zero
-                float sum = lambda0 + lambda1 + lambda2;
-                if (sum > 1e-8f)
-                {
-                    // Surface Variation Formula: lambda0 / (lambda0 + lambda1 + lambda2)
-                    // lambda0 (최소 고유값)는 평면의 법선 방향 분산(두께)을 나타냄
-                    curvatures[i] = lambda0 / sum;
-                }
-                else
-                {
-                    curvatures[i] = 0.0f;
-                }
-            });
-
-        TE(ComputeCurvature);
-    }
-
-    void Visualize(const std::vector<glm::vec3>& points)
-    {
-        if (points.empty() || curvatures.empty()) return;
-
-        // Heatmap 색상 (Blue -> Green -> Red)
-        for (size_t i = 0; i < points.size(); ++i)
-        {
-            // 곡률 시각화를 위해 값 증폭 (보통 곡률 값은 매우 작음)
-            float val = glm::clamp(curvatures[i] * 10.0f, 0.0f, 1.0f);
-
-            // Simple Heatmap: Low(Blue) -> High(Red)
-            glm::vec3 color = glm::mix(glm::vec3(0, 0, 1), glm::vec3(1, 0, 0), val);
-
-            if (0.5f > curvatures[i] * 10.0f)
-            {
-                VD::AddSphere("Curvature", points[i], 0.05f, glm::vec4(color, 1.0f));
-            }
-        }
     }
 };
 
@@ -1213,9 +908,7 @@ int main(int argc, char** argv)
             else if (GLFW_KEY_F2 == event.keyCode && event.action == 0) VD::ToggleVisibility("Blocks");
             else if (GLFW_KEY_F3 == event.keyCode && event.action == 0) VD::ToggleVisibility("Voxels");
             else if (GLFW_KEY_F4 == event.keyCode && event.action == 0) VD::ToggleVisibility("Points");
-            else if (GLFW_KEY_F5 == event.keyCode && event.action == 0) VD::ToggleVisibility("DLCs");
-            else if (GLFW_KEY_F6 == event.keyCode && event.action == 0) VD::ToggleVisibility("Curvature");
-            else if (GLFW_KEY_F7 == event.keyCode && event.action == 0) VD::ToggleVisibility("Holes");
+            else if (GLFW_KEY_F5 == event.keyCode && event.action == 0) VD::ToggleVisibility("Holes");
             });
     }
     {
@@ -1229,40 +922,16 @@ int main(int argc, char** argv)
         Feather.CreateEventCallback<KeyEvent>(cam, [](Entity entity, const KeyEvent& event) { Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnKey(event); });
         Feather.CreateEventCallback<MousePositionEvent>(cam, [](Entity entity, const MousePositionEvent& event) { Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnMousePosition(event); });
         Feather.CreateEventCallback<MouseButtonEvent>(cam, [&](Entity entity, const MouseButtonEvent& event) {
-            auto manipulator = Feather.GetComponent<CameraManipulatorTrackball>(entity);
-            manipulator->OnMouseButton(event);
+            Feather.GetComponent<CameraManipulatorTrackball>(entity)->OnMouseButton(event);
+            if (event.button == 0 && event.action == 0)
+            {
+                int w, h; glfwGetFramebufferSize(Feather.GetFeatherWindow()->GetGLFWwindow(), &w, &h);
+                float d = 0; glReadPixels((int)event.xpos, h - (int)event.ypos - 1, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &d);
+                printf("Depth: %f\n", d);
+            }
             });
         Feather.GetRegistry().emplace<EventCallback<MouseWheelEvent>>(cam, cam, [](Entity entity, const MouseWheelEvent& event) { Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseWheel(event); });
     }
-
-    {
-		auto entity = Feather.CreateEntity("TreeViewPanel");
-		auto component = Feather.CreateComponent<TreeViewPanel>(entity);
-    }
-
-    typedef enum {
-        DL_TOOTH,
-        DL_GINGIVA1,
-        DL_GINGIVA2,
-        DL_TONGUE,
-        DL_CHEEK,
-        DL_LIP,
-        DL_ETC,
-        DL_DENTIFORM_TOOTH,
-        DL_DENTIFORM_GINGIVA1,
-        DL_DENTIFORM_GINGIVA2,
-        DL_PLASTER,
-        DL_FINGER,
-        DL_METAL,
-        DL_PALATAL,
-        DL_ABUTMENT,
-        DL_SCANBODY,
-        DL_GINGIVA3,	//	mscho	@20241017
-        DL_OBTURA,
-        DL_3DPRTMODEL,
-        DL_RETRACTOR,
-        DL_CLASS_LAST
-    } DL_Class_Names;
 
     Feather.AddOnInitializeCallback([&]()
         {
@@ -1281,70 +950,8 @@ int main(int argc, char** argv)
             if (!ply.GetNormals().empty()) normals.reserve(rawCount);
             if (!ply.GetColors().empty()) colors.reserve(rawCount);
 
-            auto& rawPts = ply.GetPoints();
-            auto& rawNorms = ply.GetNormals();
-            auto& rawCols = ply.GetColors();
-            auto& rawDLCs = ply.GetDeepLearningClasses();
-
-            bool hasN = !rawNorms.empty();
-            bool hasC = !rawCols.empty();
-            bool useAlpha = ply.UseAlpha();
-			bool hasDLC = !rawDLCs.empty();
-
-            auto contrastingColos = Color::GetContrastingColors(16);
-
-            auto IsTooth = [](int deepLearningClass) -> bool
-                {
-                    switch (deepLearningClass)
-                    {
-                    case DL_TOOTH:
-                        return true;
-                    case DL_GINGIVA1:
-                        return false;
-                    case DL_GINGIVA2:
-                        return false;
-                    case DL_TONGUE:
-                        return false;
-                    case DL_CHEEK:
-                        return false;
-                    case DL_LIP:
-                        return false;
-                    case DL_ETC:
-                        return false;
-                    case DL_DENTIFORM_TOOTH:
-                        return true;
-                    case DL_DENTIFORM_GINGIVA1:
-                        return false;
-                    case DL_DENTIFORM_GINGIVA2:
-                        return false;
-                    case DL_PLASTER:
-                        return false;
-                    case DL_FINGER:
-                        return false;
-                    case DL_METAL:
-                        return true;
-                    case DL_PALATAL:
-                        return false;
-                    case DL_ABUTMENT:
-                        return true;
-                    case DL_SCANBODY:
-                        return true;
-                    case DL_GINGIVA3:
-                        return false;
-                    case DL_OBTURA:
-                        return false;
-                    case DL_3DPRTMODEL:
-                        return false;
-                    case DL_RETRACTOR:
-                        return false;
-                    case DL_CLASS_LAST:
-                        return false;
-
-                    default:
-                        return false;
-                        break;
-                    }
-                };
+            auto& rawPts = ply.GetPoints(); auto& rawNorms = ply.GetNormals(); auto& rawCols = ply.GetColors();
+            bool hasN = !rawNorms.empty(); bool hasC = !rawCols.empty(); bool useAlpha = ply.UseAlpha();
 
             for (size_t i = 0; i < rawCount; ++i)
             {
@@ -1353,34 +960,12 @@ int main(int argc, char** argv)
                     y >= Configuration.filterMin.y && y <= Configuration.filterMax.y &&
                     z >= Configuration.filterMin.z && z <= Configuration.filterMax.z)
                 {
-                    auto dlc = rawDLCs[i];
-                    //if (DL_ETC == dlc) continue;
-
                     points.push_back({ x,y,z });
                     if (hasN) normals.push_back({ rawNorms[i * 3], rawNorms[i * 3 + 1], rawNorms[i * 3 + 2] });
                     if (hasC)
                     {
                         if (useAlpha) colors.push_back({ rawCols[i * 4], rawCols[i * 4 + 1], rawCols[i * 4 + 2] });
                         else colors.push_back({ rawCols[i * 3], rawCols[i * 3 + 1], rawCols[i * 3 + 2] });
-                    }
-                    if (hasDLC)
-                    {
-                        if (IsTooth(dlc))
-                        {
-                            VD::AddSphere("DLCs", { x,y,z }, 0.05f, Color::white());
-                        }
-                        else
-                        {
-                            if (DL_ETC == dlc)
-                            {
-                                VD::AddSphere("DLCs", { x,y,z }, 0.05f, Color::black());
-                            }
-                            else
-                            {
-                                auto color = contrastingColos[dlc % 16];
-                                VD::AddSphere("DLCs", { x,y,z }, 0.05f, color);
-                            }
-                        }
                     }
                 }
             }
@@ -1389,15 +974,8 @@ int main(int argc, char** argv)
             auto [minx, miny, minz] = ply.GetAABBMin();
             glm::vec3 aabbMin(minx - 1.0f, miny - 1.0f, minz - 1.0f);
 
-            PointCloudCurvatureEstimator curvatureEstimator;
-            curvatureEstimator.Process(points, 0.5f);
-            curvatureEstimator.Visualize(points);
-
             PointCloudClusterer pcClusterer;
-            
-            pcClusterer.Process(points, normals, Configuration.voxelSize * 1.0f, 30.0f, 0.05f);
-            //pcClusterer.Process_UnionAndFind(points, normals, Configuration.voxelSize * 1.3f, 15.0f);
-            
+            pcClusterer.Process(points, normals, Configuration.voxelSize * 1.0f, 10.0f, 0.001f);
             pcClusterer.Visualize(points, normals, colors);
 
             SparseDataBlock sdb;

@@ -152,6 +152,11 @@ namespace Color
 	inline glm::vec4 yellow() { return { 1.0f, 1.0f, 0.0f, 1.0f }; }
 	inline glm::vec4 white() { return { 1.0f, 1.0f, 1.0f, 1.0f }; }
 
+	inline glm::vec4 FromRGB(float r, float g, float b, float a = 1.0f) 
+	{
+		return glm::vec4(r, g, b, a);
+	}
+
 	inline glm::vec4 Lerp(const glm::vec4& a, const glm::vec4& b, float t)
 	{
 		t = glm::clamp(t, 0.0f, 1.0f);
@@ -208,7 +213,7 @@ namespace Color
 	{
 		// 함수가 여러 번 호출되더라도 색상 목록은 한 번만 생성되도록 static으로 선언합니다.
 		static const std::vector<glm::vec4> allColors = {
-			aliceblue(), antiquewhite(), aqua(), aquamarine(), azure(), beige(), bisque(), black(),
+			aliceblue(), antiquewhite(), aqua(), aquamarine(), azure(), beige(), bisque(), //black(),
 			blanchedalmond(), blue(), blueviolet(), brown(), burlywood(), cadetblue(), chartreuse(),
 			chocolate(), coral(), cornflowerblue(), cornsilk(), crimson(), cyan(), darkblue(),
 			darkcyan(), darkgoldenrod(), darkgray(), darkgreen(), darkkhaki(), darkmagenta(),
@@ -249,14 +254,14 @@ namespace Color
 
 		// 시작점으로 검은색(black)을 찾아서 선택합니다. 대비를 위한 좋은 기준점입니다.
 		size_t startIndex = 0;
-		for (size_t i = 0; i < allColors.size(); ++i)
-		{
-			if (allColors[i] == black())
-			{
-				startIndex = i;
-				break;
-			}
-		}
+		//for (size_t i = 0; i < allColors.size(); ++i)
+		//{
+		//	if (allColors[i] == black())
+		//	{
+		//		startIndex = i;
+		//		break;
+		//	}
+		//}
 
 		result.push_back(allColors[startIndex]);
 		usedIndices[startIndex] = true;

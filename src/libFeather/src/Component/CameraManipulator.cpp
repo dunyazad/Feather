@@ -347,3 +347,22 @@ void CameraManipulatorTrackball::MakeDefault()
 
 	cameraHistoryIndex = 0;
 }
+
+void CameraManipulatorTrackball::SetCenterFromScreenPoint(float x, float y, float depth, int screenWidth, int screenHeight)
+{
+	if (!camera) return;
+
+	glm::mat4 view = camera->GetViewMatrix();
+	glm::mat4 proj = camera->GetProjectionMatrix();
+	glm::vec4 viewport = glm::vec4(0.0f, 0.0f, (float)screenWidth, (float)screenHeight);
+
+	glm::vec3 winCoords(x, (float)screenHeight - y - 1.0f, depth);
+
+	glm::vec3 worldPos = glm::unProject(winCoords, view, proj, viewport);
+
+	camera->SetTarget(worldPos);
+
+	this->radius = glm::distance(camera->GetEye(), worldPos);
+
+	camera->SetDirty(true);
+}

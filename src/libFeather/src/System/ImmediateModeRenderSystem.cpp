@@ -26,6 +26,8 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 
 	glUseProgram(0);
 
+	glDisable(GL_DEPTH_TEST);
+
 	glViewport(0, 0,
 		Feather.GetFeatherWindow()->GetWidth(),
 		Feather.GetFeatherWindow()->GetHeight());
@@ -60,7 +62,7 @@ void ImmediateModeRenderSystem::Update(ui32 frameNo, f32 timeDelta)
 	glVertex3f(0.0f, 0.0f, 100.0f);
 	glEnd();
 
-	glClear(GL_DEPTH_BUFFER_BIT);
+	//glClear(GL_DEPTH_BUFFER_BIT);
 	
 	// Enable depth test if needed
 	glEnable(GL_DEPTH_TEST);

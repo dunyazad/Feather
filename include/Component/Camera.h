@@ -15,6 +15,7 @@ public:
 	{
 	public:
 		inline bool IsDirty() const { return dirty; }
+		inline void SetDirty(bool isDirty) { dirty = isDirty; }
 
 		inline f32 GetFovy() const { return fovy * (f32)RAD2DEG; }
 		inline void SetFovy(f32 fovy) { this->fovy = fovy; dirty = true; }
@@ -41,7 +42,8 @@ public:
 	{
 	public:
 		inline bool IsDirty() const { return dirty; }
-		
+		inline void SetDirty(bool isDirty) { dirty = isDirty; }
+
 		inline f32 GetLeft() const { return left; }
 		inline void SetLeft(f32 left) { this->left = left; dirty = true; }
 		

@@ -29,16 +29,6 @@ void Camera::SetProjectionMode(ProjectionMode newMode)
 
 void Camera::Update(ui32 frameNo, f32 timeDelta)
 {
-	if(perspectiveSettings.IsDirty())
-	{
-		this->dirty = true;
-	}
-
-	if(orthogonalSettings.IsDirty())
-	{
-		this->dirty = true;
-	}
-
 	if (dirty)
 	{
 		if (mode == Perspective)
@@ -49,6 +39,8 @@ void Camera::Update(ui32 frameNo, f32 timeDelta)
 				perspectiveSettings.GetZNear(),
 				perspectiveSettings.GetZFar()
 			);
+
+			perspectiveSettings.SetDirty(false);
 		}
 		else // Orthogonal
 		{
@@ -60,6 +52,8 @@ void Camera::Update(ui32 frameNo, f32 timeDelta)
 				orthogonalSettings.GetZNear(),
 				orthogonalSettings.GetZFar()
 			);
+
+			orthogonalSettings.SetDirty(false);
 		}
 
 		viewMatrix = glm::lookAt(eye, target, up);

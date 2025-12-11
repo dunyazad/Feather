@@ -83,6 +83,8 @@ void StatusPanel::Render()
         }
 
         ImGui::Text("mouse : %4d, %4d", mouseX, mouseY);
+
+        ImGui::Text("GPU Memory : %.4f / %.4f", usedMemory, totalMemory);
     }
     ImGui::End();
 

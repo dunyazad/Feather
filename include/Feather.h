@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FeatherCommon.h>
+#include <Buffer.h>
 #include <File.h>
 #include <VisualDebugging.h>
 #include <IVisualDebugging.h>
@@ -123,6 +124,8 @@ public:
 	inline void SetConsoleWindowIndex(unsigned int index) { consoleWindowIndex = index; }
 	inline unsigned int GetMainWindowIndex() const { return mainWindowIndex; }
 	inline void SetMainWindowIndex(unsigned int index) { mainWindowIndex = index; }
+
+	inline FrameBuffer* GetFrameBuffer() const { return frameBuffer; }
 
 private:
 	libFeather();

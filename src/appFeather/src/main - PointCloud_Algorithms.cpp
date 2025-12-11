@@ -614,16 +614,15 @@ struct PointCloudCurvatureEstimator
         // Heatmap »ö»ó (Blue -> Green -> Red)
         for (size_t i = 0; i < points.size(); ++i)
         {
+            points[i];
+
             // °î·ü ½Ã°¢È­¸¦ À§ÇØ °ª ÁõÆø (º¸Åë °î·ü °ªÀº ¸Å¿ì ÀÛÀ½)
-            float val = glm::clamp(curvatures[i] * 10.0f, 0.0f, 1.0f);
+            float val = glm::clamp(curvatures[i] * 50.0f, 0.0f, 1.0f);
 
             // Simple Heatmap: Low(Blue) -> High(Red)
             glm::vec3 color = glm::mix(glm::vec3(0, 0, 1), glm::vec3(1, 0, 0), val);
 
-            if (0.5f > curvatures[i] * 10.0f)
-            {
-                VD::AddSphere("Curvature", points[i], 0.05f, glm::vec4(color, 1.0f));
-            }
+            VD::AddSphere("Curvature", points[i], 0.05f, glm::vec4(color, 1.0f));
         }
     }
 };
@@ -1233,11 +1232,6 @@ int main(int argc, char** argv)
             manipulator->OnMouseButton(event);
             });
         Feather.GetRegistry().emplace<EventCallback<MouseWheelEvent>>(cam, cam, [](Entity entity, const MouseWheelEvent& event) { Feather.GetRegistry().get<CameraManipulatorTrackball>(entity).OnMouseWheel(event); });
-    }
-
-    {
-		auto entity = Feather.CreateEntity("TreeViewPanel");
-		auto component = Feather.CreateComponent<TreeViewPanel>(entity);
     }
 
     typedef enum {

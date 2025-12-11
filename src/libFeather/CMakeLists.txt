@@ -47,6 +47,7 @@ set(source_list
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/NodeEditorPanel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/StatusPanel.h
     ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/TextBlock.h
+    ${CMAKE_SOURCE_DIR}/include/Component/GUIComponent/TreeViewPanel.h
 
     ${CMAKE_SOURCE_DIR}/include/Component/InputComponent/InputComponents.h
     ${CMAKE_SOURCE_DIR}/include/Component/InputComponent/Joystick.h
@@ -83,6 +84,7 @@ set(source_list
     src/Component/GUIComponent/NodeEditorPanel.cpp
     src/Component/GUIComponent/StatusPanel.cpp
     src/Component/GUIComponent/TextBlock.cpp
+    src/Component/GUIComponent/TreeViewPanel.cpp
 
     src/Component/InputComponent/Joystick.cpp
 

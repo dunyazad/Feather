@@ -91,6 +91,15 @@ void GUISystem::Update(ui32 frameNo, f32 timeDelta)
     }
 
     {
+        auto entities = Feather.GetRegistry().view<TreeViewPanel>();
+        for (auto& entity : entities)
+        {
+            auto component = Feather.GetRegistry().get<TreeViewPanel>(entity);
+            component.Render();
+        }
+    }
+
+    {
         auto entities = Feather.GetRegistry().view<ControlPanel>();
         for (auto& entity : entities)
         {
