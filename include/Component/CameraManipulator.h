@@ -107,6 +107,7 @@ public:
 	// Override to push history when setting camera
 	inline void SetCamera(Camera* camera) { this->camera = camera; if (camera) PushCameraHistory(); }
 
+	void SetCenter(const glm::vec3& center);
 	void SetCenterFromScreenPoint(float x, float y, float depth, int screenWidth, int screenHeight);
 
 private:

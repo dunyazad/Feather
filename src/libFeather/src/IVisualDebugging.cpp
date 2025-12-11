@@ -41,14 +41,14 @@ void IVisualDebugging::ClearAll()
 	VisualDebugging::ClearAll();
 }
 
-void IVisualDebugging::SetVisiblility(bool visible, const std::string& tag)
+void IVisualDebugging::SetVisibility(bool visible, const std::string& tag)
 {
-	VisualDebugging::SetVisiblility(visible, tag);
+	VisualDebugging::SetVisibility(visible, tag);
 }
 
-void IVisualDebugging::SetVisiblilityAll(bool visible)
+void IVisualDebugging::SetVisibilityAll(bool visible)
 {
-	VisualDebugging::SetVisiblilityAll(visible);
+	VisualDebugging::SetVisibilityAll(visible);
 }
 
 void IVisualDebugging::ToggleVisibility(const std::string& tag)

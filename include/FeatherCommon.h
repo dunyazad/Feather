@@ -19,6 +19,7 @@
 
 #include <bitset>
 #include <cstddef>
+#include <execution>
 #include <fstream>
 #include <functional>
 #include <iostream>

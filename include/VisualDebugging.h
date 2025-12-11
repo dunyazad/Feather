@@ -26,8 +26,8 @@ public:
 
 	static void Clear(const std::string& tag);
 	static void ClearAll();
-	static void SetVisiblility(bool visible, const std::string& tag);
-	static void SetVisiblilityAll(bool visible);
+	static void SetVisibility(bool visible, const std::string& tag);
+	static void SetVisibilityAll(bool visible);
 	static void ToggleVisibility(const std::string& tag);
 	static void ToggleVisibilityAll();
 

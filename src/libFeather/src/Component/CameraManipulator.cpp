@@ -36,7 +36,6 @@ void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event
 
 	if (isRButtonPressed)
 	{
-		// Orbit Rotation
 		float angleX = -dx * mouseSensitivity;
 		float angleY = -dy * mouseSensitivity;
 
@@ -47,8 +46,7 @@ void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event
 		glm::vec3 viewDir = glm::normalize(eye - target);
 		glm::vec3 right = glm::normalize(glm::cross(up, viewDir));
 
-		// Rotate around Up vector (Yaw) and Right vector (Pitch)
-		glm::quat rotX = glm::angleAxis(angleX, up); // World Up or Local Up logic can vary
+		glm::quat rotX = glm::angleAxis(angleX, up);
 		glm::quat rotY = glm::angleAxis(angleY, right);
 
 		glm::quat rot = rotX * rotY;
@@ -56,8 +54,6 @@ void CameraManipulatorTrackball::OnMousePosition(const MousePositionEvent& event
 		glm::vec3 rotatedViewDir = glm::normalize(rot * viewDir);
 		glm::vec3 rotatedUp = glm::normalize(rot * up);
 
-		// Re-calculate eye position based on target and radius
-		// Note: We use the current distance to maintain stability if radius drift occurs
 		float currentDist = glm::length(eye - target);
 		glm::vec3 newEye = target + rotatedViewDir * currentDist;
 
@@ -346,6 +342,22 @@ void CameraManipulatorTrackball::MakeDefault()
 	cameraHistory.push_back({ eye, target, up, radius });
 
 	cameraHistoryIndex = 0;
+}
+
+void CameraManipulatorTrackball::SetCenter(const glm::vec3& center)
+{
+	if (!camera) return;
+
+	auto delta = center - camera->GetTarget();
+	auto newEye = camera->GetEye() + delta;
+	camera->SetEye(newEye);
+	camera->SetTarget(center);
+
+	auto right = glm::normalize(glm::cross(camera->GetUp(), glm::normalize(newEye - center)));
+	glm::vec3 newUp = glm::normalize(glm::cross(right, glm::normalize(center - newEye)));
+	camera->SetUp(newUp);
+
+	camera->SetDirty(true);
 }
 
 void CameraManipulatorTrackball::SetCenterFromScreenPoint(float x, float y, float depth, int screenWidth, int screenHeight)

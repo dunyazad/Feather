@@ -180,7 +180,7 @@ void VisualDebugging::ClearAll()
 	}
 }
 
-void VisualDebugging::SetVisiblility(bool visible, const std::string& tag)
+void VisualDebugging::SetVisibility(bool visible, const std::string& tag)
 {
 	if (false == initialized) Initialize();
 
@@ -199,7 +199,7 @@ void VisualDebugging::SetVisiblility(bool visible, const std::string& tag)
 	}
 }
 
-void VisualDebugging::SetVisiblilityAll(bool visible)
+void VisualDebugging::SetVisibilityAll(bool visible)
 {
 	if (false == initialized) Initialize();
 

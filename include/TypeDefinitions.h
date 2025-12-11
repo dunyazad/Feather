@@ -191,6 +191,32 @@ struct Ray
 {
 	glm::vec3 origin;
 	glm::vec3 direction;
+	glm::vec3 inverseDirection;
+
+	Ray(const glm::vec3& o, const glm::vec3& d) : origin(o), direction(d) {
+		inverseDirection.x = (std::abs(d.x) < 1e-6f) ? ((d.x >= 0) ? 1e20f : -1e20f) : (1.0f / d.x);
+		inverseDirection.y = (std::abs(d.y) < 1e-6f) ? ((d.y >= 0) ? 1e20f : -1e20f) : (1.0f / d.y);
+		inverseDirection.z = (std::abs(d.z) < 1e-6f) ? ((d.z >= 0) ? 1e20f : -1e20f) : (1.0f / d.z);
+	}
+
+	inline bool IntersectSphere(const glm::vec3& sphereCenter, float radius, float& t) const
+	{
+		glm::vec3 m = origin - sphereCenter;
+		float b = glm::dot(m, direction);
+		float c = glm::dot(m, m) - radius * radius;
+
+		if (c > 0.0f && b > 0.0f) return false;
+
+		float discr = b * b - c;
+
+		if (discr < 0.0f) return false;
+
+		t = -b - std::sqrt(discr);
+
+		if (t < 0.0f) t = -b + std::sqrt(discr);
+
+		return t >= 0.0f;
+	}
 };
 
 struct AABB
@@ -213,5 +239,30 @@ struct AABB
 			p.x >= min.x && p.x <= max.x &&
 			p.y >= min.y && p.y <= max.y &&
 			p.z >= min.z && p.z <= max.z;
+	}
+
+	inline void Expand(const glm::vec3& p)
+	{
+		min = glm::min(min, p);
+		max = glm::max(max, p);
+	}
+
+	inline void Expand(const AABB& other)
+	{
+		min = glm::min(min, other.min);
+		max = glm::max(max, other.max);
+	}
+
+	inline bool IntersectRay(const Ray& ray, float& tNear, float& tFar) const
+	{
+		glm::vec3 t0 = (min - ray.origin) * ray.inverseDirection;
+		glm::vec3 t1 = (max - ray.origin) * ray.inverseDirection;
+		glm::vec3 tMin = glm::min(t0, t1);
+		glm::vec3 tMax = glm::max(t0, t1);
+
+		tNear = std::max(std::max(tMin.x, tMin.y), tMin.z);
+		tFar = std::min(std::min(tMax.x, tMax.y), tMax.z);
+
+		return tNear <= tFar && tFar >= 0.0f;
 	}
 };
