@@ -3,6 +3,7 @@ project(appFeather)
 
 add_executable(appFeather
     src/main.cpp
+	src/GeometricProcessingPipeline.hpp
 )
 
 target_include_directories(appFeather PRIVATE

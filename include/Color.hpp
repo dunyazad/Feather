@@ -307,6 +307,104 @@ namespace Color
 		return result;
 	}
 
+	inline std::vector<glm::vec4> GetContrastingColorsWithoutBWRGB(size_t count)
+	{
+		// 함수가 여러 번 호출되더라도 색상 목록은 한 번만 생성되도록 static으로 선언합니다.
+		static const std::vector<glm::vec4> allColors = {
+			aliceblue(), antiquewhite(), aqua(), aquamarine(), azure(), beige(), bisque(), /*black(),*/
+			blanchedalmond(), /*blue(),*/ blueviolet(), brown(), burlywood(), cadetblue(), chartreuse(),
+			chocolate(), coral(), cornflowerblue(), cornsilk(), crimson(), cyan(), darkblue(),
+			darkcyan(), darkgoldenrod(), darkgray(), darkgreen(), darkkhaki(), darkmagenta(),
+			darkolivegreen(), darkorange(), darkorchid(), darkred(), darksalmon(), darkseagreen(),
+			darkslateblue(), darkslategray(), darkturquoise(), darkviolet(), deeppink(), deepskyblue(),
+			dimgray(), dodgerblue(), firebrick(), floralwhite(), forestgreen(), fuchsia(),
+			gainsboro(), ghostwhite(), gold(), goldenrod(), gray(), /*green(),*/ greenyellow(),
+			honeydew(), hotpink(), indianred(), indigo(), ivory(), khaki(), lavender(),
+			lavenderblush(), lawngreen(), lemonchiffon(), lightblue(), lightcoral(), lightcyan(),
+			lightgoldenrodyellow(), lightgray(), lightgreen(), lightpink(), lightsalmon(),
+			lightseagreen(), lightskyblue(), lightslategray(), lightsteelblue(), lightyellow(),
+			lime(), limegreen(), linen(), magenta(), maroon(), mediumaquamarine(), mediumblue(),
+			mediumorchid(), mediumpurple(), mediumseagreen(), mediumslateblue(), mediumspringgreen(),
+			mediumturquoise(), mediumvioletred(), midnightblue(), mintcream(), mistyrose(),
+			moccasin(), navajowhite(), navy(), oldlace(), olive(), olivedrab(), orange(),
+			orangered(), orchid(), palegoldenrod(), palegreen(), paleturquoise(), palevioletred(),
+			papayawhip(), peachpuff(), peru(), pink(), plum(), powderblue(), purple(),
+			rebeccapurple(), /*red(),*/ rosybrown(), royalblue(), saddlebrown(), salmon(), sandybrown(),
+			seagreen(), seashell(), sienna(), silver(), skyblue(), slateblue(), slategray(), snow(),
+			springgreen(), steelblue(), tan(), teal(), thistle(), tomato(), turquoise(), violet(),
+			wheat(), /*white(),*/ whitesmoke(), yellow(), yellowgreen()
+		};
+
+		if (count == 0)
+		{
+			return {};
+		}
+		if (count >= allColors.size())
+		{
+			return allColors; // 요청된 개수가 전체 색상 수보다 많으면 모든 색상을 반환
+		}
+
+		std::vector<glm::vec4> result;
+		result.reserve(count);
+
+		// 어떤 색상이 이미 선택되었는지 추적하기 위한 벡터
+		std::vector<bool> usedIndices(allColors.size(), false);
+
+		// 시작점으로 검은색(black)을 찾아서 선택합니다. 대비를 위한 좋은 기준점입니다.
+		size_t startIndex = 0;
+		//for (size_t i = 0; i < allColors.size(); ++i)
+		//{
+		//	if (allColors[i] == black())
+		//	{
+		//		startIndex = i;
+		//		break;
+		//	}
+		//}
+
+		result.push_back(allColors[startIndex]);
+		usedIndices[startIndex] = true;
+
+		// 요청된 개수만큼 색상을 선택할 때까지 반복
+		for (size_t i = 1; i < count; ++i)
+		{
+			float maxMinDist = -1.0f;
+			size_t bestIndex = 0;
+
+			// 아직 선택되지 않은 모든 색상을 순회
+			for (size_t j = 0; j < allColors.size(); ++j)
+			{
+				if (usedIndices[j])
+				{
+					continue;
+				}
+
+				// 현재 색상(allColors[j])과 이미 선택된 색상들(result) 사이의 최소 거리를 찾습니다.
+				float min_dist_to_result = std::numeric_limits<float>::max();
+				for (const auto& selectedColor : result)
+				{
+					float dist = glm::distance(allColors[j], selectedColor);
+					if (dist < min_dist_to_result)
+					{
+						min_dist_to_result = dist;
+					}
+				}
+
+				// 이 최소 거리가 이전에 찾은 최대-최소 거리보다 크다면, 이 색상을 후보로 선택합니다.
+				if (min_dist_to_result > maxMinDist)
+				{
+					maxMinDist = min_dist_to_result;
+					bestIndex = j;
+				}
+			}
+
+			// 가장 멀리 떨어진 색상을 결과에 추가하고 사용됨으로 표시
+			result.push_back(allColors[bestIndex]);
+			usedIndices[bestIndex] = true;
+		}
+
+		return result;
+	}
+
 	inline std::vector<glm::vec4> InterpolateColors(const std::vector<glm::vec4>& colors, unsigned int count)
 	{
 		std::vector<glm::vec4> result;
