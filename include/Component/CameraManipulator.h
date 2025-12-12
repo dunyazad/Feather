@@ -26,6 +26,7 @@ public:
 	virtual void JumpToPreviousCameraHistory() = 0;
 	virtual void JumpToNextCameraHistory() = 0;
 	virtual void Reset() = 0;
+	virtual void SyncRadius() = 0;
 
 	inline Camera* GetCamera() const { return camera; }
 	inline void SetCamera(Camera* camera) { this->camera = camera; }
@@ -47,6 +48,7 @@ public:
 	virtual void JumpToPreviousCameraHistory() override {}
 	virtual void JumpToNextCameraHistory() override {}
 	virtual void Reset() override {}
+	virtual void SyncRadius() override {};
 
 	inline f32 GetAzimuth() { return azimuth; }
 	inline void SetAzimuth(f32 azimuth) { this->azimuth = azimuth; }
@@ -102,6 +104,7 @@ public:
 	virtual void JumpToPreviousCameraHistory() override;
 	virtual void JumpToNextCameraHistory() override;
 	virtual void Reset() override;
+	virtual void SyncRadius() override;
 	void MakeDefault();
 
 	// Override to push history when setting camera

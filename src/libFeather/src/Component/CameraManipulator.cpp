@@ -325,6 +325,13 @@ void CameraManipulatorTrackball::Reset()
 	camera->SetProjectionMode(Camera::Perspective);
 }
 
+void CameraManipulatorTrackball::SyncRadius()
+{
+	if (!camera) return;
+	
+	this->radius = glm::distance(camera->GetEye(), camera->GetTarget());
+}
+
 void CameraManipulatorTrackball::MakeDefault()
 {
 	if (!camera) return;
