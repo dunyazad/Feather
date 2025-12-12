@@ -24,17 +24,17 @@ File::File(const std::string& fileName, bool isBinary)
 
 File::~File()
 {
-	if (m_pFileStream != nullptr) {
-		delete m_pFileStream;
-	}
+	SAFE_DELETE(m_pFileStream);
 }
 
 void File::Create(const std::string& fileName, bool isBinary)
 {
-	if (isBinary) {
+	if (isBinary)
+	{
 		(*m_pFileStream).open(fileName, std::ios::binary | std::ios::in | std::ios::out | std::ios::trunc);
 	}
-	else {
+	else
+	{
 		(*m_pFileStream).open(fileName, std::ios::in | std::ios::out | std::ios::trunc);
 	}
 }
@@ -44,14 +44,17 @@ bool File::Open(const std::string& fileName, bool isBinary)
 	m_fileName = fileName;
 	if (false == Exists(fileName)) return false;
 
-	if (isBinary) {
+	if (isBinary)
+	{
 		(*m_pFileStream).open(fileName, std::ios::binary | std::ios::in);
 	}
-	else {
+	else
+	{
 		(*m_pFileStream).open(fileName, std::ios::in);
 	}
 
-	if ((*m_pFileStream).is_open()) {
+	if ((*m_pFileStream).is_open())
+	{
 		(*m_pFileStream).seekg(0, std::ios::end);
 		m_fileLength = int((*m_pFileStream).tellg());
 		(*m_pFileStream).seekg(0, std::ios::beg);

@@ -42,48 +42,17 @@ void libFeather::Terminate()
 {
     for (auto& [name, shader] : shaders)
     {
-        if (nullptr != shader) delete shader;
+        SAFE_DELETE(shader);
     }
     shaders.clear();
 
-    if (nullptr != frameBuffer)
-    {
-        frameBuffer->Terminate();
-        delete frameBuffer;
-		frameBuffer = nullptr;
-    }
-
-    if (nullptr != inputSystem)
-    {
-        delete inputSystem;
-        inputSystem = nullptr;
-    }
-    if (nullptr != eventSystem)
-    {
-        delete eventSystem;
-		eventSystem = nullptr;
-    }
-    if (nullptr != renderSystem)
-    {
-        delete renderSystem;
-		renderSystem = nullptr;
-    }
-    if (nullptr != immediateModeRenderSystem)
-    {
-        delete immediateModeRenderSystem;
-		immediateModeRenderSystem = nullptr;
-    }
-    if (nullptr != guiSystem)
-    {
-        delete guiSystem;
-        guiSystem = nullptr;
-    }
-
-    if (nullptr != featherWindow)
-    {
-        delete featherWindow;
-        featherWindow = nullptr;
-    }
+    SAFE_DELETE(frameBuffer);
+    SAFE_DELETE(inputSystem);
+    SAFE_DELETE(eventSystem);
+    SAFE_DELETE(renderSystem);
+    SAFE_DELETE(immediateModeRenderSystem);
+    SAFE_DELETE(guiSystem);
+    SAFE_DELETE(featherWindow);
 }
 
 void libFeather::Run()

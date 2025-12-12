@@ -19,11 +19,7 @@ Texture::~Texture()
 {
     glDeleteTextures(1, &textureID);
 
-    if (this->data)
-    {
-        delete[] this->data;
-        this->data = nullptr;
-    }
+	SAFE_DELETE_ARRAY(this->data);
 }
 
 void Texture::Bind()

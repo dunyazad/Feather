@@ -11,15 +11,16 @@
 #include <limits.h>
 
 #include <algorithm>
-#include <chrono>
-#include <filesystem>
+#include <atomic>
+#include <bitset>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-#include <bitset>
+#include <chrono>
 #include <cstddef>
 #include <execution>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -40,6 +41,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#define SAFE_DELETE(p) { if(nullptr != (p)) { delete (p); (p) = nullptr; } }
+#define SAFE_DELETE_ARRAY(p) { if(nullptr != (p)) { delete[] (p); (p) = nullptr; } }
 
 #include <Color.hpp>
 #include <Morton3D.hpp>

@@ -83,6 +83,13 @@ namespace GeometricProcessingPipeline
             }
         }
 
+        void ToPLY(const std::string& plyFileName) const
+        {
+            PLYFormat ply;
+            ToPLY(ply);
+			ply.Serialize(plyFileName);
+        }
+
         void ToPLY(PLYFormat& ply) const
         {
             for (size_t i = 0; i < numberOfElements; i++)
@@ -121,7 +128,9 @@ namespace GeometricProcessingPipeline
         float distance = 0.0f;  // 레이 원점으로부터의 거리
     };
 
-    class SparseGrid
+    class ISpatialPartitioning {};
+
+	class SparseGrid : public ISpatialPartitioning
     {
     public:
         robin_hood::unordered_flat_map<uint64_t, int> gridHead;
@@ -178,44 +187,33 @@ namespace GeometricProcessingPipeline
             SparseGridPickResult result;
             if (points.empty() || gridHead.empty()) return result;
 
-            // 1. 그리드 전체 영역과 레이 충돌 검사 (진입점 찾기)
             float tEntry = 0.0f, tExit = 0.0f;
-            if (!aabb.IntersectRay(ray, tEntry, tExit)) return result; // 그리드 안 지남
+            if (!aabb.IntersectRay(ray, tEntry, tExit)) return result;
 
-            if (tEntry < 0.0f) tEntry = 0.0f; // 카메라가 그리드 안에 있음
+            if (tEntry < 0.0f) tEntry = 0.0f;
 
-            // 2. 진입점에서의 Grid Index 계산
-            // 약간 안쪽으로 이동(epsilon)하여 경계선 오차 방지
             glm::vec3 startPos = ray.origin + ray.direction * (tEntry + 0.001f);
 
-            // 현재 검사 중인 복셀 인덱스
             int curGx = (int)std::floor((startPos.x - aabb.min.x) / cellSize);
             int curGy = (int)std::floor((startPos.y - aabb.min.y) / cellSize);
             int curGz = (int)std::floor((startPos.z - aabb.min.z) / cellSize);
 
-            // DDA 스텝 설정
             int stepX = (ray.direction.x > 0) ? 1 : -1;
             int stepY = (ray.direction.y > 0) ? 1 : -1;
             int stepZ = (ray.direction.z > 0) ? 1 : -1;
 
-            // tMax: 다음 복셀 경계까지의 *절대 거리(ray.origin 기준)*
-            // 다음 경계 좌표 계산
             float nextBoundX = aabb.min.x + (curGx + (stepX > 0 ? 1 : 0)) * cellSize;
             float nextBoundY = aabb.min.y + (curGy + (stepY > 0 ? 1 : 0)) * cellSize;
             float nextBoundZ = aabb.min.z + (curGz + (stepZ > 0 ? 1 : 0)) * cellSize;
 
-            // tMax 초기값 설정 (Ray Origin 기준)
             float tMaxX = (nextBoundX - ray.origin.x) * ray.inverseDirection.x;
             float tMaxY = (nextBoundY - ray.origin.y) * ray.inverseDirection.y;
             float tMaxZ = (nextBoundZ - ray.origin.z) * ray.inverseDirection.z;
 
-            // tDelta: 한 복셀 이동 시 증가하는 t 값 (항상 양수)
             float tDeltaX = std::abs(cellSize * ray.inverseDirection.x);
             float tDeltaY = std::abs(cellSize * ray.inverseDirection.y);
             float tDeltaZ = std::abs(cellSize * ray.inverseDirection.z);
 
-            // 3. Grid Traversal Loop
-            // tExit을 약간 넘어서까지 검사 (마지막 복셀 누락 방지)
             while (tEntry <= tExit + cellSize * 0.1f)
             {
                 uint64_t key = GetKey(curGx, curGy, curGz);
@@ -227,13 +225,11 @@ namespace GeometricProcessingPipeline
                     float minTInVoxel = FLT_MAX;
                     bool hitFound = false;
 
-                    // 현재 복셀의 점들 검사
                     while (currIdx != -1)
                     {
                         float t = 0.0f;
                         if (ray.IntersectSphere(points[currIdx], pickRadius, t))
                         {
-                            // 가장 가까운 점 찾기
                             if (t < minTInVoxel)
                             {
                                 minTInVoxel = t;
@@ -247,22 +243,18 @@ namespace GeometricProcessingPipeline
                         currIdx = nextPoint[currIdx];
                     }
 
-                    // [핵심] 현재 복셀에서 충돌을 찾았고, 그 충돌이 '이 복셀의 범위 안'에 있다면 종료
-                    // 즉, 현재 복셀을 벗어나기 전에 충돌했다면 그게 제일 가까운 거임.
-                    // 현재 복셀을 벗어나는 시점(t_next_boundary) 계산
                     float tNextBoundary = std::min(std::min(tMaxX, tMaxY), tMaxZ);
 
-                    if (hitFound && minTInVoxel <= tNextBoundary + 0.01f) // Margin 약간 추가
+                    if (hitFound && minTInVoxel <= tNextBoundary + 0.01f)
                     {
                         return result;
                     }
                 }
 
-                // 다음 복셀로 이동
                 if (tMaxX < tMaxY) {
                     if (tMaxX < tMaxZ) {
                         curGx += stepX;
-                        tEntry = tMaxX; // 현재 t 업데이트
+                        tEntry = tMaxX;
                         tMaxX += tDeltaX;
                     }
                     else {
@@ -288,7 +280,6 @@ namespace GeometricProcessingPipeline
             return result;
         }
 
-        // 단순 무식한 전체 검사 (디버깅용)
         SparseGridPickResult PickBruteForce(const std::vector<glm::vec3>& points, const Ray& ray, float pickRadius)
         {
             SparseGridPickResult result;
@@ -360,24 +351,461 @@ namespace GeometricProcessingPipeline
         }
     };
 
-    class IGeometricProcessingOperator
+    class IGeometricProcessingOperatorBase {};
+
+	template<typename SpatialPartitioningType>
+	class IGeometricProcessingOperator : public IGeometricProcessingOperatorBase
     {
     public:
-        virtual void Process(PointCloud& pointCloud) = 0;
+		IGeometricProcessingOperator() {}
+		virtual ~IGeometricProcessingOperator()
+        {
+            if (needToDeleteSpatialPartitioning)
+            {
+                SAFE_DELETE(spatialPartitioning);
+            }
+        }
+
+        virtual void Process(PointCloud& pointCloud, SpatialPartitioningType* spatialPartitioning) = 0;
 		virtual void Visualize() = 0;
+
+    protected:
+		bool needToDeleteSpatialPartitioning = false;
+        SpatialPartitioningType* spatialPartitioning = nullptr;
 	};
 
-    class OperatorClustering : public IGeometricProcessingOperator
+    class OperatorClustering : public IGeometricProcessingOperator<SparseGrid>
     {
     public:
-        virtual void Process(PointCloud& pointCloud) override
+        struct AtomicDisjointSet
         {
+            // std::vector 대신 unique_ptr 배열 사용
+            // (std::atomic은 복사가 불가능하여 vector::resize 사용 불가)
+            std::unique_ptr<std::atomic<int>[]> parent;
+            size_t size = 0;
+
+            void Initialize(size_t n)
+            {
+                size = n;
+                // 배열 한 번에 할당 (C++14 이상 std::make_unique)
+                parent = std::make_unique<std::atomic<int>[]>(n);
+
+                // 병렬 초기화: parent[i] = i
+                // 인덱스 배열을 만들어 병렬 루프를 돌립니다.
+                std::vector<int> indices(n);
+                std::iota(indices.begin(), indices.end(), 0);
+
+                std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) {
+                    parent[i].store(i, std::memory_order_relaxed);
+                    });
+            }
+
+            // Lock-Free Find (Halving)
+            int Find(int i)
+            {
+                // unique_ptr 배열은 [] 연산자 오버로딩으로 일반 배열처럼 접근 가능
+                int p = parent[i].load(std::memory_order_relaxed);
+                while (p != i)
+                {
+                    int pp = parent[p].load(std::memory_order_relaxed);
+                    parent[i].store(pp, std::memory_order_relaxed); // Path splitting
+                    i = pp;
+                    p = parent[i].load(std::memory_order_relaxed);
+                }
+                return i;
+            }
+
+            // Lock-Free Union using CAS (Compare-And-Swap)
+            void Union(int i, int j)
+            {
+                int rootA = Find(i);
+                int rootB = Find(j);
+
+                while (rootA != rootB)
+                {
+                    // 순환 참조 방지를 위해 ID 크기 순서 강제
+                    if (rootA > rootB) std::swap(rootA, rootB);
+
+                    // rootB의 부모를 rootA로 변경 시도 (CAS)
+                    int expected = rootB;
+                    // unique_ptr 배열 접근
+                    if (parent[rootB].compare_exchange_weak(expected, rootA))
+                    {
+                        return; // 성공
+                    }
+
+                    // 실패 시 다시 루트 추적
+                    rootA = Find(rootA);
+                    rootB = Find(expected);
+                }
+            }
+        };
+
+        virtual void Process(PointCloud& pointCloud, SparseGrid* sparseGrid) override
+        {
+            TS(Clustering_Parallel);
+
+            // 1. 데이터 검증 및 초기화
+            if (pointCloud.numberOfElements == 0) return;
+            if (nullptr == sparseGrid)
+            {
+                sparseGrid = new SparseGrid();
+                sparseGrid->Build(pointCloud, Configuration::voxelSize);
+                needToDeleteSpatialPartitioning = true;
+            }
+
+            pCachedPointCloud = &pointCloud;
+            size_t numPoints = pointCloud.numberOfElements;
+            pointClusterIds.assign(numPoints, -1);
+
+            // 2. Atomic Union-Find 초기화 (unique_ptr 버전 사용 필수)
+            AtomicDisjointSet dsu;
+            dsu.Initialize(numPoints);
+
+            // --------------------------------------------------------------------------
+            // [중요 파라미터 수정] "엄격하게" 분리하기 위한 설정
+            // --------------------------------------------------------------------------
+            // 1. 검색 반경: 너무 작으면(1.1) 대각선이 끊기고, 너무 크면 멀리 있는게 붙음.
+            //    1.5f (약 루트2) 정도가 적당함.
+            float searchRadius = sparseGrid->cellSize * 1.5f;
+            float searchRadiusSq = searchRadius * searchRadius;
+
+            // 2. 법선 임계값: 0.5(60도)는 너무 관대함. 
+            //    0.9(약 25도)로 올려서 각도가 조금만 달라도 다른 물체로 인식하게 함.
+            float strictAngleThreshold = 0.9f;
+
+            // 3. [신규] 평면 이격 거리(Height) 임계값
+            //    점 B가 점 A의 평면 위아래로 이 값보다 더 떠있으면 합치지 않음. (노이즈 분리 핵심)
+            float planeDistThreshold = sparseGrid->cellSize * 0.2f;
+            // --------------------------------------------------------------------------
+
+            // 4. 병렬 처리를 위한 Grid Flattening
+            struct CellData { uint64_t key; int headIdx; };
+            std::vector<CellData> flatCells;
+            flatCells.reserve(sparseGrid->gridHead.size());
+
+            for (const auto& pair : sparseGrid->gridHead)
+            {
+                flatCells.push_back({ pair.first, pair.second });
+            }
+
+            // 5. 병렬 클러스터링 실행
+            const uint64_t mask = 0x1FFFFF;
+
+            std::for_each(std::execution::par, flatCells.begin(), flatCells.end(), [&](const CellData& cell)
+                {
+                    uint64_t key = cell.key;
+                    int headIdx = cell.headIdx;
+
+                    int gz = (int)(key & mask);
+                    int gy = (int)((key >> 21) & mask);
+                    int gx = (int)(key >> 42);
+
+                    // (A) Intra-Cell (셀 내부)
+                    for (int i = headIdx; i != -1; i = sparseGrid->nextPoint[i])
+                    {
+                        const glm::vec3& pA = pointCloud.positions[i];
+                        const glm::vec3& nA = pointCloud.normals[i];
+
+                        for (int j = sparseGrid->nextPoint[i]; j != -1; j = sparseGrid->nextPoint[j])
+                        {
+                            const glm::vec3& pB = pointCloud.positions[j];
+
+                            // 거리 체크
+                            if (glm::distance2(pA, pB) > searchRadiusSq) continue;
+
+                            const glm::vec3& nB = pointCloud.normals[j];
+
+                            // [복구됨] 법선 방향 체크 (엄격하게)
+                            if (glm::dot(nA, nB) < strictAngleThreshold) continue;
+
+                            // [추가됨] 평면 거리(높이) 체크
+                            // A의 법선 평면 기준으로 B가 얼마나 떨어져 있는지 확인
+                            float planeDist = std::abs(glm::dot(nA, pB - pA));
+                            if (planeDist > planeDistThreshold) continue;
+
+                            dsu.Union(i, j);
+                        }
+
+                        // (B) Inter-Cell (이웃 셀)
+                        for (int dz = -1; dz <= 1; ++dz)
+                        {
+                            for (int dy = -1; dy <= 1; ++dy)
+                            {
+                                for (int dx = -1; dx <= 1; ++dx)
+                                {
+                                    if (dx == 0 && dy == 0 && dz == 0) continue;
+
+                                    uint64_t neighborKey = sparseGrid->GetKey(gx + dx, gy + dy, gz + dz);
+                                    if (neighborKey < key) continue; // 중복 방지
+
+                                    auto it = sparseGrid->gridHead.find(neighborKey);
+                                    if (it == sparseGrid->gridHead.end()) continue;
+
+                                    int neighborHead = it->second;
+                                    for (int j = neighborHead; j != -1; j = sparseGrid->nextPoint[j])
+                                    {
+                                        const glm::vec3& pB = pointCloud.positions[j];
+
+                                        // 거리 체크
+                                        if (glm::distance2(pA, pB) > searchRadiusSq) continue;
+
+                                        const glm::vec3& nB = pointCloud.normals[j];
+
+                                        // [복구됨] 법선 체크
+                                        if (glm::dot(nA, nB) < strictAngleThreshold) continue;
+
+                                        // [추가됨] 평면 거리 체크
+                                        float planeDist = std::abs(glm::dot(nA, pB - pA));
+                                        if (planeDist > planeDistThreshold) continue;
+
+                                        dsu.Union(i, j);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            // 6. 결과 정리
+            std::map<int, int> rootToClusterId;
+            int currentClusterCount = 0;
+
+            for (size_t i = 0; i < numPoints; ++i)
+            {
+                int root = dsu.Find((int)i);
+                if (rootToClusterId.find(root) == rootToClusterId.end())
+                {
+                    rootToClusterId[root] = currentClusterCount++;
+                }
+                pointClusterIds[i] = rootToClusterId[root];
+            }
+
+            alog("Parallel Clustering Done. Found %d clusters.\n", currentClusterCount);
+            TE(Clustering_Parallel);
         }
+
         virtual void Visualize() override
         {
+            if (nullptr == pCachedPointCloud || pointClusterIds.empty()) return;
+
+            auto contrastingColors = Color::GetContrastingColors(64);
+
+            size_t count = pCachedPointCloud->numberOfElements;
+            for (size_t i = 0; i < count; ++i)
+            {
+                int clusterId = pointClusterIds[i];
+                if (clusterId < 0) continue;
+
+                const glm::vec3& p = pCachedPointCloud->positions[i];
+
+                // 시각화: 클러스터 ID에 따라 다른 색상 부여
+                VD::AddSphere(
+                    "ClusteredPoints",
+                    p,
+                    Configuration::pointVisualizationRadius,
+                    contrastingColors[clusterId % contrastingColors.size()]
+                );
+            }
+        }
+
+    protected:
+        std::vector<int> pointClusterIds;
+        const PointCloud* pCachedPointCloud = nullptr;
+    };
+
+    class OperatorCurvatureEstimation : public IGeometricProcessingOperator<SparseGrid>
+    {
+    public:
+        // 결과 저장용 (0.0 = 평면, 1.0 = 급격한 엣지)
+        std::vector<float> curvatures;
+
+        virtual void Process(PointCloud& pointCloud, SparseGrid* sparseGrid) override
+        {
+            TS(Curvature_Parallel);
+
+            if (pointCloud.numberOfElements == 0) return;
+
+            // 1. SparseGrid가 없으면 생성
+            if (nullptr == sparseGrid)
+            {
+                sparseGrid = new SparseGrid();
+                sparseGrid->Build(pointCloud, Configuration::voxelSize);
+                needToDeleteSpatialPartitioning = true;
+            }
+
+            pCachedPointCloud = &pointCloud;
+            size_t numPoints = pointCloud.numberOfElements;
+            curvatures.resize(numPoints);
+
+            // 2. 파라미터 설정
+            // 곡률 계산은 클러스터링보다 조금 더 넓은 범위를 보는 것이 좋습니다. (최소 6~10개 이웃 필요)
+            float searchRadius = sparseGrid->cellSize * 2.0f;
+            float searchRadiusSq = searchRadius * searchRadius;
+
+            // 3. 병렬 처리용 인덱스 생성
+            std::vector<int> indices(numPoints);
+            std::iota(indices.begin(), indices.end(), 0);
+
+            // 4. 병렬로 각 점의 곡률(Surface Variation) 계산
+            std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+                {
+                    const glm::vec3& p = pointCloud.positions[i];
+
+                    // (1) 이웃 수집 (SparseGrid 활용)
+                    std::vector<int> neighbors;
+                    neighbors.reserve(32); // vector 할당 최소화를 위한 예약
+
+                    glm::vec3 centroid(0.0f);
+
+                    int gx = (int)std::floor((p.x - sparseGrid->aabb.min.x) / sparseGrid->cellSize);
+                    int gy = (int)std::floor((p.y - sparseGrid->aabb.min.y) / sparseGrid->cellSize);
+                    int gz = (int)std::floor((p.z - sparseGrid->aabb.min.z) / sparseGrid->cellSize);
+
+                    // 3x3x3 인접 셀 탐색
+                    for (int dz = -1; dz <= 1; ++dz)
+                    {
+                        for (int dy = -1; dy <= 1; ++dy)
+                        {
+                            for (int dx = -1; dx <= 1; ++dx)
+                            {
+                                uint64_t key = sparseGrid->GetKey(gx + dx, gy + dy, gz + dz);
+                                auto it = sparseGrid->gridHead.find(key);
+                                if (it == sparseGrid->gridHead.end()) continue;
+
+                                int currIdx = it->second;
+                                while (currIdx != -1)
+                                {
+                                    // 자기 자신 제외 & 거리 체크
+                                    if (currIdx != i)
+                                    {
+                                        if (glm::distance2(p, pointCloud.positions[currIdx]) <= searchRadiusSq)
+                                        {
+                                            neighbors.push_back(currIdx);
+                                            centroid += pointCloud.positions[currIdx];
+                                        }
+                                    }
+                                    currIdx = sparseGrid->nextPoint[currIdx];
+                                }
+                            }
+                        }
+                    }
+
+                    // (2) 공분산 행렬 계산
+                    size_t k = neighbors.size();
+                    if (k < 4) // 이웃이 너무 적으면 계산 불가 (평면으로 간주)
+                    {
+                        curvatures[i] = 0.0f;
+                        return;
+                    }
+
+                    centroid /= (float)k;
+
+                    // Covariance Matrix (3x3 Symmetric)
+                    // Cov = Sum( (p - c) * (p - c)^T )
+                    float xx = 0, xy = 0, xz = 0;
+                    float yy = 0, yz = 0, zz = 0;
+
+                    for (int idx : neighbors)
+                    {
+                        glm::vec3 r = pointCloud.positions[idx] - centroid;
+                        xx += r.x * r.x;
+                        xy += r.x * r.y;
+                        xz += r.x * r.z;
+                        yy += r.y * r.y;
+                        yz += r.y * r.z;
+                        zz += r.z * r.z;
+                    }
+
+                    glm::mat3 cov;
+                    cov[0][0] = xx; cov[0][1] = xy; cov[0][2] = xz;
+                    cov[1][0] = xy; cov[1][1] = yy; cov[1][2] = yz;
+                    cov[2][0] = xz; cov[2][1] = yz; cov[2][2] = zz;
+
+                    cov /= (float)k;
+
+                    // (3) 고유값 분해 및 곡률 산출
+                    glm::vec3 evals = ComputeEigenValuesSymmetric(cov);
+
+                    // 정렬 (lambda0 <= lambda1 <= lambda2)
+                    float l0 = evals.x, l1 = evals.y, l2 = evals.z;
+                    if (l0 > l1) std::swap(l0, l1);
+                    if (l1 > l2) std::swap(l1, l2);
+                    if (l0 > l1) std::swap(l0, l1);
+
+                    // Surface Variation = lambda0 / (lambda0 + lambda1 + lambda2)
+                    // 평면일수록 l0(법선 방향 분산)가 0에 가깝고, 엣지나 구형일수록 커짐
+                    float sum = l0 + l1 + l2;
+                    if (sum > 1e-9f)
+                    {
+                        curvatures[i] = l0 / sum;
+                    }
+                    else
+                    {
+                        curvatures[i] = 0.0f;
+                    }
+                });
+
+            TE(Curvature_Parallel);
+        }
+
+        virtual void Visualize() override
+        {
+            if (nullptr == pCachedPointCloud || curvatures.empty()) return;
+
+            size_t count = pCachedPointCloud->numberOfElements;
+
+            // 시각화 파라미터
+            float visualScale = 150.0f; // 곡률 값이 보통 0.0~0.1 사이로 작으므로 증폭
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                float val = curvatures[i];
+
+                // 0.01 이하는 평면으로 보고 렌더링 생략 (성능 및 시인성 확보)
+                // 필요하면 주석 해제하여 전체 렌더링
+                // if (val < 0.01f) continue; 
+
+                // Color Map: Blue(Low) -> Green -> Red(High)
+                float t = glm::clamp(val * visualScale, 0.0f, 1.0f);
+                glm::vec3 color = glm::mix(glm::vec3(0, 0, 1), glm::vec3(1, 0, 0), t);
+
+                VD::AddSphere(
+                    "CurvatureEstimation",
+                    pCachedPointCloud->positions[i],
+                    Configuration::pointVisualizationRadius, // 점 크기
+                    glm::vec4(color, 1.0f)
+                );
+            }
+        }
+
+    private:
+        const PointCloud* pCachedPointCloud = nullptr;
+
+        // 3x3 대칭 행렬 고유값 계산 (Cardan's method)
+        inline glm::vec3 ComputeEigenValuesSymmetric(const glm::mat3& M)
+        {
+            double m = (M[0][0] + M[1][1] + M[2][2]) / 3.0;
+            double p = (glm::pow(M[0][0] - m, 2.0) + glm::pow(M[1][1] - m, 2.0) + glm::pow(M[2][2] - m, 2.0) +
+                2.0 * (glm::pow(M[0][1], 2.0) + glm::pow(M[0][2], 2.0) + glm::pow(M[1][2], 2.0))) / 6.0;
+
+            double q = glm::determinant(M - glm::mat3(m)) / 2.0;
+            double phi = 0.0;
+
+            if (p > 1e-9)
+            {
+                phi = glm::atan(glm::sqrt(std::max(0.0, p * p * p - q * q)), q) / 3.0;
+            }
+
+            if (phi < 0) phi += 3.14159265358979323846 / 3.0;
+
+            double eig1 = m + 2.0 * std::sqrt(p) * std::cos(phi);
+            double eig2 = m + 2.0 * std::sqrt(p) * std::cos(phi + 2.0 * 3.14159265358979323846 / 3.0);
+            double eig3 = 3.0 * m - eig1 - eig2;
+
+            return glm::vec3((float)eig1, (float)eig2, (float)eig3);
         }
     };
-    
 
     struct PointCloudClusterer
     {
@@ -1518,7 +1946,6 @@ int main(int argc, char** argv)
     GeometricProcessingPipeline::PointCloud pc;
     GeometricProcessingPipeline::SparseGrid sgrid;
 
-
     {
         auto appMain = Feather.CreateEntity("AppMain");
         Feather.CreateEventCallback<KeyEvent>(appMain, [](Entity entity, const KeyEvent& event) {
@@ -1671,7 +2098,7 @@ int main(int argc, char** argv)
             {
                 TS(PLYLoading);
 				PLYFormat ply;
-                if (!ply.Deserialize("D:\\Debug\\PLY\\Input.ply"))
+                if (!ply.Deserialize("D:\\Debug\\PLY\\Compound_0.ply"))
                 {
                     printf("Failed to load PLY.\n");
                     return;
@@ -1686,7 +2113,31 @@ int main(int argc, char** argv)
                 TE(SparseGridBuilding);
 			}
 
-            sgrid.Visualize(pc);
+            //sgrid.Visualize(pc);
+
+            //GeometricProcessingPipeline::OperatorClustering operatorClustering;
+            //{
+            //    TS(Clustering);
+            //    operatorClustering.Process(pc, &sgrid);
+            //    TE(Clustering);
+
+            //    TS(Visualizing);
+            //    operatorClustering.Visualize();
+            //    TE(Visualizing);
+            //}
+
+            GeometricProcessingPipeline::OperatorCurvatureEstimation operatorCurvatureEstimation;
+            {
+                TS(Clustering);
+                operatorCurvatureEstimation.Process(pc, &sgrid);
+                TE(Clustering);
+
+                TS(Visualizing);
+                operatorCurvatureEstimation.Visualize();
+                TE(Visualizing);
+            }
+
+
             return;
 
 
