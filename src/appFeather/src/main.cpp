@@ -219,7 +219,7 @@ int main(int argc, char** argv)
             {
                 TS(PLYLoading);
                 PLYFormat ply;
-                if (!ply.Deserialize("D:\\Debug\\PLY\\Compound_A.ply"))
+                if (!ply.Deserialize("D:\\Debug\\PLY\\Compound_B.ply"))
                 {
                     printf("Failed to load PLY.\n");
                     return;
@@ -230,26 +230,7 @@ int main(int argc, char** argv)
 
             pipeline.BuildSparseGrid(pc);
 
-    //        {
-				//auto operatorPointDensity = pipeline.AddOperator<GPP::OperatorPointDensity>("OperatorDensityEstimation", false);
-    //            operatorPointDensity->SetNeighborSearchOffset(2);
-				//operatorPointDensity->SetSearchRadiusScale(3.0f);
-    //        }
-
-    //        {
-				//auto operatorNormalDivergence = pipeline.AddOperator<GPP::OperatorNormalDivergence>("OperatorNormalDivergence", false);
-    //        }
-
-            {
-				auto operatorMeshGeneration = pipeline.AddOperator<GPP::OperatorMeshGeneration>("OperatorMeshGeneration", false);
-            }
-
-            pipeline.Execute(pc);
-
-            pipeline.VisualizeLast();
-            return;
-
-            //pipeline.AddOperator<GPP::OperatorFilterETC>("OperatorFilterETC", true);
+            pipeline.AddOperator<GPP::OperatorFilterETC>("OperatorFilterETC", true);
 
             {
                 auto operatorCurvatureEstimation = pipeline.AddOperator<GPP::OperatorCurvatureEstimation>("OperatorCurvatureEstimation", false);
@@ -272,53 +253,64 @@ int main(int argc, char** argv)
                 operatorClustering->SetUseMarksForClustering(true);
             }
 
-        //    {
-        //        struct FilterFunctor
-        //        {
-        //            GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
+            {
+                struct FilterFunctor
+                {
+                    GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
 
-        //            bool operator()(GPP::PointCloud& pointCloud, size_t index)
-        //            {
-        //                //if (0 < pointCloud.pointClusterIDs[index]) return false;
-        //                //else return true;
+                    bool operator()(GPP::PointCloud& pointCloud, size_t index)
+                    {
+                        if (0 < pointCloud.pointClusterIDs[index])
+                        {
+                            pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    }
+                };
 
-        ///*				auto& p = pointCloud.positions[index];
+                FilterFunctor filterFunctor;
+                //pipeline.BuildSparseGrid(pc);
+                auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", true);
+            }
 
-        //                std::vector<unsigned int> outIndices;
-        //                std::vector<float> outDistances;
-        //                filter->GetSpatialPartitioning()->GetKNearestNeighbors(pointCloud.positions, p, 16, outIndices, outDistances);
+            {
+				auto operatorMeshGeneration = pipeline.AddOperator<GPP::OperatorMeshGeneration>("OperatorMeshGeneration", false);
+                operatorMeshGeneration->SetMeshVoxelSize(0.3f);
 
-        //                for (size_t i = 0; i < outIndices.size(); i++)
-        //                {
-        //                    auto neighborIndex = outIndices[i];
-        //                    auto& neighborPosition = pointCloud.positions[neighborIndex];
-        //                    auto distance = glm::length(neighborPosition - p);
-        //                    if (distance < 0.05f)
-        //                    {
-        //                        if (DL_ETC == pointCloud.pointDeepLearningClassIDs[neighborIndex])
-        //                        {
-        //                            pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
-        //                            break;
-        //                        }
-        //                    }
-        //                }*/
+				//operatorMeshGeneration->ExportPLY("D:\\Debug\\PLY\\Compound_B_MeshGeneration_Output.ply");
+            }
 
-        //                //if (DL_ETC == pointCloud.pointDeepLearningClassIDs[index] && 0 < pointCloud.pointClusterIDs[index])
-        //                if (0 < pointCloud.pointClusterIDs[index])
-        //                {
-        //                    pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
-        //                    //return false;
-        //                }
-        //                //if (0 < pointCloud.pointClusterIDs[index]) pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
+            {
+				auto operatorPointCloudLoader = pipeline.AddOperator<GPP::OperatorPointCloudLoader>("OperatorPointCloudLoader", true);
+                operatorPointCloudLoader->SetPLYFilename("D:\\Debug\\PLY\\Compound_B.ply");
+            }
 
-        //                return true;
-        //            }
-        //        };
+            {
+				//std::vector<GPP::Triangle> triangles;
+    //            PLYFormat ply;
+				//ply.Deserialize("D:\\Debug\\PLY\\Compound_B_MeshGeneration_Output.ply");
 
-        //        FilterFunctor filterFunctor;
-        //        //pipeline.BuildSparseGrid(pc);
-        //        auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", true);
-        //    }
+    //            for (size_t i = 0; i < ply.GetTriangleIndices().size() / 3; i++)
+    //            {
+				//	auto i0 = ply.GetTriangleIndices()[i * 3 + 0];
+				//	auto i1 = ply.GetTriangleIndices()[i * 3 + 1];
+				//	auto i2 = ply.GetTriangleIndices()[i * 3 + 2];
+
+				//	auto v0 = glm::vec3(ply.GetPoints()[i0 * 3 + 0], ply.GetPoints()[i0 * 3 + 1], ply.GetPoints()[i0 * 3 + 2]);
+				//	auto v1 = glm::vec3(ply.GetPoints()[i1 * 3 + 0], ply.GetPoints()[i1 * 3 + 1], ply.GetPoints()[i1 * 3 + 2]);
+				//	auto v2 = glm::vec3(ply.GetPoints()[i2 * 3 + 0], ply.GetPoints()[i2 * 3 + 1], ply.GetPoints()[i2 * 3 + 2]);
+
+				//	triangles.push_back({ v0, v1, v2 });
+    //            }
+
+				auto operatorMeshDistanceFilter = pipeline.AddOperator<GPP::OperatorMeshDistanceFilter>("OperatorMeshDistanceFilter", false);
+				//operatorMeshDistanceFilter->SetReferenceMesh(triangles);
+                operatorMeshDistanceFilter->SetThresholdMultiplier(3.0f);
+            }
 
             //{
             //    auto operatorCurvatureEstimation = pipeline.AddOperator<GPP::OperatorCurvatureEstimation>("OperatorCurvatureEstimation", false);

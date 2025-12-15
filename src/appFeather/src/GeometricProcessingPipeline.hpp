@@ -123,6 +123,32 @@ namespace GeometricProcessingPipeline
 
         AABB aabb;
 
+        void Clear()
+        {
+            numberOfElements = 0;
+            positions.clear();
+            normals.clear();
+			colors.clear();
+			pointDeepLearningClassIDs.clear();
+			pointClusterIDs.clear();
+            marks.clear();
+            aabb = AABB();
+		}
+
+        [[nodiscard]] PointCloud Clone() const
+        {
+            PointCloud pc;
+            pc.numberOfElements = numberOfElements;
+            pc.positions = positions;
+            pc.normals = normals;
+            pc.colors = colors;
+            pc.pointDeepLearningClassIDs = pointDeepLearningClassIDs;
+            pc.pointClusterIDs = pointClusterIDs;
+            pc.marks = marks;
+            pc.aabb = aabb;
+            return pc;
+        }
+
         void FromPLY(const std::string& plyFileName)
         {
 			PLYFormat ply;
@@ -132,6 +158,8 @@ namespace GeometricProcessingPipeline
 
         void FromPLY(const PLYFormat& ply)
         {
+            Clear();
+
             numberOfElements = ply.GetPoints().size() / 3;
             positions.resize(numberOfElements);
             normals.resize(numberOfElements);
@@ -678,6 +706,8 @@ namespace GeometricProcessingPipeline
             const std::vector<int>& clusterIds,
             const glm::vec3& aabbMin)
         {
+            blockSizePerAxis = voxelSize * Configuration::voxelsPerBlockAxis;
+
             gridOrigin.x = std::floor(aabbMin.x / blockSizePerAxis) * blockSizePerAxis;
             gridOrigin.y = std::floor(aabbMin.y / blockSizePerAxis) * blockSizePerAxis;
             gridOrigin.z = std::floor(aabbMin.z / blockSizePerAxis) * blockSizePerAxis;
@@ -1223,6 +1253,653 @@ namespace GeometricProcessingPipeline
         std::vector<int> pointTags;
 		PointCloud* cachedPointCloud = nullptr;
 	};
+
+    class OperatorPointCloudLoader : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorPointCloudLoader(bool needToRebuildSpatialPartitioning = false)
+			: IGeometricProcessingOperator<SparseGrid>(needToRebuildSpatialPartitioning)
+		{
+		}
+
+		virtual void Process(PointCloud& pointCloud) override
+		{
+            if (plyFilename.empty()) return;
+
+			pointCloud.FromPLY(plyFilename);
+
+			TS(PointCloudLoader);
+			if (pointCloud.numberOfElements == 0) return;
+			if (nullptr == spatialPartitioning)
+			{
+				spatialPartitioning = new SparseGrid();
+				spatialPartitioning->Build(pointCloud, Configuration::voxelSize);
+				needToDeleteSpatialPartitioning = true;
+			}
+			cachedPointCloud = &pointCloud;
+			TE(PointCloudLoader);
+		}
+
+		virtual void Visualize() override
+		{
+            for (size_t i = 0; i < cachedPointCloud->numberOfElements; i++)
+            {
+				const auto& p = cachedPointCloud->positions[i];
+				const auto& n = cachedPointCloud->normals[i];
+				const auto& c = cachedPointCloud->colors[i];
+
+                VD::AddSphere("PointCloudLoader",
+                    p,
+                    Configuration::pointVisualizationRadius,
+                    glm::vec4(c, 1.0f)
+				);
+            }
+		}
+
+		inline const std::string& GetPLYFilename() const { return plyFilename; }
+		inline void SetPLYFilename(const std::string& filename) { plyFilename = filename; }
+
+    protected:
+		std::string plyFilename;
+	};
+
+    class OperatorPointCloudVisualization : public IGeometricProcessingOperator<SparseGrid>
+    {
+    public:
+        OperatorPointCloudVisualization(bool needToRebuildSpatialPartitioning = false)
+            : IGeometricProcessingOperator<SparseGrid>(needToRebuildSpatialPartitioning)
+        {
+        }
+        
+        virtual void Process(PointCloud& pointCloud) override
+        {
+            TS(PointCloudVisualization);
+            if (pointCloud.numberOfElements == 0) return;
+            // 1. Build Spatial Partitioning
+            if (nullptr == spatialPartitioning)
+            {
+                spatialPartitioning = new SparseGrid();
+                spatialPartitioning->Build(pointCloud, Configuration::voxelSize);
+                needToDeleteSpatialPartitioning = true;
+            }
+            cachedPointCloud = &pointCloud;
+            TE(PointCloudVisualization);
+        }
+
+        virtual void Visualize() override
+        {
+            if (nullptr == cachedPointCloud) return;
+            size_t count = cachedPointCloud->numberOfElements;
+            for (size_t i = 0; i < count; ++i)
+            {
+                VD::AddSphere(
+                    "PointCloudVisualization",
+                    cachedPointCloud->positions[i],
+                    Configuration::pointVisualizationRadius * 0.9f,
+                    //glm::vec4(cachedPointCloud->colors[i], 1.0f)
+
+                    Color::red()
+                );
+            }
+        }
+	};
+
+    class OperatorPointCloudLaplacianSmoothing : public IGeometricProcessingOperator<SparseGrid>
+    {
+    public:
+        OperatorPointCloudLaplacianSmoothing(bool needToRebuildSpatialPartitioning = false)
+            : IGeometricProcessingOperator<SparseGrid>(needToRebuildSpatialPartitioning)
+        {
+        }
+
+        virtual void Process(PointCloud& pointCloud) override
+        {
+            TS(LaplacianSmoothing);
+
+            if (pointCloud.numberOfElements == 0) return;
+
+            // 1. Build Spatial Partitioning (한 번 빌드하여 모든 반복에 사용)
+            if (nullptr == spatialPartitioning)
+            {
+                spatialPartitioning = new SparseGrid();
+                spatialPartitioning->Build(pointCloud, Configuration::voxelSize);
+                needToDeleteSpatialPartitioning = true;
+            }
+
+            cachedPointCloud = &pointCloud;
+            size_t numPoints = pointCloud.numberOfElements;
+
+            float searchRadius = spatialPartitioning->cellSize * searchRadiusMultiplier;
+            float searchRadiusSq = searchRadius * searchRadius;
+
+            std::vector<int> indices(numPoints);
+            std::iota(indices.begin(), indices.end(), 0);
+
+            // 위치 핑퐁(Ping-Pong)을 위한 버퍼
+            std::vector<glm::vec3> nextPositions = pointCloud.positions;
+
+            // 2. Iterative Smoothing
+            for (int iter = 0; iter < iterations; ++iter)
+            {
+                // 병렬 처리: 각 점에 대해 이웃의 평균 위치 계산
+                std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+                    {
+                        // 마킹된 포인트(예: 경계점)는 이동하지 않음 (옵션)
+                        if (preserveMarks && !pointCloud.marks.empty() && pointCloud.marks[i] != 0)
+                        {
+                            nextPositions[i] = pointCloud.positions[i];
+                            return;
+                        }
+
+                        const glm::vec3& p = pointCloud.positions[i];
+                        glm::vec3 centroid(0.0f);
+                        int neighborCount = 0;
+
+                        // SparseGrid를 이용한 이웃 검색
+                        int gx = (int)std::floor((p.x - spatialPartitioning->aabb.min.x) / spatialPartitioning->cellSize);
+                        int gy = (int)std::floor((p.y - spatialPartitioning->aabb.min.y) / spatialPartitioning->cellSize);
+                        int gz = (int)std::floor((p.z - spatialPartitioning->aabb.min.z) / spatialPartitioning->cellSize);
+
+                        for (int dz = -neighborSearchOffset; dz <= neighborSearchOffset; ++dz)
+                        {
+                            for (int dy = -neighborSearchOffset; dy <= neighborSearchOffset; ++dy)
+                            {
+                                for (int dx = -neighborSearchOffset; dx <= neighborSearchOffset; ++dx)
+                                {
+                                    uint64_t key = spatialPartitioning->GetKey(gx + dx, gy + dy, gz + dz);
+                                    auto it = spatialPartitioning->voxelPointListHead.find(key);
+
+                                    if (it == spatialPartitioning->voxelPointListHead.end()) continue;
+
+                                    int curr = it->second;
+                                    while (curr != -1)
+                                    {
+                                        // 자기 자신 제외하고 거리 체크
+                                        if (curr != i)
+                                        {
+                                            // 현재 iteration의 위치 기준이 아닌, 이전 iteration(pointCloud.positions) 기준으로 이웃 판단
+                                            if (glm::distance2(p, pointCloud.positions[curr]) <= searchRadiusSq)
+                                            {
+                                                centroid += pointCloud.positions[curr];
+                                                neighborCount++;
+                                            }
+                                        }
+                                        curr = spatialPartitioning->nextPoint[curr];
+                                    }
+                                }
+                            }
+                        }
+
+                        if (neighborCount > 0)
+                        {
+                            centroid /= (float)neighborCount;
+                            glm::vec3 delta = centroid - p;
+
+                            // P_new = P_old + lambda * (Avg_Neighbors - P_old)
+                            nextPositions[i] = p + delta * smoothingFactor;
+                        }
+                        else
+                        {
+                            // 이웃이 없으면 제자리 유지
+                            nextPositions[i] = p;
+                        }
+                    });
+
+                // 위치 업데이트 (다음 iteration을 위해)
+                pointCloud.positions = nextPositions;
+            }
+
+            TE(LaplacianSmoothing);
+        }
+
+        virtual void Visualize() override
+        {
+            if (nullptr == cachedPointCloud) return;
+
+            size_t count = cachedPointCloud->numberOfElements;
+            for (size_t i = 0; i < count; ++i)
+            {
+                // 스무딩된 결과를 시각화
+                VD::AddSphere(
+                    "SmoothedPoints",
+                    cachedPointCloud->positions[i],
+                    Configuration::pointVisualizationRadius,
+                    glm::vec4(cachedPointCloud->colors[i], 1.0f)
+                );
+            }
+        }
+
+        // Parameters Setters/Getters
+        inline void SetIterations(int iter) { iterations = iter; }
+        inline int GetIterations() const { return iterations; }
+
+        inline void SetSmoothingFactor(float lambda) { smoothingFactor = glm::clamp(lambda, 0.0f, 1.0f); }
+        inline float GetSmoothingFactor() const { return smoothingFactor; }
+
+		inline float GetSearchRadiusMultiplier() const { return searchRadiusMultiplier; }
+        inline void SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; }
+        
+		inline int GetNeighborSearchOffset() const { return neighborSearchOffset; }
+		inline void SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; }
+		
+        inline bool IsPreserveMarks() const { return preserveMarks; }
+        inline void SetPreserveMarks(bool preserve) { preserveMarks = preserve; }
+
+    private:
+        int iterations = 3;             // 반복 횟수
+        float smoothingFactor = 0.5f;   // Lambda (0.0 ~ 1.0), 클수록 많이 이동
+        float searchRadiusMultiplier = 1.5f;
+        int neighborSearchOffset = 1;
+        bool preserveMarks = true;      // marks가 0이 아닌 포인트 고정 여부
+    };
+
+    class OperatorKNNSmoothing : public IGeometricProcessingOperator<SparseGrid>
+    {
+    public:
+        OperatorKNNSmoothing(bool needToRebuildSpatialPartitioning = false)
+            : IGeometricProcessingOperator<SparseGrid>(needToRebuildSpatialPartitioning)
+        {
+        }
+
+        virtual void Process(PointCloud& pointCloud) override
+        {
+            TS(KNNSmoothing);
+
+            if (pointCloud.numberOfElements == 0) return;
+
+            // 1. Build Spatial Partitioning if needed (used for KNN search)
+            if (nullptr == spatialPartitioning)
+            {
+                spatialPartitioning = new SparseGrid();
+                spatialPartitioning->Build(pointCloud, Configuration::voxelSize);
+                needToDeleteSpatialPartitioning = true;
+            }
+
+            cachedPointCloud = &pointCloud;
+            size_t numPoints = pointCloud.numberOfElements;
+
+            std::vector<int> indices(numPoints);
+            std::iota(indices.begin(), indices.end(), 0);
+
+            // 위치 업데이트를 위한 Ping-Pong 버퍼
+            std::vector<glm::vec3> nextPositions = pointCloud.positions;
+
+            // 2. Iterative Smoothing
+            for (int iter = 0; iter < iterations; ++iter)
+            {
+                std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+                    {
+                        // 마킹된 포인트(예: 특징점)는 이동하지 않음 (옵션)
+                        //if (preserveMarks && !pointCloud.marks.empty() && pointCloud.marks[i] != 0)
+                        //{
+                        //    nextPositions[i] = pointCloud.positions[i];
+                        //    return;
+                        //}
+
+                        if (false == (preserveMarks && !pointCloud.marks.empty() && pointCloud.marks[i] != 0))
+                        {
+                            return;
+                        }
+
+                        const glm::vec3& p = pointCloud.positions[i];
+
+						pointCloud.colors[i] = glm::vec3(1.0f, 0.0f, 0.0f);
+
+                        // Thread-local vectors for KNN result
+                        // SparseGrid::GetKNearestNeighbors requires these containers
+                        std::vector<unsigned int> neighborIndices;
+                        std::vector<float> neighborDistances;
+                        neighborIndices.reserve(kNeighbors);
+                        neighborDistances.reserve(kNeighbors);
+
+                        // Find K-Nearest Neighbors
+                        // Note: This includes the point itself usually, depending on implementation.
+                        // The provided GetKNearestNeighbors implementation in SparseGrid finds strictly closest points.
+                        spatialPartitioning->GetKNearestNeighbors(
+                            pointCloud.positions,
+                            p,
+                            kNeighbors,
+                            neighborIndices,
+                            neighborDistances
+                        );
+
+                        if (!neighborIndices.empty())
+                        {
+                            glm::vec3 centroid(0.0f);
+                            float validCount = 0.0f;
+
+                            for (unsigned int idx : neighborIndices)
+                            {
+                                // 자기 자신은 제외하고 평균을 구하고 싶다면 아래 조건 활성화
+                                //if ((int)idx == i) continue; 
+
+                                centroid += pointCloud.positions[idx];
+                                validCount += 1.0f;
+                            }
+
+                            if (validCount > 0.0f)
+                            {
+                                centroid /= validCount;
+                                glm::vec3 delta = centroid - p;
+
+                                // Update position towards centroid
+                                nextPositions[i] = p + delta * smoothingFactor;
+                            }
+                            else
+                            {
+                                nextPositions[i] = p;
+                            }
+                        }
+                        else
+                        {
+                            nextPositions[i] = p;
+                        }
+                    });
+
+                // Update positions for next iteration
+                pointCloud.positions = nextPositions;
+            }
+
+            TE(KNNSmoothing);
+        }
+
+        virtual void Visualize() override
+        {
+            if (nullptr == cachedPointCloud) return;
+
+            size_t count = cachedPointCloud->numberOfElements;
+            for (size_t i = 0; i < count; ++i)
+            {
+                VD::AddSphere(
+                    "KNNSmoothedPoints",
+                    cachedPointCloud->positions[i],
+                    Configuration::pointVisualizationRadius,
+                    glm::vec4(cachedPointCloud->colors[i], 1.0f)
+                );
+            }
+        }
+
+        // Parameters
+        inline void SetK(int k) { kNeighbors = k; }
+        inline int GetK() const { return kNeighbors; }
+
+        inline void SetIterations(int iter) { iterations = iter; }
+        inline int GetIterations() const { return iterations; }
+
+        inline void SetSmoothingFactor(float factor) { smoothingFactor = glm::clamp(factor, 0.0f, 1.0f); }
+        inline float GetSmoothingFactor() const { return smoothingFactor; }
+
+        inline void SetPreserveMarks(bool preserve) { preserveMarks = preserve; }
+
+    private:
+        int kNeighbors = 8;
+        int iterations = 3;
+        float smoothingFactor = 0.5f;
+        bool preserveMarks = true;
+    };
+
+    class OperatorSurfaceFitting : public IGeometricProcessingOperator<SparseGrid>
+    {
+    public:
+        OperatorSurfaceFitting(bool needToRebuildSpatialPartitioning = false)
+            : IGeometricProcessingOperator<SparseGrid>(needToRebuildSpatialPartitioning)
+        {
+        }
+
+        virtual void Process(PointCloud& pointCloud) override
+        {
+            TS(SurfaceFitting);
+
+            if (pointCloud.numberOfElements == 0) return;
+
+            // 1. Build Spatial Partitioning if needed
+            if (nullptr == spatialPartitioning)
+            {
+                spatialPartitioning = new SparseGrid();
+                spatialPartitioning->Build(pointCloud, Configuration::voxelSize);
+                needToDeleteSpatialPartitioning = true;
+            }
+
+            cachedPointCloud = &pointCloud;
+            size_t numPoints = pointCloud.numberOfElements;
+
+            for (int i = 0; i < iteration; i++)
+            {
+                // 결과를 담을 임시 버퍼 (Ping-Pong)
+                std::vector<glm::vec3> newPositions = pointCloud.positions;
+                std::vector<glm::vec3> newNormals = pointCloud.normals;
+
+                std::vector<int> indices(numPoints);
+                std::iota(indices.begin(), indices.end(), 0);
+
+                // 2. Perform Surface Fitting (Parallel)
+                std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+                    {
+                        // 마킹된 포인트 보호 (옵션)
+                        //if (preserveMarks && !pointCloud.marks.empty() && pointCloud.marks[i] != 0)
+                        //{
+                        //    return;
+                        //}
+
+                        const glm::vec3& p = pointCloud.positions[i];
+
+                        // KNN Search
+                        // SparseGrid::GetKNearestNeighbors requires these containers
+                        std::vector<unsigned int> neighborIndices;
+                        std::vector<float> neighborDistances;
+                        neighborIndices.reserve(kNeighbors);
+                        neighborDistances.reserve(kNeighbors);
+
+                        spatialPartitioning->GetKNearestNeighbors(
+                            pointCloud.positions,
+                            p,
+                            kNeighbors,
+                            neighborIndices,
+                            neighborDistances
+                        );
+
+                        size_t k = neighborIndices.size();
+                        if (k < 4) return; // 점이 너무 적으면 피팅 불가
+
+                        // --- Weighted PCA (Principal Component Analysis) ---
+
+                        // 1) Compute Weighted Centroid
+                        glm::vec3 centroid(0.0f);
+                        float totalWeight = 0.0f;
+
+                        // 가우시안 가중치 계산을 위한 파라미터 (가장 먼 이웃 거리 기준)
+                        float maxDist = neighborDistances.back();
+                        float h = std::max(maxDist * 0.5f, 1e-6f); // bandwidth
+                        float hSq = h * h;
+
+                        std::vector<float> weights(k);
+
+                        for (size_t j = 0; j < k; ++j)
+                        {
+                            float distSq = neighborDistances[j] * neighborDistances[j];
+                            float w = std::exp(-distSq / hSq); // Gaussian Kernel
+
+                            weights[j] = w;
+                            centroid += pointCloud.positions[neighborIndices[j]] * w;
+                            totalWeight += w;
+                        }
+
+                        if (totalWeight < 1e-6f) return;
+                        centroid /= totalWeight;
+
+                        // 2) Compute Weighted Covariance Matrix
+                        // Cov = Sum( w_i * (p_i - c) * (p_i - c)^T )
+                        float xx = 0, xy = 0, xz = 0, yy = 0, yz = 0, zz = 0;
+
+                        for (size_t j = 0; j < k; ++j)
+                        {
+                            glm::vec3 r = pointCloud.positions[neighborIndices[j]] - centroid;
+                            float w = weights[j];
+
+                            xx += w * r.x * r.x;
+                            xy += w * r.x * r.y;
+                            xz += w * r.x * r.z;
+                            yy += w * r.y * r.y;
+                            yz += w * r.y * r.z;
+                            zz += w * r.z * r.z;
+                        }
+
+                        glm::mat3 cov;
+                        cov[0][0] = xx; cov[0][1] = xy; cov[0][2] = xz;
+                        cov[1][0] = xy; cov[1][1] = yy; cov[1][2] = yz;
+                        cov[2][0] = xz; cov[2][1] = yz; cov[2][2] = zz;
+
+                        cov /= totalWeight;
+
+                        // 3) Solve Eigen System to find Plane Normal
+                        // 가장 작은 고유값에 해당하는 고유벡터가 평면의 법선(Normal)입니다.
+                        glm::vec3 eigenVals;
+                        glm::mat3 eigenVecs;
+                        ComputeEigenDecomposition(cov, eigenVals, eigenVecs);
+
+                        // 고유값은 오름차순 정렬되어 있다고 가정 (ComputeEigenDecomposition 내부 처리)
+                        // eigenVecs[0] -> smallest eigenvalue's vector (Estimated Normal)
+                        glm::vec3 planeNormal = eigenVecs[0];
+
+                        // 법선 방향 일관성 유지 (기존 법선과 내적하여 뒤집힘 방지)
+                        if (glm::dot(planeNormal, pointCloud.normals[i]) < 0.0f)
+                        {
+                            planeNormal = -planeNormal;
+                        }
+
+                        // 4) Project Point onto the Plane
+                        // Plane defined by (Centroid, planeNormal)
+                        // Projected P' = P - dot(P - Centroid, Normal) * Normal
+                        glm::vec3 diff = p - centroid;
+                        float distToPlane = glm::dot(diff, planeNormal);
+
+                        // 이동 벡터 제한 (너무 급격한 변화 방지)
+                        //float moveLimit = spatialPartitioning->cellSize * 0.5f;
+                        //distToPlane = glm::clamp(distToPlane, -moveLimit, moveLimit);
+
+                        newPositions[i] = p - planeNormal * distToPlane;
+
+                        if (updateNormals)
+                        {
+                            newNormals[i] = planeNormal;
+                        }
+
+                        if (0.1f < glm::length(newPositions[i] - p))
+                        {
+                            pointCloud.colors[i] = Color::red();
+                        }
+                    });
+
+                // 데이터 업데이트
+                pointCloud.positions = newPositions;
+                if (updateNormals)
+                {
+                    pointCloud.normals = newNormals;
+                }
+            }
+
+            TE(SurfaceFitting);
+        }
+
+        virtual void Visualize() override
+        {
+            if (nullptr == cachedPointCloud) return;
+
+            size_t count = cachedPointCloud->numberOfElements;
+            for (size_t i = 0; i < count; ++i)
+            {
+                VD::AddSphere(
+                    "FittedPoints",
+                    cachedPointCloud->positions[i],
+                    Configuration::pointVisualizationRadius,
+                    glm::vec4(cachedPointCloud->colors[i], 1.0f)
+                );
+            }
+        }
+
+        // Parameters
+        inline void SetKNeighbors(int k) { kNeighbors = k; }
+        inline void SetUpdateNormals(bool update) { updateNormals = update; }
+        inline void SetPreserveMarks(bool preserve) { preserveMarks = preserve; }
+
+    private:
+        int kNeighbors = 32;
+		int iteration = 10;
+        bool updateNormals = true;
+        bool preserveMarks = true;
+
+        // 3x3 Symmetric Matrix Eigen Decomposition (Jacobi Method or similar approximation)
+        // returns Sorted Eigenvalues (x=smallest, y=mid, z=largest) and corresponding Vectors (columns of mat3)
+        void ComputeEigenDecomposition(const glm::mat3& cov, glm::vec3& outEvals, glm::mat3& outEvecs)
+        {
+            // 1. Compute Eigenvalues using Cardan's method (Closed form)
+            double m = (cov[0][0] + cov[1][1] + cov[2][2]) / 3.0;
+            double p = (glm::pow(cov[0][0] - m, 2.0) + glm::pow(cov[1][1] - m, 2.0) + glm::pow(cov[2][2] - m, 2.0) +
+                2.0 * (glm::pow(cov[0][1], 2.0) + glm::pow(cov[0][2], 2.0) + glm::pow(cov[1][2], 2.0))) / 6.0;
+
+            double q = glm::determinant(cov - glm::mat3(m)) / 2.0;
+            double phi = 0.0;
+            if (p > 1e-12) phi = glm::atan(glm::sqrt(std::max(0.0, p * p * p - q * q)), q) / 3.0;
+            if (phi < 0) phi += 3.14159265358979323846 / 3.0;
+
+            double eig1 = m + 2.0 * std::sqrt(p) * std::cos(phi);
+            double eig2 = m + 2.0 * std::sqrt(p) * std::cos(phi + 2.0 * 3.14159265358979323846 / 3.0);
+            double eig3 = 3.0 * m - eig1 - eig2;
+
+            outEvals = glm::vec3((float)eig1, (float)eig2, (float)eig3);
+
+            // Sort Eigenvalues (Smallest first for plane normal)
+            // Indices mapping: 0, 1, 2
+            int i0 = 0, i1 = 1, i2 = 2;
+            if (outEvals[i0] > outEvals[i1]) std::swap(i0, i1);
+            if (outEvals[i1] > outEvals[i2]) std::swap(i1, i2);
+            if (outEvals[i0] > outEvals[i1]) std::swap(i0, i1);
+
+            // Reorder values
+            glm::vec3 sortedEvals;
+            sortedEvals.x = outEvals[i0];
+            sortedEvals.y = outEvals[i1];
+            sortedEvals.z = outEvals[i2];
+            outEvals = sortedEvals;
+
+            // 2. Compute Eigenvectors
+            // For 3x3 symmetric, we can compute eigenvectors by cross product of rows of (A - lambda*I)
+            // We need the eigenvector for the SMALLEST eigenvalue (i0) for the normal.
+            // But we compute all for completeness.
+
+            auto computeVec = [&](float lambda) -> glm::vec3 {
+                glm::mat3 A = cov - glm::mat3(lambda);
+
+                glm::vec3 r0(A[0][0], A[0][1], A[0][2]);
+                glm::vec3 r1(A[1][0], A[1][1], A[1][2]);
+                glm::vec3 r2(A[2][0], A[2][1], A[2][2]);
+
+                // Try cross products
+                glm::vec3 v1 = glm::cross(r0, r1);
+                glm::vec3 v2 = glm::cross(r1, r2);
+                glm::vec3 v3 = glm::cross(r2, r0);
+
+                float l1 = glm::dot(v1, v1);
+                float l2 = glm::dot(v2, v2);
+                float l3 = glm::dot(v3, v3);
+
+                glm::vec3 maxV = v1;
+                if (l2 > l1) maxV = v2;
+                if (l3 > std::max(l1, l2)) maxV = v3;
+
+                if (glm::length(maxV) > 1e-6f) return glm::normalize(maxV);
+
+                // If degenerate (identity matrix like), return dominant axis approximation
+                return glm::vec3(1, 0, 0); // Fallback
+                };
+
+            // Calculate vectors for sorted eigenvalues
+            outEvecs[0] = computeVec(outEvals.x); // Smallest -> Normal
+            outEvecs[1] = computeVec(outEvals.y);
+            // Last one via cross product to ensure orthogonality
+            outEvecs[2] = glm::normalize(glm::cross(outEvecs[0], outEvecs[1]));
+        }
+    };
 
     class OperatorPointDensity : public IGeometricProcessingOperator<SparseGrid>
     {
@@ -2782,7 +3459,7 @@ namespace GeometricProcessingPipeline
             // 2. Initialize SparseDataBlock
             // Clear previous data to ensure clean generation
             sparseDataBlock.dataBlocks.clear();
-            sparseDataBlock.voxelSize = Configuration::voxelSize;
+            sparseDataBlock.voxelSize = meshVoxelSize;
 
             // 3. Populate Voxel Data (Implicit Surface Generation)
             // Converts explicit point cloud into implicit signed distance field
@@ -2797,6 +3474,11 @@ namespace GeometricProcessingPipeline
             // 4. Generate Mesh
             // Extracts surface geometry from the implicit field
             meshGenerator.Generate(sparseDataBlock);
+
+            if (false == exportFilename.empty())
+            {
+				meshGenerator.ExportPLY(exportFilename);
+            }
 
             // 5. Post-processing
             if (detectHoles)
@@ -2818,22 +3500,333 @@ namespace GeometricProcessingPipeline
 
         void ExportPLY(const std::string& filename)
         {
-            meshGenerator.ExportPLY(filename);
+            exportFilename = filename;
         }
+
+		inline float GetMeshVoxelSize() const { return meshVoxelSize; }
+		inline void SetMeshVoxelSize(float size) { meshVoxelSize = size; }
 
         inline void SetShowMesh(bool show) { showMesh = show; }
         inline void SetShowHoles(bool show) { showHoles = show; }
         inline void SetDetectHoles(bool detect) { detectHoles = detect; }
 
+        inline std::vector<Triangle>& GetTriangles() { return meshGenerator.triangles; }
         inline const std::vector<Triangle>& GetTriangles() const { return meshGenerator.triangles; }
 
     private:
+        float meshVoxelSize = Configuration::voxelSize;
+
         SparseDataBlock sparseDataBlock;
         MeshGenerator meshGenerator;
+
+        std::string exportFilename;
 
         bool showMesh = true;
         bool showHoles = true;
         bool detectHoles = true;
+    };
+
+    class OperatorMeshDistanceFilter : public IGeometricProcessingOperator<SparseGrid>
+    {
+    public:
+        OperatorMeshDistanceFilter(bool needToRebuildSpatialPartitioning = false)
+            : IGeometricProcessingOperator<SparseGrid>(needToRebuildSpatialPartitioning)
+        {
+        }
+
+        void SetReferenceMesh(const std::vector<Triangle>& meshTriangles)
+        {
+            // [Fix] 메쉬 등록 시 퇴화 삼각형(면적이 거의 없는 삼각형)을 미리 걸러냄
+            referenceMesh.clear();
+            referenceMesh.reserve(meshTriangles.size());
+
+            for (const auto& tri : meshTriangles)
+            {
+                glm::vec3 e1 = tri.v[1] - tri.v[0];
+                glm::vec3 e2 = tri.v[2] - tri.v[0];
+                glm::vec3 crossP = glm::cross(e1, e2);
+
+                // 면적이 너무 작으면 거리 계산 시 Det가 0이 되어 NaN 유발 가능 -> 제외
+                if (glm::length2(crossP) > 1e-12f)
+                {
+                    referenceMesh.push_back(tri);
+                }
+            }
+        }
+
+        virtual void Process(PointCloud& pointCloud) override
+        {
+            TS(MeshDistanceFilter);
+
+            if (pointCloud.numberOfElements == 0 || referenceMesh.empty()) return;
+
+            cachedPointCloud = &pointCloud;
+            size_t numPoints = pointCloud.numberOfElements;
+
+            distances.resize(numPoints);
+            pointCloud.marks.assign(numPoints, 0);
+
+            // 1. Build Spatial Grid for Triangles
+            BuildTriangleGrid();
+
+            std::vector<int> indices(numPoints);
+            std::iota(indices.begin(), indices.end(), 0);
+
+            // 2. Compute Distances (Parallel)
+            std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+                {
+                    float d = GetClosestDistanceFromMesh(pointCloud.positions[i]);
+
+                    if (std::isnan(d) || std::isinf(d)) d = FLT_MAX;
+
+                    distances[i] = d;
+                });
+
+            int markedCount = 0;
+            for (size_t i = 0; i < numPoints; ++i)
+            {
+                //if (distances[i] > averageDistance * thresholdMultiplier)
+                //{
+                //    pointCloud.marks[i] = 1;
+                //    markedCount++;
+                //}
+
+                if (distances[i] > Configuration::voxelSize * thresholdMultiplier)
+                {
+                    pointCloud.marks[i] = 1;
+                    markedCount++;
+                }
+            }
+
+            // 로그 출력 (디버깅용)
+            // printf("Mesh Distance Filter: Avg Dist = %.4f, Marked Points = %d\n", averageDistance, markedCount);
+
+            TE(MeshDistanceFilter);
+        }
+
+        virtual void Visualize() override
+        {
+            if (nullptr == cachedPointCloud || distances.empty()) return;
+
+            size_t count = cachedPointCloud->numberOfElements;
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                if (cachedPointCloud->marks[i] == 1)
+                {
+                    VD::AddSphere(
+                        "HighDistancePoints",
+                        cachedPointCloud->positions[i],
+                        Configuration::pointVisualizationRadius * 1.2f,
+                        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f) // Red
+                    );
+                }
+                else
+                {
+                    float t = (averageDistance > 1e-6f) ? glm::clamp(distances[i] / (averageDistance * 2.0f), 0.0f, 1.0f) : 0.0f;
+                    glm::vec3 color = glm::mix(glm::vec3(0, 0, 1), glm::vec3(0, 1, 1), t);
+
+                    VD::AddSphere(
+                        "NormalDistancePoints",
+                        cachedPointCloud->positions[i],
+                        Configuration::pointVisualizationRadius,
+                        glm::vec4(color, 0.5f)
+                    );
+                }
+            }
+        }
+
+        inline void SetThresholdMultiplier(float mult) { thresholdMultiplier = mult; }
+        inline float GetAverageDistance() const { return averageDistance; }
+
+    private:
+        std::vector<Triangle> referenceMesh;
+        std::vector<float> distances;
+        float averageDistance = 0.0f;
+        float thresholdMultiplier = 3.0f;
+
+        struct TriGridKey
+        {
+            int x, y, z;
+            bool operator==(const TriGridKey& o) const { return x == o.x && y == o.y && z == o.z; }
+        };
+        struct TriGridHash
+        {
+            size_t operator()(const TriGridKey& k) const {
+                return ((std::hash<int>()(k.x) ^ (std::hash<int>()(k.y) << 1)) >> 1) ^ (std::hash<int>()(k.z) << 1);
+            }
+        };
+
+        robin_hood::unordered_flat_map<TriGridKey, std::vector<int>, TriGridHash> triangleGrid;
+        float triGridSize = 0.0f;
+        glm::vec3 triGridMin = glm::vec3(0.0f);
+
+        void BuildTriangleGrid()
+        {
+            triangleGrid.clear();
+            if (referenceMesh.empty()) return;
+
+            AABB meshAABB;
+            for (const auto& tri : referenceMesh)
+            {
+                meshAABB.Expand(tri.v[0]);
+                meshAABB.Expand(tri.v[1]);
+                meshAABB.Expand(tri.v[2]);
+            }
+            triGridMin = meshAABB.min - glm::vec3(0.1f);
+            triGridSize = Configuration::voxelSize * 5.0f;
+
+            for (int i = 0; i < (int)referenceMesh.size(); ++i)
+            {
+                const auto& tri = referenceMesh[i];
+
+                glm::vec3 tMin = glm::min(glm::min(tri.v[0], tri.v[1]), tri.v[2]);
+                glm::vec3 tMax = glm::max(glm::max(tri.v[0], tri.v[1]), tri.v[2]);
+
+                int minX = (int)std::floor((tMin.x - triGridMin.x) / triGridSize);
+                int minY = (int)std::floor((tMin.y - triGridMin.y) / triGridSize);
+                int minZ = (int)std::floor((tMin.z - triGridMin.z) / triGridSize);
+
+                int maxX = (int)std::floor((tMax.x - triGridMin.x) / triGridSize);
+                int maxY = (int)std::floor((tMax.y - triGridMin.y) / triGridSize);
+                int maxZ = (int)std::floor((tMax.z - triGridMin.z) / triGridSize);
+
+                for (int z = minZ; z <= maxZ; ++z)
+                {
+                    for (int y = minY; y <= maxY; ++y)
+                    {
+                        for (int x = minX; x <= maxX; ++x)
+                        {
+                            triangleGrid[{x, y, z}].push_back(i);
+                        }
+                    }
+                }
+            }
+        }
+
+        float GetClosestDistanceFromMesh(const glm::vec3& p)
+        {
+            float minDistSq = FLT_MAX;
+
+            int gx = (int)std::floor((p.x - triGridMin.x) / triGridSize);
+            int gy = (int)std::floor((p.y - triGridMin.y) / triGridSize);
+            int gz = (int)std::floor((p.z - triGridMin.z) / triGridSize);
+
+            bool found = false;
+
+            for (int r = 0; r <= 2; ++r)
+            {
+                for (int dz = -r; dz <= r; ++dz)
+                {
+                    for (int dy = -r; dy <= r; ++dy)
+                    {
+                        for (int dx = -r; dx <= r; ++dx)
+                        {
+                            auto it = triangleGrid.find({ gx + dx, gy + dy, gz + dz });
+                            if (it != triangleGrid.end())
+                            {
+                                for (int triIdx : it->second)
+                                {
+                                    float sq = SqDistPointTriangle(p, referenceMesh[triIdx]);
+                                    // [Fix] sq가 NaN인 경우 무시
+                                    if (!std::isnan(sq) && sq < minDistSq)
+                                    {
+                                        minDistSq = sq;
+                                        found = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (found && minDistSq < (triGridSize * r * triGridSize * r)) break;
+            }
+
+            if (!found) return 1000.0f;
+
+            return std::sqrt(minDistSq);
+        }
+
+        // [Fix] Point - Triangle Squared Distance Helper (Robust Version)
+        float SqDistPointTriangle(const glm::vec3& p, const Triangle& tri)
+        {
+            glm::vec3 B = tri.v[0];
+            glm::vec3 E0 = tri.v[1] - B;
+            glm::vec3 E1 = tri.v[2] - B;
+            glm::vec3 D = B - p;
+            float a = glm::dot(E0, E0);
+            float b = glm::dot(E0, E1);
+            float c = glm::dot(E1, E1);
+            float d = glm::dot(E0, D);
+            float e = glm::dot(E1, D);
+            float f = glm::dot(D, D);
+
+            float det = a * c - b * b;
+            float s = b * e - c * d;
+            float t = b * d - a * e;
+
+            // [Fix] Determinant가 0에 가까우면(Degenerate Triangle) 안전하게 처리
+            if (std::abs(det) < 1e-12f)
+            {
+                // 삼각형이 선분이나 점으로 퇴화된 경우, 가장 가까운 꼭짓점과의 거리 반환
+                float d0 = glm::distance2(p, tri.v[0]);
+                float d1 = glm::distance2(p, tri.v[1]);
+                float d2 = glm::distance2(p, tri.v[2]);
+                return std::min({ d0, d1, d2 });
+            }
+
+            if (s + t <= det)
+            {
+                if (s < 0.f)
+                {
+                    if (t < 0.f)  // region 4
+                    {
+                        if (d < 0.f) { t = 0.f; if (-d >= a) { s = 1.f; } else { s = -d / a; } }
+                        else { s = 0.f; if (e >= 0.f) { t = 0.f; } else if (-e >= c) { t = 1.f; } else { t = -e / c; } }
+                    }
+                    else  // region 3
+                    {
+                        s = 0.f; if (e >= 0.f) { t = 0.f; }
+                        else if (-e >= c) { t = 1.f; }
+                        else { t = -e / c; }
+                    }
+                }
+                else if (t < 0.f)  // region 5
+                {
+                    t = 0.f; if (d >= 0.f) { s = 0.f; }
+                    else if (-d >= a) { s = 1.f; }
+                    else { s = -d / a; }
+                }
+                else  // region 0
+                {
+                    float invDet = 1.f / det; s *= invDet; t *= invDet;
+                }
+            }
+            else
+            {
+                if (s < 0.f)  // region 2
+                {
+                    float tmp0 = b + d; float tmp1 = c + e;
+                    if (tmp1 > tmp0) { float numer = tmp1 - tmp0; float denom = a - 2.f * b + c; s = (numer >= denom) ? 1.f : numer / denom; t = 1.f - s; }
+                    else { s = 0.f; if (tmp1 <= 0.f) { t = 1.f; } else if (e >= 0.f) { t = 0.f; } else { t = -e / c; } }
+                }
+                else if (t < 0.f)  // region 6
+                {
+                    float tmp0 = b + e; float tmp1 = a + d;
+                    if (tmp1 > tmp0) { float numer = tmp1 - tmp0; float denom = a - 2.f * b + c; t = (numer >= denom) ? 1.f : numer / denom; s = 1.f - t; }
+                    else { t = 0.f; if (tmp1 <= 0.f) { s = 1.f; } else if (d >= 0.f) { s = 0.f; } else { s = -d / a; } }
+                }
+                else  // region 1
+                {
+                    float numer = c + e - b - d; float denom = a - 2.f * b + c;
+                    if (numer <= 0.f) { s = 0.f; }
+                    else if (numer >= denom) { s = 1.f; }
+                    else { s = numer / denom; }
+                    t = 1.f - s;
+                }
+            }
+            return a * s * s + 2.f * b * s * t + c * t * t + 2.f * d * s + 2.f * e * t + f;
+        }
     };
 
     class Pipeline
@@ -2870,7 +3863,19 @@ namespace GeometricProcessingPipeline
                 {
                     auto time = std::chrono::high_resolution_clock::now();
 
+                    auto operatorMeshDistanceFilter = std::dynamic_pointer_cast<OperatorMeshDistanceFilter>(op);
+                    if (operatorMeshDistanceFilter)
+                    {
+						operatorMeshDistanceFilter->SetReferenceMesh(generatedMeshTriangles);
+                    }
+
                     op->Process(pointCloud, sparseGrid);
+
+                    auto operatorMeshGeneration = std::dynamic_pointer_cast<OperatorMeshGeneration>(op);
+                    if (operatorMeshGeneration)
+                    {
+						operatorMeshGeneration->GetTriangles().swap(generatedMeshTriangles);
+                    }
 
                     std::cout << Miliseconds(time, tag.c_str()) << std::endl;
                 }
@@ -2919,5 +3924,6 @@ namespace GeometricProcessingPipeline
     protected:
         std::vector<std::tuple<std::string, std::shared_ptr<IGeometricProcessingOperator<SparseGrid>>>> operators;
         SparseGrid* sparseGrid = nullptr;
+		std::vector<Triangle> generatedMeshTriangles;
     };
 }
