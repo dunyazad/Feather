@@ -230,25 +230,6 @@ int main(int argc, char** argv)
 
             pipeline.BuildSparseGrid(pc);
 
-    //        {
-				//auto operatorPointDensity = pipeline.AddOperator<GPP::OperatorPointDensity>("OperatorDensityEstimation", false);
-    //            operatorPointDensity->SetNeighborSearchOffset(2);
-				//operatorPointDensity->SetSearchRadiusScale(3.0f);
-    //        }
-
-    //        {
-				//auto operatorNormalDivergence = pipeline.AddOperator<GPP::OperatorNormalDivergence>("OperatorNormalDivergence", false);
-    //        }
-
-            {
-				auto operatorMeshGeneration = pipeline.AddOperator<GPP::OperatorMeshGeneration>("OperatorMeshGeneration", false);
-            }
-
-            pipeline.Execute(pc);
-
-            pipeline.VisualizeLast();
-            return;
-
             //pipeline.AddOperator<GPP::OperatorFilterETC>("OperatorFilterETC", true);
 
             {
@@ -436,6 +417,166 @@ int main(int argc, char** argv)
             }*/
             return;
 #endif // 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            TS(PLYLoading);
+            PLYFormat ply;
+            //if (!ply.Deserialize("D:\\Debug\\PLY\\InputCompound.ply"))
+            if (!ply.Deserialize("D:\\Debug\\PLY\\Compound_0.ply"))
+            {
+                printf("Failed to load PLY.\n");
+                return;
+            }
+
+            std::vector<glm::vec3> points, normals, colors;
+            size_t rawCount = ply.GetPoints().size() / 3;
+            points.reserve(rawCount);
+            if (!ply.GetNormals().empty()) normals.reserve(rawCount);
+            if (!ply.GetColors().empty()) colors.reserve(rawCount);
+
+            auto& rawPts = ply.GetPoints();
+            auto& rawNorms = ply.GetNormals();
+            auto& rawCols = ply.GetColors();
+            auto& rawDLCs = ply.GetDeepLearningClasses();
+
+            bool hasN = !rawNorms.empty();
+            bool hasC = !rawCols.empty();
+            bool useAlpha = ply.UseAlpha();
+			bool hasDLC = !rawDLCs.empty();
+
+            auto contrastingColos = Color::GetContrastingColors(16);
+
+            for (size_t i = 0; i < rawCount; ++i)
+            {
+                float x = rawPts[i * 3], y = rawPts[i * 3 + 1], z = rawPts[i * 3 + 2];
+                if (x >= GPP::Configuration::filterMin.x && x <= GPP::Configuration::filterMax.x &&
+                    y >= GPP::Configuration::filterMin.y && y <= GPP::Configuration::filterMax.y &&
+                    z >= GPP::Configuration::filterMin.z && z <= GPP::Configuration::filterMax.z)
+                {
+                    auto dlc = rawDLCs[i];
+                    //if (DL_ETC == dlc) continue;
+
+                    points.push_back({ x,y,z });
+                    if (hasN) normals.push_back({ rawNorms[i * 3], rawNorms[i * 3 + 1], rawNorms[i * 3 + 2] });
+                    if (hasC)
+                    {
+                        if (useAlpha) colors.push_back({ rawCols[i * 4], rawCols[i * 4 + 1], rawCols[i * 4 + 2] });
+                        else colors.push_back({ rawCols[i * 3], rawCols[i * 3 + 1], rawCols[i * 3 + 2] });
+                    }
+                    if (hasDLC)
+                    {
+                        if (IsTooth(dlc))
+                        {
+                            VD::AddSphere("DLCs", { x,y,z }, 0.05f, Color::white());
+                        }
+                        else
+                        {
+                            if (DL_ETC == dlc)
+                            {
+                                VD::AddSphere("DLCs", { x,y,z }, 0.05f, Color::black());
+                            }
+                            else
+                            {
+                                auto color = contrastingColos[dlc % 16];
+                                VD::AddSphere("DLCs", { x,y,z }, 0.05f, color);
+                            }
+                        }
+                    }
+                }
+            }
+            TE(PLYLoading);
+
+            auto [minx, miny, minz] = ply.GetAABBMin();
+            glm::vec3 aabbMin(minx - 1.0f, miny - 1.0f, minz - 1.0f);
+
+            GPP::PointCloudCurvatureEstimator curvatureEstimator;
+            curvatureEstimator.Process(points, 0.5f);
+            curvatureEstimator.Visualize(points);
+
+            GPP::PointCloudClusterer pcClusterer;
+            
+            pcClusterer.Process(points, normals, GPP::Configuration::voxelSize * 1.0f, 30.0f, 0.05f);
+            //pcClusterer.Process_UnionAndFind(points, normals, Configuration::voxelSize * 1.3f, 15.0f);
+            
+            pcClusterer.Visualize(points, normals, colors);
+
+            GPP::SparseDataBlock sdb;
+            sdb.FromPointsData(points, normals, colors, pcClusterer.pointClusterIds, aabbMin);
+
+            TS(MeshGeneration);
+            GPP::MeshGenerator meshGen;
+            meshGen.Generate(sdb);
+            meshGen.DetectHoles();
+            TE(MeshGeneration);
+
+            meshGen.Visualize(true, true);
+            //meshGen.ExportPLY("D:\\Debug\\PLY\\output.ply");
+
+            sdb.Visualize();
+
+            alog("Total DataBlocks : %s\n", FormatWithCommas(sdb.dataBlocks.size()).c_str());
+            alog("DataBlock Size : %zd\n", sizeof(GPP::DataBlock));
+            alog("Total Memory : %s bytes\n", FormatWithCommas(sdb.dataBlocks.size() * sizeof(GPP::DataBlock)).c_str());
+
+            {
+                size_t blockCount = sdb.dataBlocks.size();
+                size_t blockSizeBytes = sizeof(GPP::DataBlock);
+                size_t totalBytes = blockCount * blockSizeBytes;
+
+                auto formatBytes = [&](size_t bytes) {
+                    double kb = bytes / 1024.0;
+                    double mb = bytes / (1024.0 * 1024.0);
+                    double gb = bytes / (1024.0 * 1024.0 * 1024.0);
+
+                    char buf[256];
+                    if (gb >= 1.0)
+                        sprintf(buf, "%.2f GB", gb);
+                    else if (mb >= 1.0)
+                        sprintf(buf, "%.2f MB", mb);
+                    else if (kb >= 1.0)
+                        sprintf(buf, "%.2f KB", kb);
+                    else
+                        sprintf(buf, "%zu bytes", bytes);
+                    return std::string(buf);
+                    };
+
+                alog("========================================\n");
+                alog("SparseDataBlock Memory Report\n");
+                alog("  Total Blocks : %s\n", FormatWithCommas(blockCount).c_str());
+                alog("  Block Size   : %s (%zu bytes)\n",
+                    formatBytes(blockSizeBytes).c_str(), blockSizeBytes);
+                alog("  Total Memory : %s\n",
+                    formatBytes(totalBytes).c_str());
+                alog("========================================\n");
+            }
+
+
+            {
+                auto gui = Feather.GetRegistry().create();
+                auto statusPanel = Feather.GetRegistry().emplace<StatusPanel>(gui);
+                Feather.CreateEventCallback<MousePositionEvent>(gui, [](Entity entity, const MousePositionEvent& event) {
+                    auto& component = Feather.GetRegistry().get<StatusPanel>(entity);
+                    component.mouseX = event.xpos; component.mouseY = event.ypos;
+                    });
+            }
         });
 
     Feather.Run();
