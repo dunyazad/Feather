@@ -149,6 +149,34 @@ namespace GeometricProcessingPipeline
             return pc;
         }
 
+        void CopyFrom(const PointCloud& src)
+        {
+            Clear();
+
+            numberOfElements = src.numberOfElements;
+            positions = src.positions;
+            normals = src.normals;
+            colors = src.colors;
+            pointDeepLearningClassIDs = src.pointDeepLearningClassIDs;
+            pointClusterIDs = src.pointClusterIDs;
+            marks = src.marks;
+            aabb = src.aabb;
+		}
+
+        void CopyTo(PointCloud& dst) const
+        {
+            dst.Clear();
+
+            dst.numberOfElements = numberOfElements;
+            dst.positions = positions;
+            dst.normals = normals;
+            dst.colors = colors;
+            dst.pointDeepLearningClassIDs = pointDeepLearningClassIDs;
+            dst.pointClusterIDs = pointClusterIDs;
+            dst.marks = marks;
+			dst.aabb = aabb;
+		}
+
         void FromPLY(const std::string& plyFileName)
         {
 			PLYFormat ply;
@@ -261,7 +289,11 @@ namespace GeometricProcessingPipeline
 
         void Build(const GeometricProcessingPipeline::PointCloud& pc, float cellSize)
         {
-            if (pc.numberOfElements == 0) return;
+            if (pc.numberOfElements == 0)
+            {
+				aerr("PointCloud is empty. Cannot build SparseGrid.\n");
+                return;
+            }
 
             this->cellSize = cellSize;
             
@@ -1218,6 +1250,35 @@ namespace GeometricProcessingPipeline
         }
     };
 
+    struct GeometricProcessingOperatorParameter
+    {
+		std::map<std::string, std::any> parameters;
+
+		template<typename T>
+        void SetParameter(const std::string& name, const T& value)
+        {
+            parameters[name] = value;
+        }
+
+		template<typename T>
+        T GetParameter(const std::string& name, const T& defaultValue) const
+        {
+            auto it = parameters.find(name);
+            if (it != parameters.end())
+            {
+                try
+                {
+                    return std::any_cast<T>(it->second);
+                }
+                catch (const std::bad_any_cast&)
+                {
+                    return defaultValue;
+                }
+            }
+            return defaultValue;
+		}
+    };
+
     class IGeometricProcessingOperatorBase {};
 
 	template<typename SpatialPartitioningType>
@@ -1315,7 +1376,6 @@ namespace GeometricProcessingPipeline
         {
             TS(PointCloudVisualization);
             if (pointCloud.numberOfElements == 0) return;
-            // 1. Build Spatial Partitioning
             if (nullptr == spatialPartitioning)
             {
                 spatialPartitioning = new SparseGrid();
@@ -1336,9 +1396,9 @@ namespace GeometricProcessingPipeline
                     "PointCloudVisualization",
                     cachedPointCloud->positions[i],
                     Configuration::pointVisualizationRadius * 0.9f,
-                    //glm::vec4(cachedPointCloud->colors[i], 1.0f)
+                    glm::vec4(cachedPointCloud->colors[i], 1.0f)
 
-                    Color::red()
+                    //Color::red()
                 );
             }
         }
@@ -3858,6 +3918,8 @@ namespace GeometricProcessingPipeline
         {
 			TS(GeometricProcessingPipeline);
 
+            pointClouds.push_back(pointCloud.Clone());
+
             for (auto& [tag, op] : operators)
             {
                 {
@@ -3925,5 +3987,7 @@ namespace GeometricProcessingPipeline
         std::vector<std::tuple<std::string, std::shared_ptr<IGeometricProcessingOperator<SparseGrid>>>> operators;
         SparseGrid* sparseGrid = nullptr;
 		std::vector<Triangle> generatedMeshTriangles;
+
+		std::vector<PointCloud> pointClouds;
     };
 }

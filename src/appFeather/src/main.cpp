@@ -219,7 +219,7 @@ int main(int argc, char** argv)
             {
                 TS(PLYLoading);
                 PLYFormat ply;
-                if (!ply.Deserialize("D:\\Debug\\PLY\\Compound_B.ply"))
+                if (!ply.Deserialize("D:\\Debug\\PLY\\Compound_A.ply"))
                 {
                     printf("Failed to load PLY.\n");
                     return;
@@ -281,18 +281,18 @@ int main(int argc, char** argv)
 				auto operatorMeshGeneration = pipeline.AddOperator<GPP::OperatorMeshGeneration>("OperatorMeshGeneration", false);
                 operatorMeshGeneration->SetMeshVoxelSize(0.3f);
 
-				//operatorMeshGeneration->ExportPLY("D:\\Debug\\PLY\\Compound_B_MeshGeneration_Output.ply");
+				//operatorMeshGeneration->ExportPLY("D:\\Debug\\PLY\\Compound_A_MeshGeneration_Output.ply");
             }
 
             {
 				auto operatorPointCloudLoader = pipeline.AddOperator<GPP::OperatorPointCloudLoader>("OperatorPointCloudLoader", true);
-                operatorPointCloudLoader->SetPLYFilename("D:\\Debug\\PLY\\Compound_B.ply");
+                operatorPointCloudLoader->SetPLYFilename("D:\\Debug\\PLY\\Compound_A.ply");
             }
 
             {
 				//std::vector<GPP::Triangle> triangles;
     //            PLYFormat ply;
-				//ply.Deserialize("D:\\Debug\\PLY\\Compound_B_MeshGeneration_Output.ply");
+				//ply.Deserialize("D:\\Debug\\PLY\\Compound_A_MeshGeneration_Output.ply");
 
     //            for (size_t i = 0; i < ply.GetTriangleIndices().size() / 3; i++)
     //            {
@@ -312,6 +312,38 @@ int main(int argc, char** argv)
                 operatorMeshDistanceFilter->SetThresholdMultiplier(3.0f);
             }
 
+            {
+				auto operatorNormalDivergence = pipeline.AddOperator<GPP::OperatorCurvatureDivergence>("OperatorCurvatureDivergence", false);
+            }
+
+            {
+                struct FilterFunctor
+                {
+                    GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
+
+                    bool operator()(GPP::PointCloud& pointCloud, size_t index)
+                    {
+                        if (0 < pointCloud.pointClusterIDs[index])
+                        {
+                            pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    }
+                };
+                FilterFunctor filterFunctor;
+
+				auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", false);
+            }
+
+            {
+                auto operatorClustering = pipeline.AddOperator<GPP::OperatorClustering>("OperatorClustering", false);
+                operatorClustering->SetUseMarksForClustering(true);
+            }
+
             //{
             //    auto operatorCurvatureEstimation = pipeline.AddOperator<GPP::OperatorCurvatureEstimation>("OperatorCurvatureEstimation", false);
             //    operatorCurvatureEstimation->SetNeighborSearchOffset(3);
@@ -324,28 +356,38 @@ int main(int argc, char** argv)
             //    operatorClustering->SetUseMarksForClustering(true);
             //}
 
-            //{
-            //    struct FilterFunctor
-            //    {
-            //        GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
+       //     {
+       //         struct FilterFunctor
+       //         {
+       //             GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
 
-            //        bool operator()(GPP::PointCloud& pointCloud, size_t index)
-            //        {
-            //            
-            //            if (0 < pointCloud.pointClusterIDs[index])
-            //            {
-            //                pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
-            //                return true;
-            //            }
+       //             bool operator()(GPP::PointCloud& pointCloud, size_t index)
+       //             {
+       //                 
+       //                 //if (0 < pointCloud.pointClusterIDs[index])
+       //                 //{
+       //                 //    pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
+       //                 //    return true;
+       //                 //}
 
-            //            return true;
-            //        }
-            //    };
+       //                 if(1 == pointCloud.marks[index])
+							//return false;
 
-            //    FilterFunctor filterFunctor;
-            //    //pipeline.BuildSparseGrid(pc);
-            //    auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", true);
-            //}
+       //                 return true;
+       //             }
+       //         };
+
+       //         FilterFunctor filterFunctor;
+       //         //pipeline.BuildSparseGrid(pc);
+       //         auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", true);
+       //     }
+
+       //     {
+       //         auto operatorMeshGeneration = pipeline.AddOperator<GPP::OperatorMeshGeneration>("OperatorMeshGeneration", false);
+       //         operatorMeshGeneration->SetMeshVoxelSize(0.15f);
+
+       //         operatorMeshGeneration->ExportPLY("D:\\Debug\\PLY\\Compound_A_Result.ply");
+       //     }
 
 			pipeline.Execute(pc);
 

@@ -11,6 +11,7 @@
 #include <limits.h>
 
 #include <algorithm>
+#include <any>
 #include <atomic>
 #include <bitset>
 
@@ -34,6 +35,7 @@
 #include <random>
 #include <set>
 #include <sstream>
+#include <stack>
 #include <string>
 #include <thread>
 #include <typeinfo>
@@ -153,3 +155,5 @@ std::string Miliseconds(const std::chrono::steady_clock::time_point beginTime, c
 
 #define alog(...) printf("\033[38;5;1m\033[48;5;15m(^(OO)^) /V/\033[0m\t" __VA_ARGS__)
 #define alogt(tag, ...) printf("\033[38;5;1m\033[48;5;15m [%d] (^(OO)^) /V/\033[0m\t" tag, __VA_ARGS__)
+
+#define aerr(...) printf("\033[38;5;15m\033[48;5;1m(x(OO)x) /V/ [ERROR] @%s:%d\033[0m\t" __VA_ARGS__, __FILE__, __LINE__)
