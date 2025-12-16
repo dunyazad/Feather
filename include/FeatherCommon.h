@@ -103,6 +103,11 @@ const std::string EmptyString = "";
 
 #include <glm_include.h>
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/LU>
+
 #include <stb_connected_components.h>
 #include <stb_c_lexer.h>
 #include <stb_divide.h>

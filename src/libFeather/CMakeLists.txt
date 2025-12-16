@@ -166,6 +166,7 @@ target_include_directories(libFeather PUBLIC
     ${Feather_SOURCE_DIR}/External/robin_hood/
     ${Feather_SOURCE_DIR}/External/glad/include/
     ${Feather_SOURCE_DIR}/External/glm/
+    ${Feather_SOURCE_DIR}/External/Eigen
     ${CMAKE_SOURCE_DIR}/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${glfw_SOURCE_DIR}/include

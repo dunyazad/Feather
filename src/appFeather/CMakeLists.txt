@@ -1,9 +1,18 @@
 cmake_minimum_required(VERSION 3.20)
 project(appFeather)
 
+file(GLOB_RECURSE GEOMETRIC_PROCESSING_SOURCES
+    CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GeometricProcessing/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GeometricProcessing/*.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GeometricProcessing/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GeometricProcessing/*.cpp
+)
+
+
 add_executable(appFeather
     src/main.cpp
-	src/GeometricProcessingPipeline.hpp
+	${GEOMETRIC_PROCESSING_SOURCES}
 )
 
 target_include_directories(appFeather PRIVATE

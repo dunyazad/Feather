@@ -194,9 +194,11 @@ struct Ray
 	glm::vec3 inverseDirection;
 
 	Ray(const glm::vec3& o, const glm::vec3& d) : origin(o), direction(d) {
-		inverseDirection.x = (std::abs(d.x) < 1e-6f) ? ((d.x >= 0) ? 1e20f : -1e20f) : (1.0f / d.x);
-		inverseDirection.y = (std::abs(d.y) < 1e-6f) ? ((d.y >= 0) ? 1e20f : -1e20f) : (1.0f / d.y);
-		inverseDirection.z = (std::abs(d.z) < 1e-6f) ? ((d.z >= 0) ? 1e20f : -1e20f) : (1.0f / d.z);
+		const float epsilon = 1e-6f;
+
+		inverseDirection.x = (std::abs(direction.x) < epsilon) ? ((direction.x >= 0) ? 1e20f : -1e20f) : (1.0f / direction.x);
+		inverseDirection.y = (std::abs(direction.y) < epsilon) ? ((direction.y >= 0) ? 1e20f : -1e20f) : (1.0f / direction.y);
+		inverseDirection.z = (std::abs(direction.z) < epsilon) ? ((direction.z >= 0) ? 1e20f : -1e20f) : (1.0f / direction.z);
 	}
 
 	inline bool IntersectSphere(const glm::vec3& sphereCenter, float radius, float& t) const
