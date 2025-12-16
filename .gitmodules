@@ -7,3 +7,6 @@
 [submodule "External/RxTx"]
 	path = External/RxTx
 	url = https://github.com/dunyazad/RxTx.git
+[submodule "external/eigen"]
+	path = external/eigen
+	url = https://github.com/PX4/eigen.git
