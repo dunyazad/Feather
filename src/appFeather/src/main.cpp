@@ -229,22 +229,275 @@ int main(int argc, char** argv)
 
             { // OperatorPointCloudLoader
                 GPP::GeometricProcessingOperatorParameter parameter;
-				parameter.SetParameter<std::string>("plyFilename", "D:\\Debug\\PLY\\Compound.ply");
-				parameter.needToRebuildSpatialPartitioning = true;
+				parameter.SetParameter<std::string>("plyFilename", "D:\\Debug\\PLY\\Compound_B.ply");
 				pipeline.AddOperator<GPP::OperatorPointCloudLoader>("OperatorPointCloudLoader", parameter);
             }
 
             { // OperatorStorePointCloud
                 GPP::GeometricProcessingOperatorParameter parameter;
-                parameter.needToRebuildSpatialPartitioning = true;
+                //parameter.needToRebuildSpatialPartitioning = true;
                 pipeline.AddOperator<GPP::OperatorStorePointCloud>("OperatorStorePointCloud", parameter);
             }
 
-			{ // OperatorFilterETC
-                GPP::GeometricProcessingOperatorParameter parameter;
-				parameter.needToRebuildSpatialPartitioning = true;
-                pipeline.AddOperator<GPP::OperatorFilterETC>("OperatorFilterETC", parameter);
+            for (size_t i = 0; i < 1; i++)
+            {
+                { // OperatorPointCloudErosionDilation
+                    GPP::GeometricProcessingOperatorParameter parameter;
+
+                    float radius = 0.05f;
+                    float overlapDist = 0.05f;
+                    float maxAngle = 15.0f;
+
+                    parameter.SetParameter<float>("radius", radius);
+                    parameter.SetParameter<float>("overlapDist", overlapDist);
+                    parameter.SetParameter<float>("maxAngle", maxAngle);
+					parameter.SetParameter<bool>("markingOnly", true);
+					parameter.SetParameter<std::string>("operation", "Erosion");
+
+                    pipeline.AddOperator<GPP::OperatorApplyMorphology>("OperatorApplyMorphology", parameter);
+                }
+
+                { // OperatorCustomFilter
+                    struct FilterFunctor
+                    {
+                        GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
+
+                        bool operator()(GPP::PointCloud& pointCloud, size_t index)
+                        {
+                            if (1 == pointCloud.marks[index])
+                            {
+                                pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
+                                return false;
+                            }
+                            else
+                            {
+                                return true;
+                            }
+                        }
+                    };
+                    FilterFunctor filterFunctor;
+
+                    GPP::GeometricProcessingOperatorParameter parameter;
+                    parameter.needToRebuildSpatialPartitioning = true;
+                    auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", parameter);
+                }
             }
+
+            //for (size_t i = 0; i < 1; i++)
+            //{
+            //    { // OperatorPointCloudErosionDilation
+            //        GPP::GeometricProcessingOperatorParameter parameter;
+
+            //        float radius = 0.05f;
+            //        float overlapDist = 0.05f;
+            //        float maxAngle = 15.0f;
+
+            //        parameter.SetParameter<float>("radius", radius);
+            //        parameter.SetParameter<float>("overlapDist", overlapDist);
+            //        parameter.SetParameter<float>("maxAngle", maxAngle);
+            //        parameter.SetParameter<std::string>("operation", "Dilation");
+
+            //        pipeline.AddOperator<GPP::OperatorApplyMorphology>("OperatorApplyMorphology", parameter);
+            //    }
+
+            //    { // OperatorCustomFilter
+            //        struct FilterFunctor
+            //        {
+            //            GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
+
+            //            bool operator()(GPP::PointCloud& pointCloud, size_t index)
+            //            {
+            //                if (1 == pointCloud.marks[index])
+            //                {
+            //                    pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
+            //                    return false;
+            //                }
+            //                else
+            //                {
+            //                    return true;
+            //                }
+            //            }
+            //        };
+            //        FilterFunctor filterFunctor;
+
+            //        GPP::GeometricProcessingOperatorParameter parameter;
+            //        parameter.needToRebuildSpatialPartitioning = true;
+            //        auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", parameter);
+            //    }
+            //}
+
+            { // OperatorComparePointCloudUsingDistance
+                GPP::GeometricProcessingOperatorParameter parameter;
+				int indexA = 0;
+				int indexB = -1;
+
+				parameter.SetParameter<int>("indexA", indexA);
+				parameter.SetParameter<int>("indexB", indexB);
+                pipeline.AddOperator<GPP::OperatorCompareSameIndexOrderedPointCloud>("OperatorCompareSameIndexOrderedPointCloud", parameter);
+            }
+
+            { pipeline.Execute(); pipeline.VisualizeLast(); return; }
+
+    //        { // OperatorPointCloudErosionDilation
+    //            GPP::GeometricProcessingOperatorParameter parameter;
+    //            
+    //            float radius = 0.05f;
+    //            float overlapDist = 0.05f;
+    //            float maxAngle = 15.0f;
+
+				//parameter.SetParameter<float>("radius", radius);
+				//parameter.SetParameter<float>("overlapDist", overlapDist);
+				//parameter.SetParameter<float>("maxAngle", maxAngle);
+
+				//auto operatorPointCloudErosionDilation = pipeline.AddOperator<GPP::OperatorPointCloudErosionDilation>("OperatorPointCloudErosionDilation", parameter);
+    //        }
+
+            //{ // OperatorPointCloudDilationErosion
+            //    GPP::GeometricProcessingOperatorParameter parameter;
+
+            //    float radius = 0.05f;
+            //    float overlapDist = 0.05f;
+            //    float maxAngle = 15.0f;
+
+            //    parameter.SetParameter<float>("radius", radius);
+            //    parameter.SetParameter<float>("overlapDist", overlapDist);
+            //    parameter.SetParameter<float>("maxAngle", maxAngle);
+
+            //    auto operatorPointCloudDilationErosion = pipeline.AddOperator<GPP::OperatorPointCloudDilationErosion>("OperatorPointCloudDilationErosion", parameter);
+            //}
+
+            //{ // OperatorCustomFilter
+            //    struct FilterFunctor
+            //    {
+            //        GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
+
+            //        bool operator()(GPP::PointCloud& pointCloud, size_t index)
+            //        {
+            //            if (1 == pointCloud.marks[index])
+            //            {
+            //                pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
+            //                return false;
+            //            }
+            //            else
+            //            {
+            //                return true;
+            //            }
+            //        }
+            //    };
+            //    FilterFunctor filterFunctor;
+
+            //    GPP::GeometricProcessingOperatorParameter parameter;
+            //    parameter.needToRebuildSpatialPartitioning = true;
+            //    auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", parameter);
+            //}
+
+            { pipeline.Execute(); pipeline.VisualizeLast(); return; }
+
+            { // OperatorNormalDeviation
+                GPP::GeometricProcessingOperatorParameter parameter;
+
+                float searchRadiusMultiplier = 2.0f;
+                int neighborSearchOffset = 1;
+                float maxDeviationAngle = 20.0f;
+
+                parameter.SetParameter<float>("searchRadiusMultiplier", searchRadiusMultiplier);
+                parameter.SetParameter<int>("neighborSearchOffset", neighborSearchOffset);
+                parameter.SetParameter<float>("maxDeviationAngle", maxDeviationAngle);
+
+                auto operatorNormalDeviation = pipeline.AddOperator<GPP::OperatorNormalDeviation>("OperatorNormalDeviation", parameter);
+            }
+
+            { pipeline.Execute(); pipeline.VisualizeLast(); return; }
+
+
+            //{ // OperatorCustomFilter
+            //    struct FilterFunctor
+            //    {
+            //        GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
+
+            //        bool operator()(GPP::PointCloud& pointCloud, size_t index)
+            //        {
+            //            if (1 == pointCloud.marks[index])
+            //            {
+            //                pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
+            //                return false;
+            //            }
+            //            else
+            //            {
+            //                return true;
+            //            }
+            //        }
+            //    };
+            //    FilterFunctor filterFunctor;
+
+            //    GPP::GeometricProcessingOperatorParameter parameter;
+            //    parameter.needToRebuildSpatialPartitioning = true;
+            //    auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", parameter);
+            //}
+
+
+            { // OperatorNormalGradient
+                GPP::GeometricProcessingOperatorParameter parameter;
+
+                float searchRadiusMultiplier = 2.0f;
+                int neighborSearchOffset = 1;
+                float visualizationSigma = 3.0f;
+				bool useAlphaGradient = false;
+				parameter.SetParameter<float>("searchRadiusMultiplier", searchRadiusMultiplier);
+				parameter.SetParameter<int>("neighborSearchOffset", neighborSearchOffset);
+				parameter.SetParameter<bool>("useAlphaGradient", useAlphaGradient);
+				parameter.SetParameter<float>("visualizationSigma", visualizationSigma);
+
+				auto operatorNormalGradient = pipeline.AddOperator<GPP::OperatorNormalGradient>("OperatorNormalGradient", parameter);
+            }
+
+            { // OperatorNormalDivergenceGradient
+                GPP::GeometricProcessingOperatorParameter parameter;
+
+                float visualizationSigma = 3.0f;
+                float gradientMean = 0.0f;
+                float gradientStdDev = 0.0f;
+
+				parameter.SetParameter<float>("visualizationSigma", visualizationSigma);
+				parameter.SetParameter<float>("gradientMean", gradientMean);
+				parameter.SetParameter<float>("gradientStdDev", gradientStdDev);
+
+				auto operatorNormalDivergenceGradient = pipeline.AddOperator<GPP::OperatorNormalDivergenceGradient>("OperatorNormalDivergenceGradient", parameter);
+            }
+
+            { // OperatorNormalDivergence
+                GPP::GeometricProcessingOperatorParameter parameter;
+
+                float searchRadiusMultiplier = 5.0f;
+                int neighborSearchOffset = 3;
+                float visualizationScale = 50.0f;
+
+                parameter.SetParameter<float>("searchRadiusMultiplier", searchRadiusMultiplier);
+                parameter.SetParameter<int>("neighborSearchOffset", neighborSearchOffset);
+                parameter.SetParameter<float>("visualizationScale", visualizationScale);
+
+                auto operatorNormalDivergence = pipeline.AddOperator<GPP::OperatorNormalDivergence>("OperatorNormalDivergence", parameter);
+            }
+
+            { // OperatorNormalDeviation
+				GPP::GeometricProcessingOperatorParameter parameter;
+
+                float searchRadiusMultiplier = 2.0f;
+                int neighborSearchOffset = 1;
+                float maxDeviationAngle = 20.0f;
+
+				parameter.SetParameter<float>("searchRadiusMultiplier", searchRadiusMultiplier);
+				parameter.SetParameter<int>("neighborSearchOffset", neighborSearchOffset);
+				parameter.SetParameter<float>("maxDeviationAngle", maxDeviationAngle);
+
+				auto operatorNormalDeviation = pipeline.AddOperator<GPP::OperatorNormalDeviation>("OperatorNormalDeviation", parameter);
+            }
+
+			//{ // OperatorFilterETC
+   //             GPP::GeometricProcessingOperatorParameter parameter;
+			//	parameter.needToRebuildSpatialPartitioning = true;
+   //             pipeline.AddOperator<GPP::OperatorFilterETC>("OperatorFilterETC", parameter);
+   //         }
 
     //        { // OperatorCompareWithLastPointCloud
 				//GPP::GeometricProcessingOperatorParameter parameter;
@@ -260,12 +513,8 @@ int main(int argc, char** argv)
                 operatorCurvatureEstimation->SetVisualizationScale(5.0f);
             }
 
-  /*          {
-                pipeline.Execute();
-                pipeline.VisualizeLast();
-                return;
-            }*/
- 
+            { pipeline.Execute(); pipeline.VisualizeLast(); return; }
+
             { // OperatorClustering
                 GPP::GeometricProcessingOperatorParameter parameter;
 

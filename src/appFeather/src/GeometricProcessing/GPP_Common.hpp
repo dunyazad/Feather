@@ -241,43 +241,45 @@ namespace GeometricProcessingPipeline
         [[nodiscard]] PointCloud Clone() const
         {
             PointCloud pc;
-            pc.numberOfElements = numberOfElements;
-            pc.positions = positions;
-            pc.normals = normals;
-            pc.colors = colors;
-            pc.pointDeepLearningClassIDs = pointDeepLearningClassIDs;
-            pc.pointClusterIDs = pointClusterIDs;
-            pc.marks = marks;
+			pc.Resize(numberOfElements);
+
+			memcpy(pc.positions.data(), positions.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(pc.normals.data(), normals.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(pc.colors.data(), colors.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(pc.pointDeepLearningClassIDs.data(), pointDeepLearningClassIDs.data(), sizeof(int) * numberOfElements);
+			memcpy(pc.pointClusterIDs.data(), pointClusterIDs.data(), sizeof(int) * numberOfElements);
+			memcpy(pc.marks.data(), marks.data(), sizeof(int) * numberOfElements);
             pc.aabb = aabb;
+
             return pc;
         }
 
         void CopyFrom(const PointCloud& src)
         {
             Clear();
+            Resize(src.numberOfElements);
 
-            numberOfElements = src.numberOfElements;
-            positions = src.positions;
-            normals = src.normals;
-            colors = src.colors;
-            pointDeepLearningClassIDs = src.pointDeepLearningClassIDs;
-            pointClusterIDs = src.pointClusterIDs;
-            marks = src.marks;
-            aabb = src.aabb;
+			memcpy(positions.data(), src.positions.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(normals.data(), src.normals.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(colors.data(), src.colors.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(pointDeepLearningClassIDs.data(), src.pointDeepLearningClassIDs.data(), sizeof(int) * numberOfElements);
+			memcpy(pointClusterIDs.data(), src.pointClusterIDs.data(), sizeof(int) * numberOfElements);
+            memcpy(marks.data(), src.marks.data(), sizeof(int) * numberOfElements);
+			aabb = src.aabb;
         }
 
         void CopyTo(PointCloud& dst) const
         {
             dst.Clear();
+			dst.Resize(numberOfElements);
 
-            dst.numberOfElements = numberOfElements;
-            dst.positions = positions;
-            dst.normals = normals;
-            dst.colors = colors;
-            dst.pointDeepLearningClassIDs = pointDeepLearningClassIDs;
-            dst.pointClusterIDs = pointClusterIDs;
-            dst.marks = marks;
-            dst.aabb = aabb;
+			memcpy(dst.positions.data(), positions.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(dst.normals.data(), normals.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(dst.colors.data(), colors.data(), sizeof(Eigen::Vector3f) * numberOfElements);
+			memcpy(dst.pointDeepLearningClassIDs.data(), pointDeepLearningClassIDs.data(), sizeof(int) * numberOfElements);
+			memcpy(dst.pointClusterIDs.data(), pointClusterIDs.data(), sizeof(int) * numberOfElements);
+			memcpy(dst.marks.data(), marks.data(), sizeof(int) * numberOfElements);
+			dst.aabb = aabb;
         }
 
         void FromPLY(const std::string& plyFileName)
@@ -1380,11 +1382,11 @@ namespace GeometricProcessingPipeline
             }
         }
 
-        virtual void Process(PointCloud* currentPointCloud) = 0;
-        void Process(PointCloud* currentPointCloud, SpatialPartitioningType* spatialPartitioning)
+        virtual void Process() = 0;
+        void Process(SpatialPartitioningType* spatialPartitioning)
         {
             this->spatialPartitioning = spatialPartitioning;
-            Process(currentPointCloud);
+            Process();
         }
 
         virtual void Visualize() = 0;
@@ -1401,7 +1403,7 @@ namespace GeometricProcessingPipeline
         GeometricProcessingOperatorParameter parameter;
         SpatialPartitioningType* spatialPartitioning = nullptr;
         std::vector<int> pointTags;
-        PointCloud* cachedPointCloud = nullptr;
+        std::shared_ptr<PointCloud> cachedPointCloud = nullptr;
     };
 
     class Pipeline
@@ -1425,22 +1427,34 @@ namespace GeometricProcessingPipeline
         void VisualizeLast();
         void Clear();
 
-        void CreatePointCloud();
+        int CreatePointCloud();
         void StorePointCloud();
         void RestoreInitialPointCloud();
         void RestoreLastPointCloud();
 
         inline SparseGrid* GetSparseGrid() const { return sparseGrid; }
 
-        inline PointCloud* GetCurrentPointCloud() const { return currentPointCloud; }
-        inline PointCloud* GetLastPointCloud() { return (pointClouds.size() >= 2) ? &pointClouds[pointClouds.size() - 2] : nullptr; }
+        inline std::shared_ptr<PointCloud> GetCurrentPointCloud()
+        {
+            if(-1 == currentPointCloudIndex || currentPointCloudIndex >= pointClouds.size()) return nullptr;
+            else return pointClouds[currentPointCloudIndex];
+        }
+
+		inline std::shared_ptr<PointCloud> GetInitialPointCloud() { return pointClouds.empty() ? nullptr : pointClouds[0]; }
+        inline std::shared_ptr<PointCloud> GetLastPointCloud() { return pointClouds.empty() ? nullptr : pointClouds.back(); }
+        inline std::shared_ptr<PointCloud> GetPointCloud(int index)
+        {
+            if (-1 == index) return GetLastPointCloud();
+            else if(pointClouds.empty()) return nullptr;
+            else return pointClouds[index];
+        }
 
     protected:
         std::vector<std::tuple<std::string, std::shared_ptr<IGeometricProcessingOperator<SparseGrid>>>> operators;
         SparseGrid* sparseGrid = nullptr;
         std::vector<Triangle> generatedMeshTriangles;
 
-        std::vector<PointCloud> pointClouds;
-        PointCloud* currentPointCloud = nullptr;
+        std::vector<std::shared_ptr<PointCloud>> pointClouds;
+        int currentPointCloudIndex = -1;
     };
 }
