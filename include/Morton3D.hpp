@@ -3,6 +3,19 @@
 #include <cstdint>
 #include <cmath>
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/LU>
+
+namespace Eigen {
+    template <typename Type, int Size>
+    using Vector = Matrix<Type, Size, 1>;
+
+    using Vector3b = Vector<unsigned char, 3>;
+    using Vector3ui = Vector<unsigned int, 3>;
+}
+
 class Morton3D
 {
 public:
@@ -20,6 +33,14 @@ public:
         uint64_t xx = Part1By2(index.x);
         uint64_t yy = Part1By2(index.y) << 1;
         uint64_t zz = Part1By2(index.z) << 2;
+        return xx | yy | zz;
+    }
+
+    static uint64_t Encode(const Eigen::Vector3ui& index)
+    {
+        uint64_t xx = Part1By2(index.x());
+        uint64_t yy = Part1By2(index.y()) << 1;
+        uint64_t zz = Part1By2(index.z()) << 2;
         return xx | yy | zz;
     }
 
@@ -44,6 +65,11 @@ public:
         return Encode(index);
 	}
 
+    static uint64_t IndexToKey(const Eigen::Vector3ui& index)
+    {
+        return Encode(index);
+    }
+
     // Convert world position ¡æ voxel index
     static glm::ivec3 PositionToIndex(
         const glm::vec3& p,
@@ -59,9 +85,31 @@ public:
         return glm::ivec3(ix, iy, iz);
     }
 
+    static Eigen::Vector3ui PositionToIndex(
+        const Eigen::Vector3f& p,
+        const Eigen::Vector3f& origin,
+        float voxelSize)
+    {
+        float inv = 1.0f / voxelSize;
+
+        int ix = (int)std::floor((p.x() - origin.x()) * inv);
+        int iy = (int)std::floor((p.y() - origin.y()) * inv);
+        int iz = (int)std::floor((p.z() - origin.z()) * inv);
+
+        return Eigen::Vector3ui(ix, iy, iz);
+    }
+
     static uint64_t EncodeFromVec3(
         const glm::vec3& p,
         const glm::vec3& origin,
+        float voxelSize)
+    {
+        return Encode(PositionToIndex(p, origin, voxelSize));
+    }
+
+    static uint64_t EncodeFromVec3(
+        const Eigen::Vector3f& p,
+        const Eigen::Vector3f& origin,
         float voxelSize)
     {
         return Encode(PositionToIndex(p, origin, voxelSize));
@@ -81,9 +129,33 @@ public:
             ) * voxelSize;
     }
 
+    static Eigen::Vector3f IndexToPosition(
+        const Eigen::Vector3ui& index,
+        const Eigen::Vector3f& origin,
+        float voxelSize)
+    {
+        return origin +
+            Eigen::Vector3f(
+                (float)index.x() + 0.5f,
+                (float)index.y() + 0.5f,
+                (float)index.z() + 0.5f
+            ) * voxelSize;
+    }
+
     static glm::vec3 DecodeToVec3(
         uint64_t code,
         const glm::vec3& origin,
+        float voxelSize)
+    {
+        uint32_t ix, iy, iz;
+        Decode(code, ix, iy, iz);
+
+        return IndexToPosition({ ix, iy, iz }, origin, voxelSize);
+    }
+
+    static Eigen::Vector3f DecodeToVec3(
+        uint64_t code,
+        const Eigen::Vector3f& origin,
         float voxelSize)
     {
         uint32_t ix, iy, iz;

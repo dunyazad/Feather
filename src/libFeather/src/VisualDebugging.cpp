@@ -300,6 +300,22 @@ void VisualDebugging::AddBox(const std::string& tag, const AABB& aabb, const glm
 	AddBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
 }
 
+void VisualDebugging::AddBox(const std::string& tag, const Eigen::AABB& aabb, const Eigen::Vector4f& color)
+{
+	auto center = (aabb.min + aabb.max) * 0.5f;
+	auto dimensions = aabb.max - aabb.min;
+	AddBox(tag, center, { 0.0f, 0.0f, 1.0f }, dimensions, color);
+}
+
+void VisualDebugging::AddBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+{
+	AddBox(tag,
+		glm::vec3(center.x(), center.y(), center.z()),
+		glm::vec3(normal.x(), normal.y(), normal.z()),
+		glm::vec3(dimensions.x(), dimensions.y(), dimensions.z()),
+		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+}
+
 void VisualDebugging::AddBox(const std::string& tag, const glm::vec3& center, const glm::vec3& dimensions, const glm::vec4& color)
 {
 	AddBox(tag, center, glm::vec3(0.0f, 1.0f, 0.0f), dimensions, color);
@@ -367,6 +383,28 @@ void VisualDebugging::AddWiredBox(const std::string& tag, const glm::vec3& cente
 	renderable->IncreaseNumberOfInstances();
 }
 
+void VisualDebugging::AddWiredBox(const std::string& tag, const Eigen::AABB& aabb, const Eigen::Vector4f& color)
+{
+	AddWiredBox(tag, { glm::vec3(aabb.min.x(), aabb.min.y(), aabb.min.z()) }, { glm::vec3(aabb.max.x(), aabb.max.y(), aabb.max.z()) }, glm::vec4(color.x(), color.y(), color.z(), color.w()));
+}
+
+void VisualDebugging::AddWiredBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+{
+	AddWiredBox(tag,
+		glm::vec3(center.x(), center.y(), center.z()),
+		glm::vec3(dimensions.x(), dimensions.y(), dimensions.z()),
+		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+}
+
+void VisualDebugging::AddWiredBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+{
+	AddWiredBox(tag,
+		glm::vec3(center.x(), center.y(), center.z()),
+		glm::vec3(normal.x(), normal.y(), normal.z()),
+		glm::vec3(dimensions.x(), dimensions.y(), dimensions.z()),
+		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+}
+
 void VisualDebugging::AddSphere(const std::string& tag, const glm::vec3& center, float radius, const glm::vec4& color)
 {
 	AddSphere(tag, center, glm::vec3(0.0f, 1.0f, 0.0f), radius, color);
@@ -395,6 +433,23 @@ void VisualDebugging::AddSphere(const std::string& tag, const glm::vec3& center,
 	renderable->AddInstanceTransform(tm);
 
 	renderable->IncreaseNumberOfInstances();
+}
+
+void VisualDebugging::AddSphere(const std::string& tag, const Eigen::Vector3f& center, float radius, const Eigen::Vector4f& color)
+{
+	AddSphere(tag,
+		glm::vec3(center.x(), center.y(), center.z()),
+		radius,
+		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+}
+
+void VisualDebugging::AddSphere(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, float radius, const Eigen::Vector4f& color)
+{
+	AddSphere(tag,
+		glm::vec3(center.x(), center.y(), center.z()),
+		glm::vec3(normal.x(), normal.y(), normal.z()),
+		radius,
+		glm::vec4(color.x(), color.y(), color.z(), color.w()));
 }
 
 void VisualDebugging::AddText(const std::string& tag, const std::string& text, const glm::vec3& position, const glm::vec4& color, float fontSize)
@@ -468,3 +523,115 @@ unsigned int VisualDebugging::ShowPreviousSelection()
 
 	return selectionIndex;
 }
+
+
+
+
+
+
+
+
+
+//
+//// ------------------------------------------------------------------------
+//// Eigen Type Support Implementations
+//// ------------------------------------------------------------------------
+//
+//void VisualDebugging::AddLine(const std::string& tag, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector4f& c)
+//{
+//	AddLine(tag, v0, v1, c, c);
+//}
+//
+//void VisualDebugging::AddLine(const std::string& tag, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector4f& c0, const Eigen::Vector4f& c1)
+//{
+//	AddLine(tag,
+//		glm::vec3(v0.x(), v0.y(), v0.z()),
+//		glm::vec3(v1.x(), v1.y(), v1.z()),
+//		glm::vec4(c0.x(), c0.y(), c0.z(), c0.w()),
+//		glm::vec4(c1.x(), c1.y(), c1.z(), c1.w()));
+//}
+//
+//void VisualDebugging::AddTriangle(const std::string& tag, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2, const Eigen::Vector4f& c)
+//{
+//	AddTriangle(tag, v0, v1, v2, c, c, c);
+//}
+//
+//void VisualDebugging::AddTriangle(const std::string& tag, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2, const Eigen::Vector4f& c0, const Eigen::Vector4f& c1, const Eigen::Vector4f& c2)
+//{
+//	AddTriangle(tag,
+//		glm::vec3(v0.x(), v0.y(), v0.z()),
+//		glm::vec3(v1.x(), v1.y(), v1.z()),
+//		glm::vec3(v2.x(), v2.y(), v2.z()),
+//		glm::vec4(c0.x(), c0.y(), c0.z(), c0.w()),
+//		glm::vec4(c1.x(), c1.y(), c1.z(), c1.w()),
+//		glm::vec4(c2.x(), c2.y(), c2.z(), c2.w()));
+//}
+//
+//void VisualDebugging::AddBox(const std::string& tag, const Eigen::AABB& aabb, const Eigen::Vector4f& color)
+//{
+//	AddBox(tag, {glm::vec3(aabb.min.x(), aabb.min.y(), aabb.min.z())}, {glm::vec3(aabb.max.x(), aabb.max.y(), aabb.max.z())}, glm::vec4(color.x(), color.y(), color.z(), color.w()));
+//}
+//
+//void VisualDebugging::AddBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+//{
+//	AddBox(tag,
+//		glm::vec3(center.x(), center.y(), center.z()),
+//		glm::vec3(dimensions.x(), dimensions.y(), dimensions.z()),
+//		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+//}
+//
+//void VisualDebugging::AddBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+//{
+//	AddBox(tag,
+//		glm::vec3(center.x(), center.y(), center.z()),
+//		glm::vec3(normal.x(), normal.y(), normal.z()),
+//		glm::vec3(dimensions.x(), dimensions.y(), dimensions.z()),
+//		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+//}
+//
+//void VisualDebugging::AddWiredBox(const std::string& tag, const Eigen::AABB& aabb, const Eigen::Vector4f& color)
+//{
+//	AddWiredBox(tag, { glm::vec3(aabb.min.x(), aabb.min.y(), aabb.min.z()) }, { glm::vec3(aabb.max.x(), aabb.max.y(), aabb.max.z()) }, glm::vec4(color.x(), color.y(), color.z(), color.w()));
+//}
+//
+//void VisualDebugging::AddWiredBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+//{
+//	AddWiredBox(tag,
+//		glm::vec3(center.x(), center.y(), center.z()),
+//		glm::vec3(dimensions.x(), dimensions.y(), dimensions.z()),
+//		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+//}
+//
+//void VisualDebugging::AddWiredBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+//{
+//	AddWiredBox(tag,
+//		glm::vec3(center.x(), center.y(), center.z()),
+//		glm::vec3(normal.x(), normal.y(), normal.z()),
+//		glm::vec3(dimensions.x(), dimensions.y(), dimensions.z()),
+//		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+//}
+//
+//void VisualDebugging::AddSphere(const std::string& tag, const Eigen::Vector3f& center, float radius, const Eigen::Vector4f& color)
+//{
+//	AddSphere(tag,
+//		glm::vec3(center.x(), center.y(), center.z()),
+//		radius,
+//		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+//}
+//
+//void VisualDebugging::AddSphere(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, float radius, const Eigen::Vector4f& color)
+//{
+//	AddSphere(tag,
+//		glm::vec3(center.x(), center.y(), center.z()),
+//		glm::vec3(normal.x(), normal.y(), normal.z()),
+//		radius,
+//		glm::vec4(color.x(), color.y(), color.z(), color.w()));
+//}
+//
+//void VisualDebugging::AddText(const std::string& tag, const std::string& text, const Eigen::Vector3f& position, const Eigen::Vector4f& color, float fontSize)
+//{
+//	AddText(tag, text,
+//		glm::vec3(position.x(), position.y(), position.z()),
+//		glm::vec4(color.x(), color.y(), color.z(), color.w()),
+//		fontSize);
+//}

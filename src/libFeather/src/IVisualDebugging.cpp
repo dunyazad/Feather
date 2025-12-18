@@ -71,12 +71,32 @@ void IVisualDebugging::AddLine(const std::string& tag, const glm::vec3& v0, cons
 	VisualDebugging::AddLine(tag, v0, v1, c0, c1);
 }
 
+void IVisualDebugging::AddLine(const std::string& tag, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector4f& c)
+{
+	VisualDebugging::AddLine(tag, v0, v1, c);
+}
+
+void IVisualDebugging::AddLine(const std::string& tag, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector4f& c0, const Eigen::Vector4f& c1)
+{
+	VisualDebugging::AddLine(tag, v0, v1, c0, c1);
+}
+
 void IVisualDebugging::AddTriangle(const std::string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c)
 {
 	VisualDebugging::AddTriangle(tag, v0, v1, v2, c);
 }
 
 void IVisualDebugging::AddTriangle(const std::string& tag, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& c0, const glm::vec4& c1, const glm::vec4& c2)
+{
+	VisualDebugging::AddTriangle(tag, v0, v1, v2, c0, c1, c2);
+}
+
+void IVisualDebugging::AddTriangle(const std::string& tag, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2, const Eigen::Vector4f& c)
+{
+	VisualDebugging::AddTriangle(tag, v0, v1, v2, c);
+}
+
+void IVisualDebugging::AddTriangle(const std::string& tag, const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2, const Eigen::Vector4f& c0, const Eigen::Vector4f& c1, const Eigen::Vector4f& c2)
 {
 	VisualDebugging::AddTriangle(tag, v0, v1, v2, c0, c1, c2);
 }
@@ -96,6 +116,21 @@ void IVisualDebugging::AddBox(const std::string& tag, const glm::vec3& center, c
 	VisualDebugging::AddBox(tag, center, normal, dimensions, color);
 }
 
+void IVisualDebugging::AddBox(const std::string& tag, const Eigen::AABB& aabb, const Eigen::Vector4f& color)
+{
+	VisualDebugging::AddBox(tag, aabb, color);
+}
+
+void IVisualDebugging::AddBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+{
+	VisualDebugging::AddBox(tag, center, dimensions, color);
+}
+
+void IVisualDebugging::AddBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+{
+	VisualDebugging::AddBox(tag, center, normal, dimensions, color);
+}
+
 void IVisualDebugging::AddWiredBox(const std::string& tag, const AABB& aabb, const glm::vec4& color)
 {
 	VisualDebugging::AddWiredBox(tag, aabb, color);
@@ -111,6 +146,21 @@ void IVisualDebugging::AddWiredBox(const std::string& tag, const glm::vec3& cent
 	VisualDebugging::AddWiredBox(tag, center, normal, dimensions, color);
 }
 
+void IVisualDebugging::AddWiredBox(const std::string& tag, const Eigen::AABB& aabb, const Eigen::Vector4f& color)
+{
+	VisualDebugging::AddWiredBox(tag, aabb, color);
+}
+
+void IVisualDebugging::AddWiredBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+{
+	VisualDebugging::AddWiredBox(tag, center, dimensions, color);
+}
+
+void IVisualDebugging::AddWiredBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)
+{
+	VisualDebugging::AddWiredBox(tag, center, normal, dimensions, color);
+}
+
 void IVisualDebugging::AddSphere(const std::string& tag, const glm::vec3& center, float radius, const glm::vec4& color)
 {
 	VisualDebugging::AddSphere(tag, center, radius, color);
@@ -121,7 +171,22 @@ void IVisualDebugging::AddSphere(const std::string& tag, const glm::vec3& center
 	VisualDebugging::AddSphere(tag, center, normal, radius, color);
 }
 
+void IVisualDebugging::AddSphere(const std::string& tag, const Eigen::Vector3f& center, float radius, const Eigen::Vector4f& color)
+{
+	VisualDebugging::AddSphere(tag, center, radius, color);
+}
+
+void IVisualDebugging::AddSphere(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& normal, float radius, const Eigen::Vector4f& color)
+{
+	VisualDebugging::AddSphere(tag, center, normal, radius, color);
+}
+
 void IVisualDebugging::AddText(const std::string& tag, const std::string& text, const glm::vec3& position, const glm::vec4& color, float fontSize)
+{
+	VisualDebugging::AddText(tag, text, position, color, fontSize);
+}
+
+void IVisualDebugging::AddText(const std::string& tag, const std::string& text, const Eigen::Vector3f& position, const Eigen::Vector4f& color, float fontSize)
 {
 	VisualDebugging::AddText(tag, text, position, color, fontSize);
 }

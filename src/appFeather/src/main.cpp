@@ -12,8 +12,6 @@ static inline std::string FormatWithCommas(size_t value)
     return numStr;
 }
 
-using VD = VisualDebugging;
-
 namespace GPP = GeometricProcessingPipeline;
 
 #include <Eigen/Core>
@@ -182,28 +180,34 @@ int main(int argc, char** argv)
                 if (worldPosNear.w != 0.0f) worldPosNear /= worldPosNear.w;
                 if (worldPosFar.w != 0.0f) worldPosFar /= worldPosFar.w;
 
-                glm::vec3 rayOrigin = glm::vec3(worldPosNear);
-                glm::vec3 rayDir = glm::normalize(glm::vec3(worldPosFar - worldPosNear));
+                Eigen::Vector3f rayOrigin = Eigen::Vector3f(worldPosNear.x, worldPosNear.y, worldPosNear.z);
+                auto delta = worldPosFar - worldPosNear;
+                Eigen::Vector3f rayDir = (Eigen::Vector3f(delta.x, delta.y, delta.z)).normalized();
 
-                Ray ray{ rayOrigin, rayDir };
+                Eigen::Ray ray{ rayOrigin, rayDir };
 
                 auto result = pipeline.GetSparseGrid()->Pick(pipeline.GetCurrentPointCloud()->positions, ray, GeometricProcessingPipeline::Configuration::pointVisualizationRadius);
 
                 if (result.hasHit)
                 {
-                    glm::vec3 p = pipeline.GetCurrentPointCloud()->positions[result.pointIndex];
-                    VD::AddSphere("PickedPoint", p, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+                    auto p = pipeline.GetCurrentPointCloud()->positions[result.pointIndex];
+                    VD::AddSphere("PickedPoint", p, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
 
                     if (Feather.IsKeyPressed(GLFW_KEY_LEFT_CONTROL) || Feather.IsKeyPressed(GLFW_KEY_RIGHT_CONTROL))
                     {
-                        manipulator->SetCenter(p);
+                        manipulator->SetCenter(glm::vec3(p.x(), p.y(), p.z()));
                     }
 
-                    glm::vec3 cellMin = pipeline.GetSparseGrid()->aabb.min + glm::vec3(
-                        (float)result.gx * pipeline.GetSparseGrid()->cellSize,
-                        (float)result.gy * pipeline.GetSparseGrid()->cellSize,
-                        (float)result.gz * pipeline.GetSparseGrid()->cellSize
-                    );
+                    glm::vec3 cellMin =
+                        glm::vec3(
+                            pipeline.GetSparseGrid()->aabb.min.x(),
+                            pipeline.GetSparseGrid()->aabb.min.y(),
+                            pipeline.GetSparseGrid()->aabb.min.z())
+                        + glm::vec3(
+                            (float)result.gx * pipeline.GetSparseGrid()->cellSize,
+                            (float)result.gy * pipeline.GetSparseGrid()->cellSize,
+                            (float)result.gz * pipeline.GetSparseGrid()->cellSize);
+
                     glm::vec3 cellMax = cellMin + glm::vec3(pipeline.GetSparseGrid()->cellSize);
                     VD::AddWiredBox("PickedCell", { cellMin, cellMax }, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
@@ -225,7 +229,7 @@ int main(int argc, char** argv)
 
             { // OperatorPointCloudLoader
                 GPP::GeometricProcessingOperatorParameter parameter;
-				parameter.SetParameter<std::string>("plyFilename", "D:\\Debug\\PLY\\Compound_B.ply");
+				parameter.SetParameter<std::string>("plyFilename", "D:\\Debug\\PLY\\Compound.ply");
 				parameter.needToRebuildSpatialPartitioning = true;
 				pipeline.AddOperator<GPP::OperatorPointCloudLoader>("OperatorPointCloudLoader", parameter);
             }
@@ -236,17 +240,16 @@ int main(int argc, char** argv)
                 pipeline.AddOperator<GPP::OperatorStorePointCloud>("OperatorStorePointCloud", parameter);
             }
 
-			//{ // OperatorFilterETC
-   //             GPP::GeometricProcessingOperatorParameter parameter;
-			//	parameter.needToRebuildSpatialPartitioning = true;
-   //             pipeline.AddOperator<GPP::OperatorFilterETC>("OperatorFilterETC", parameter);
-   //         }
+			{ // OperatorFilterETC
+                GPP::GeometricProcessingOperatorParameter parameter;
+				parameter.needToRebuildSpatialPartitioning = true;
+                pipeline.AddOperator<GPP::OperatorFilterETC>("OperatorFilterETC", parameter);
+            }
 
     //        { // OperatorCompareWithLastPointCloud
 				//GPP::GeometricProcessingOperatorParameter parameter;
 				//pipeline.AddOperator<GPP::OperatorCompareWithLastPointCloud>("OperatorCompareWithLastPointCloud", parameter);
     //        }
-
            
             { // OperatorCurvatureEstimation
                 GPP::GeometricProcessingOperatorParameter parameter;
@@ -257,6 +260,12 @@ int main(int argc, char** argv)
                 operatorCurvatureEstimation->SetVisualizationScale(5.0f);
             }
 
+  /*          {
+                pipeline.Execute();
+                pipeline.VisualizeLast();
+                return;
+            }*/
+ 
             { // OperatorClustering
                 GPP::GeometricProcessingOperatorParameter parameter;
 
@@ -313,6 +322,12 @@ int main(int argc, char** argv)
 				//operatorMeshGeneration->ExportPLY("D:\\Debug\\PLY\\Compound_A_MeshGeneration_Output.ply");
             }
 
+            { // OperatorCompareWithLastPointCloud
+                GPP::GeometricProcessingOperatorParameter parameter;
+                pipeline.AddOperator<GPP::OperatorCompareWithLastPointCloud>("OperatorCompareWithLastPointCloud", parameter);
+            }
+
+
     //        {
     //            GPP::GeometricProcessingOperatorParameter parameter;
 				//parameter.needToRebuildSpatialPartitioning = true;
@@ -331,6 +346,12 @@ int main(int argc, char** argv)
 				auto operatorMeshDistanceFilter = pipeline.AddOperator<GPP::OperatorMeshDistanceFilter>("OperatorMeshDistanceFilter", parameter);
 				//operatorMeshDistanceFilter->SetReferenceMesh(triangles);
                 operatorMeshDistanceFilter->SetThresholdMultiplier(3.0f);
+            }
+
+            {
+                pipeline.Execute();
+                pipeline.VisualizeLast();
+                return;
             }
 
 			//{ // OperatorCurvatureDivergence
@@ -406,6 +427,8 @@ int main(int argc, char** argv)
 
             pipeline.VisualizeLast();
             //operatorCustomFilter->Visualize();
+
+			pipeline.GetCurrentPointCloud()->ToPLY("D:\\Debug\\PLY\\Output.ply");
 
 #if 0
             pipeline.BuildSparseGrid(pc);

@@ -1,8 +1,16 @@
 #pragma once
 
 #include <robin_hood.h>
-
 #include <libFeather.h>
+#include <algorithm>
+#include <cmath>
+#include <vector>
+#include <execution>
+#include <mutex>
+#include <memory>
+#include <queue>
+#include <tuple>
+#include <any>
 
 typedef enum {
     DL_TOOTH,
@@ -21,7 +29,7 @@ typedef enum {
     DL_PALATAL,
     DL_ABUTMENT,
     DL_SCANBODY,
-    DL_GINGIVA3,	//	mscho	@20241017
+    DL_GINGIVA3,
     DL_OBTURA,
     DL_3DPRTMODEL,
     DL_RETRACTOR,
@@ -87,6 +95,89 @@ namespace GeometricProcessingPipeline
 {
     class Pipeline;
 
+    struct Ray
+    {
+        Eigen::Vector3f origin;
+        Eigen::Vector3f direction;
+        Eigen::Vector3f inverseDirection;
+
+        Ray(const Eigen::Vector3f& o, const Eigen::Vector3f& d) : origin(o), direction(d) {
+            const float epsilon = 1e-6f;
+
+            inverseDirection.x() = (std::abs(direction.x()) < epsilon) ? ((direction.x() >= 0) ? 1e20f : -1e20f) : (1.0f / direction.x());
+            inverseDirection.y() = (std::abs(direction.y()) < epsilon) ? ((direction.y() >= 0) ? 1e20f : -1e20f) : (1.0f / direction.y());
+            inverseDirection.z() = (std::abs(direction.z()) < epsilon) ? ((direction.z() >= 0) ? 1e20f : -1e20f) : (1.0f / direction.z());
+        }
+
+        inline bool IntersectSphere(const Eigen::Vector3f& sphereCenter, float radius, float& t) const
+        {
+            Eigen::Vector3f m = origin - sphereCenter;
+            float b = m.dot(direction);
+            float c = m.dot(m) - radius * radius;
+
+            if (c > 0.0f && b > 0.0f) return false;
+
+            float discr = b * b - c;
+
+            if (discr < 0.0f) return false;
+
+            t = -b - std::sqrt(discr);
+
+            if (t < 0.0f) t = -b + std::sqrt(discr);
+
+            return t >= 0.0f;
+        }
+    };
+
+    struct AABB
+    {
+        Eigen::Vector3f min = Eigen::Vector3f::Constant(FLT_MAX);
+        Eigen::Vector3f max = Eigen::Vector3f::Constant(-FLT_MAX);
+
+        inline bool Intersects(const AABB& other) const
+        {
+            if (max.x() < other.min.x() || min.x() > other.max.x()) return false;
+            if (max.y() < other.min.y() || min.y() > other.max.y()) return false;
+            if (max.z() < other.min.z() || min.z() > other.max.z()) return false;
+
+            return true;
+        }
+
+        inline bool Contains(const Eigen::Vector3f& p) const
+        {
+            return
+                p.x() >= min.x() && p.x() <= max.x() &&
+                p.y() >= min.y() && p.y() <= max.y() &&
+                p.z() >= min.z() && p.z() <= max.z();
+        }
+
+        inline void Expand(const Eigen::Vector3f& p)
+        {
+            min = min.cwiseMin(p);
+            max = max.cwiseMax(p);
+        }
+
+        inline void Expand(const AABB& other)
+        {
+            min = min.cwiseMin(other.min);
+            max = max.cwiseMax(other.max);
+        }
+
+        inline bool IntersectRay(const Ray& ray, float& tNear, float& tFar) const
+        {
+            Eigen::Vector3f t0 = (min - ray.origin).cwiseProduct(ray.inverseDirection);
+            Eigen::Vector3f t1 = (max - ray.origin).cwiseProduct(ray.inverseDirection);
+            Eigen::Vector3f tMin = t0.cwiseMin(t1);
+            Eigen::Vector3f tMax = t0.cwiseMax(t1);
+
+            tNear = std::max(std::max(tMin.x(), tMin.y()), tMin.z());
+            tFar = std::min(std::min(tMax.x(), tMax.y()), tMax.z());
+
+            return tNear <= tFar && tFar >= 0.0f;
+        }
+
+    };
+
     class Configuration
     {
     public:
@@ -94,61 +185,58 @@ namespace GeometricProcessingPipeline
         static constexpr int voxelsPerBlock =
             voxelsPerBlockAxis * voxelsPerBlockAxis * voxelsPerBlockAxis;
 
-        static constexpr float voxelSize = 0.1f;
+        static constexpr float voxelSize = 0.3f;
         static constexpr int sdfOffset = 1;
 
-        //static constexpr glm::vec3 filterMin = glm::vec3(-10.0f, -10.0f, -10.0f);
-        //static constexpr glm::vec3 filterMax = glm::vec3(10.0f, 10.0f, 10.0f);
-        inline static glm::vec3 filterMin = glm::vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-        inline static glm::vec3 filterMax = glm::vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+        inline static Eigen::Vector3f filterMin = Eigen::Vector3f::Constant(-FLT_MAX);
+        inline static Eigen::Vector3f filterMax = Eigen::Vector3f::Constant(FLT_MAX);
 
-        //static constexpr float pointVisualizationRadius = 0.045f;
         static constexpr float pointVisualizationRadius = 0.025f;
     };
 
     class Triangle
     {
     public:
-        glm::vec3 v[3];
-        glm::vec3 n[3];
-        glm::vec3 c[3];
+        Eigen::Vector3f v[3];
+        Eigen::Vector3f n[3];
+        Eigen::Vector3f c[3];
     };
 
     class PointCloud
     {
     public:
         size_t numberOfElements = 0;
-        std::vector<glm::vec3> positions;
-        std::vector<glm::vec3> normals;
-		std::vector<glm::vec3> colors;
+        std::vector<Eigen::Vector3f> positions;
+        std::vector<Eigen::Vector3f> normals;
+        std::vector<Eigen::Vector3f> colors;
         std::vector<int> pointDeepLearningClassIDs;
         std::vector<int> pointClusterIDs;
         std::vector<int> marks;
 
-        AABB aabb;
+        Eigen::AABB aabb;
 
         void Clear()
         {
             numberOfElements = 0;
             positions.clear();
             normals.clear();
-			colors.clear();
-			pointDeepLearningClassIDs.clear();
-			pointClusterIDs.clear();
+            colors.clear();
+            pointDeepLearningClassIDs.clear();
+            pointClusterIDs.clear();
             marks.clear();
-            aabb = AABB();
-		}
+            aabb = Eigen::AABB();
+        }
 
         void Resize(size_t newSize)
         {
             numberOfElements = newSize;
             positions.resize(newSize);
-			normals.resize(newSize);
-			colors.resize(newSize);
-			pointDeepLearningClassIDs.resize(newSize, -1);
+            normals.resize(newSize);
+            colors.resize(newSize);
+            pointDeepLearningClassIDs.resize(newSize, -1);
             pointClusterIDs.resize(newSize, -1);
-			marks.resize(newSize, -1);
-		}
+            marks.resize(newSize, -1);
+        }
 
         [[nodiscard]] PointCloud Clone() const
         {
@@ -176,7 +264,7 @@ namespace GeometricProcessingPipeline
             pointClusterIDs = src.pointClusterIDs;
             marks = src.marks;
             aabb = src.aabb;
-		}
+        }
 
         void CopyTo(PointCloud& dst) const
         {
@@ -189,13 +277,13 @@ namespace GeometricProcessingPipeline
             dst.pointDeepLearningClassIDs = pointDeepLearningClassIDs;
             dst.pointClusterIDs = pointClusterIDs;
             dst.marks = marks;
-			dst.aabb = aabb;
-		}
+            dst.aabb = aabb;
+        }
 
         void FromPLY(const std::string& plyFileName)
         {
-			PLYFormat ply;
-			ply.Deserialize(plyFileName);
+            PLYFormat ply;
+            ply.Deserialize(plyFileName);
             FromPLY(ply);
         }
 
@@ -207,9 +295,9 @@ namespace GeometricProcessingPipeline
             positions.resize(numberOfElements);
             normals.resize(numberOfElements);
             colors.resize(numberOfElements);
-			pointDeepLearningClassIDs.resize(numberOfElements, -1);
-			pointClusterIDs.resize(numberOfElements, -1);
-			marks.resize(numberOfElements, -1);
+            pointDeepLearningClassIDs.resize(numberOfElements, -1);
+            pointClusterIDs.resize(numberOfElements, -1);
+            marks.resize(numberOfElements, -1);
 
             memcpy(positions.data(), ply.GetPoints().data(), sizeof(float) * 3 * numberOfElements);
             if (ply.GetNormals().size() == numberOfElements * 3)
@@ -224,20 +312,20 @@ namespace GeometricProcessingPipeline
             {
                 for (size_t i = 0; i < numberOfElements; ++i)
                 {
-                    colors[i] = glm::vec3(
+                    colors[i] = Eigen::Vector3f(
                         ply.GetColors()[4 * i + 0],
                         ply.GetColors()[4 * i + 1],
                         ply.GetColors()[4 * i + 2]);
                 }
             }
-            if(ply.GetDeepLearningClasses().size() == numberOfElements)
+            if (ply.GetDeepLearningClasses().size() == numberOfElements)
             {
                 memcpy(pointDeepLearningClassIDs.data(), ply.GetDeepLearningClasses().data(), sizeof(int) * numberOfElements);
-			}
+            }
 
             for (size_t i = 0; i < numberOfElements; i++)
             {
-				aabb.Expand(positions[i]);
+                aabb.Expand(positions[i]);
             }
         }
 
@@ -245,24 +333,24 @@ namespace GeometricProcessingPipeline
         {
             PLYFormat ply;
             ToPLY(ply);
-			ply.Serialize(plyFileName);
+            ply.Serialize(plyFileName);
         }
 
         void ToPLY(PLYFormat& ply) const
         {
             for (size_t i = 0; i < numberOfElements; i++)
             {
-                ply.AddPoint(XYZ(positions[i]));
+                ply.AddPoint(positions[i].x(), positions[i].y(), positions[i].z());
                 if (normals.size() == numberOfElements)
                 {
-                    ply.AddNormal(XYZ(normals[i]));
-				}
+                    ply.AddNormal(normals[i].x(), normals[i].y(), normals[i].z());
+                }
                 if (colors.size() == numberOfElements)
                 {
-                    ply.AddColor(XYZ(colors[i]));
-				}
+                    ply.AddColor(colors[i].x(), colors[i].y(), colors[i].z());
+                }
             }
-		}
+        }
     };
 
     class Voxel
@@ -271,30 +359,30 @@ namespace GeometricProcessingPipeline
         bool valid = false;
         float signedDistance = 0.0f;
         float weight = 0.0f;
-        glm::vec3 normal = glm::zero<glm::vec3>();
-        glm::vec3 color = glm::zero<glm::vec3>();
+        Eigen::Vector3f normal = Eigen::Vector3f::Zero();
+        Eigen::Vector3f color = Eigen::Vector3f::Zero();
         int clusterId = -1;
         float divergence = 0.0f;
     };
 
     struct SparseGridPickResult
     {
-        bool hasHit = false;    // 충돌 여부
-        int pointIndex = -1;    // 가장 가까운 점의 인덱스
-        uint64_t cellKey = 0;   // 해당 셀의 해시 키
-        int gx = 0, gy = 0, gz = 0; // 해당 셀의 3차원 그리드 인덱스
-        float distance = 0.0f;  // 레이 원점으로부터의 거리
+        bool hasHit = false;
+        int pointIndex = -1;
+        uint64_t cellKey = 0;
+        int gx = 0, gy = 0, gz = 0;
+        float distance = 0.0f;
     };
 
     class ISpatialPartitioning {};
 
-	class SparseGrid : public ISpatialPartitioning
+    class SparseGrid : public ISpatialPartitioning
     {
     public:
         robin_hood::unordered_flat_map<uint64_t, int> voxelPointListHead;
         std::vector<int> nextPoint;
 
-		AABB aabb;
+        Eigen::AABB aabb;
         float cellSize = 0.1f;
 
         inline uint64_t GetKey(int x, int y, int z) const
@@ -306,12 +394,12 @@ namespace GeometricProcessingPipeline
         {
             if (pc.numberOfElements == 0)
             {
-				aerr("PointCloud is empty. Cannot build SparseGrid.\n");
+                aerr("PointCloud is empty. Cannot build SparseGrid.\n");
                 return;
             }
 
             this->cellSize = cellSize;
-            
+
             aabb = pc.aabb;
 
             voxelPointListHead.clear();
@@ -319,14 +407,14 @@ namespace GeometricProcessingPipeline
 
             nextPoint.assign(pc.numberOfElements, -1);
 
-            aabb.min -= glm::vec3(cellSize * 0.1f);
-            aabb.max += glm::vec3(cellSize * 0.1f);
+            aabb.min -= Eigen::Vector3f::Constant(cellSize * 0.1f);
+            aabb.max += Eigen::Vector3f::Constant(cellSize * 0.1f);
 
             for (int i = 0; i < (int)pc.numberOfElements; ++i)
             {
-                int gx = (int)((pc.positions[i].x - aabb.min.x) / cellSize);
-                int gy = (int)((pc.positions[i].y - aabb.min.y) / cellSize);
-                int gz = (int)((pc.positions[i].z - aabb.min.z) / cellSize);
+                int gx = (int)((pc.positions[i].x() - aabb.min.x()) / cellSize);
+                int gy = (int)((pc.positions[i].y() - aabb.min.y()) / cellSize);
+                int gz = (int)((pc.positions[i].z() - aabb.min.z()) / cellSize);
 
                 uint64_t key = GetKey(gx, gy, gz);
 
@@ -344,25 +432,23 @@ namespace GeometricProcessingPipeline
             }
         }
 
-        int GetClosestPoint(const std::vector<glm::vec3>& points, const glm::vec3& queryPos, float& outDist)
+        int GetClosestPoint(const std::vector<Eigen::Vector3f>& points, const Eigen::Vector3f& queryPos, float& outDist)
         {
             outDist = FLT_MAX;
             if (points.empty()) return -1;
 
-            // 쿼리 포인트의 그리드 인덱스 계산
-            int startGx = (int)std::floor((queryPos.x - aabb.min.x) / cellSize);
-            int startGy = (int)std::floor((queryPos.y - aabb.min.y) / cellSize);
-            int startGz = (int)std::floor((queryPos.z - aabb.min.z) / cellSize);
+            int startGx = (int)std::floor((queryPos.x() - aabb.min.x()) / cellSize);
+            int startGy = (int)std::floor((queryPos.y() - aabb.min.y()) / cellSize);
+            int startGz = (int)std::floor((queryPos.z() - aabb.min.z()) / cellSize);
 
             float minDistSq = FLT_MAX;
             int closestIdx = -1;
 
             int searchRadius = 0;
-            const int maxSearchRadius = 100; // 안전 장치
+            const int maxSearchRadius = 100;
 
             while (searchRadius < maxSearchRadius)
             {
-                // 현재 반경(searchRadius)에 해당하는 껍질(Shell) 부분의 복셀들을 순회
                 int minR = -searchRadius;
                 int maxR = searchRadius;
 
@@ -372,8 +458,7 @@ namespace GeometricProcessingPipeline
                     {
                         for (int dx = minR; dx <= maxR; ++dx)
                         {
-                            // 최적화: 내부 복셀은 이미 검사했으므로 건너뛰고 표면만 검사
-                            if (searchRadius > 0 && abs(dx) != searchRadius && abs(dy) != searchRadius && abs(dz) != searchRadius)
+                            if (searchRadius > 0 && std::abs(dx) != searchRadius && std::abs(dy) != searchRadius && std::abs(dz) != searchRadius)
                             {
                                 continue;
                             }
@@ -386,8 +471,8 @@ namespace GeometricProcessingPipeline
                                 int currIdx = it->second;
                                 while (currIdx != -1)
                                 {
-                                    glm::vec3 diff = queryPos - points[currIdx];
-                                    float sqDist = glm::dot(diff, diff);
+                                    Eigen::Vector3f diff = queryPos - points[currIdx];
+                                    float sqDist = diff.squaredNorm();
 
                                     if (sqDist < minDistSq)
                                     {
@@ -401,27 +486,21 @@ namespace GeometricProcessingPipeline
                     }
                 }
 
-                // [조기 종료 조건]
-                // 현재까지 찾은 최소 거리가 현재 검색 박스의 경계(벽)까지의 거리보다 가깝다면,
-                // 더 바깥쪽 복셀에는 이보다 가까운 점이 존재할 수 없으므로 탐색 종료.
                 if (closestIdx != -1)
                 {
-                    // 현재 검색 범위의 월드 좌표 경계 계산
-                    float minX = aabb.min.x + (startGx - searchRadius) * cellSize;
-                    float maxX = aabb.min.x + (startGx + searchRadius + 1) * cellSize;
-                    float minY = aabb.min.y + (startGy - searchRadius) * cellSize;
-                    float maxY = aabb.min.y + (startGy + searchRadius + 1) * cellSize;
-                    float minZ = aabb.min.z + (startGz - searchRadius) * cellSize;
-                    float maxZ = aabb.min.z + (startGz + searchRadius + 1) * cellSize;
+                    float minX = aabb.min.x() + (startGx - searchRadius) * cellSize;
+                    float maxX = aabb.min.x() + (startGx + searchRadius + 1) * cellSize;
+                    float minY = aabb.min.y() + (startGy - searchRadius) * cellSize;
+                    float maxY = aabb.min.y() + (startGy + searchRadius + 1) * cellSize;
+                    float minZ = aabb.min.z() + (startGz - searchRadius) * cellSize;
+                    float maxZ = aabb.min.z() + (startGz + searchRadius + 1) * cellSize;
 
-                    // 쿼리 포인트에서 현재 검색 박스 경계면까지의 최단 거리
-                    float distToX = std::min(std::abs(queryPos.x - minX), std::abs(queryPos.x - maxX));
-                    float distToY = std::min(std::abs(queryPos.y - minY), std::abs(queryPos.y - maxY));
-                    float distToZ = std::min(std::abs(queryPos.z - minZ), std::abs(queryPos.z - maxZ));
+                    float distToX = std::min(std::abs(queryPos.x() - minX), std::abs(queryPos.x() - maxX));
+                    float distToY = std::min(std::abs(queryPos.y() - minY), std::abs(queryPos.y() - maxY));
+                    float distToZ = std::min(std::abs(queryPos.z() - minZ), std::abs(queryPos.z() - maxZ));
 
                     float minDistToBoundary = std::min({ distToX, distToY, distToZ });
 
-                    // 거리 제곱 비교 (sqrt 연산 최소화)
                     if (minDistSq < minDistToBoundary * minDistToBoundary)
                     {
                         break;
@@ -439,28 +518,23 @@ namespace GeometricProcessingPipeline
             return closestIdx;
         }
 
-        void GetKNearestNeighbors(const std::vector<glm::vec3>& points, const glm::vec3& queryPos, int k, std::vector<unsigned int>& outIndices, std::vector<float>& outDistances)
+        void GetKNearestNeighbors(const std::vector<Eigen::Vector3f>& points, const Eigen::Vector3f& queryPos, int k, std::vector<unsigned int>& outIndices, std::vector<float>& outDistances)
         {
             outIndices.clear();
             outDistances.clear();
             if (points.empty() || k <= 0) return;
 
-            // (거리 제곱, 인덱스)를 저장하는 Max Heap 우선순위 큐
-            // 큐의 top에는 항상 k개의 점 중 가장 먼 점이 위치합니다.
             std::priority_queue<std::pair<float, int>> pq;
 
-            // 쿼리 포인트가 속한 그리드 좌표 계산
-            int startGx = (int)std::floor((queryPos.x - aabb.min.x) / cellSize);
-            int startGy = (int)std::floor((queryPos.y - aabb.min.y) / cellSize);
-            int startGz = (int)std::floor((queryPos.z - aabb.min.z) / cellSize);
+            int startGx = (int)std::floor((queryPos.x() - aabb.min.x()) / cellSize);
+            int startGy = (int)std::floor((queryPos.y() - aabb.min.y()) / cellSize);
+            int startGz = (int)std::floor((queryPos.z() - aabb.min.z()) / cellSize);
 
-            // 검색 반경 (복셀 단위)
             int searchRadius = 0;
-            const int maxSearchRadius = 100; // 무한 루프 방지를 위한 안전 장치
+            const int maxSearchRadius = 100;
 
             while (searchRadius < maxSearchRadius)
             {
-                // 현재 반경(searchRadius)에 해당하는 껍질(Shell) 부분의 복셀들을 순회
                 int minR = -searchRadius;
                 int maxR = searchRadius;
 
@@ -470,8 +544,7 @@ namespace GeometricProcessingPipeline
                     {
                         for (int dx = minR; dx <= maxR; ++dx)
                         {
-                            // 최적화: 내부 복셀은 이미 이전 루프에서 검사했으므로 건너뛰고, 현재 반경의 '표면'만 검사
-                            if (searchRadius > 0 && abs(dx) != searchRadius && abs(dy) != searchRadius && abs(dz) != searchRadius)
+                            if (searchRadius > 0 && std::abs(dx) != searchRadius && std::abs(dy) != searchRadius && std::abs(dz) != searchRadius)
                             {
                                 continue;
                             }
@@ -484,8 +557,8 @@ namespace GeometricProcessingPipeline
                                 int currIdx = it->second;
                                 while (currIdx != -1)
                                 {
-                                    glm::vec3 diff = queryPos - points[currIdx];
-                                    float sqDist = glm::dot(diff, diff);
+                                    Eigen::Vector3f diff = queryPos - points[currIdx];
+                                    float sqDist = diff.squaredNorm();
 
                                     if (pq.size() < (size_t)k)
                                     {
@@ -503,27 +576,21 @@ namespace GeometricProcessingPipeline
                     }
                 }
 
-                // 종료 조건 검사:
-                // k개를 모두 찾았고, 현재 검색한 범위(박스)의 경계까지의 거리가
-                // 찾은 점들 중 가장 먼 점(pq.top)보다 멀다면 더 이상 검색할 필요가 없음.
                 if (pq.size() == (size_t)k)
                 {
-                    // 현재 검색 범위의 월드 좌표 경계 계산
-                    float minX = aabb.min.x + (startGx - searchRadius) * cellSize;
-                    float maxX = aabb.min.x + (startGx + searchRadius + 1) * cellSize;
-                    float minY = aabb.min.y + (startGy - searchRadius) * cellSize;
-                    float maxY = aabb.min.y + (startGy + searchRadius + 1) * cellSize;
-                    float minZ = aabb.min.z + (startGz - searchRadius) * cellSize;
-                    float maxZ = aabb.min.z + (startGz + searchRadius + 1) * cellSize;
+                    float minX = aabb.min.x() + (startGx - searchRadius) * cellSize;
+                    float maxX = aabb.min.x() + (startGx + searchRadius + 1) * cellSize;
+                    float minY = aabb.min.y() + (startGy - searchRadius) * cellSize;
+                    float maxY = aabb.min.y() + (startGy + searchRadius + 1) * cellSize;
+                    float minZ = aabb.min.z() + (startGz - searchRadius) * cellSize;
+                    float maxZ = aabb.min.z() + (startGz + searchRadius + 1) * cellSize;
 
-                    // 쿼리 포인트에서 현재 검색 박스 경계면(벽)까지의 최단 거리 계산
-                    float distToX = std::min(std::abs(queryPos.x - minX), std::abs(queryPos.x - maxX));
-                    float distToY = std::min(std::abs(queryPos.y - minY), std::abs(queryPos.y - maxY));
-                    float distToZ = std::min(std::abs(queryPos.z - minZ), std::abs(queryPos.z - maxZ));
+                    float distToX = std::min(std::abs(queryPos.x() - minX), std::abs(queryPos.x() - maxX));
+                    float distToY = std::min(std::abs(queryPos.y() - minY), std::abs(queryPos.y() - maxY));
+                    float distToZ = std::min(std::abs(queryPos.z() - minZ), std::abs(queryPos.z() - maxZ));
 
                     float minDistToBoundary = std::min({ distToX, distToY, distToZ });
 
-                    // 경계까지의 거리가 현재 확보한 k번째 이웃의 거리보다 크면, 바깥쪽 복셀에는 더 가까운 점이 있을 수 없음.
                     if (minDistToBoundary * minDistToBoundary > pq.top().first)
                     {
                         break;
@@ -533,7 +600,6 @@ namespace GeometricProcessingPipeline
                 searchRadius++;
             }
 
-            // 결과 저장 (우선순위 큐는 Max Heap이므로 거꾸로 꺼내야 오름차순 정렬됨)
             size_t count = pq.size();
             outIndices.resize(count);
             outDistances.resize(count);
@@ -546,54 +612,45 @@ namespace GeometricProcessingPipeline
             }
         }
 
-        SparseGridPickResult Pick(const std::vector<glm::vec3>& points, const Ray& ray, float pickRadius)
+        SparseGridPickResult Pick(const std::vector<Eigen::Vector3f>& points, const Eigen::Ray& ray, float pickRadius)
         {
             SparseGridPickResult result;
-            result.distance = FLT_MAX; // [중요 1] 초기화: 무한대 거리
+            result.distance = FLT_MAX;
             result.hasHit = false;
 
             if (points.empty() || voxelPointListHead.empty()) return result;
 
-            // 1. AABB 교차 검사
             float tEntry = 0.0f, tExit = 0.0f;
             if (!aabb.IntersectRay(ray, tEntry, tExit)) return result;
 
-            // Ray가 박스 내부에서 시작하는 경우 tEntry 보정
             if (tEntry < 0.0f) tEntry = 0.0f;
 
-            // 2. 시작 위치 보정 (부동소수점 오차로 인한 경계면 문제 방지)
-            glm::vec3 startPos = ray.origin + ray.direction * (tEntry + 0.001f);
+            Eigen::Vector3f startPos = ray.origin + ray.direction * (tEntry + 0.001f);
 
-            // 3. 시작 복셀 인덱스 계산
-            int curGx = (int)std::floor((startPos.x - aabb.min.x) / cellSize);
-            int curGy = (int)std::floor((startPos.y - aabb.min.y) / cellSize);
-            int curGz = (int)std::floor((startPos.z - aabb.min.z) / cellSize);
+            int curGx = (int)std::floor((startPos.x() - aabb.min.x()) / cellSize);
+            int curGy = (int)std::floor((startPos.y() - aabb.min.y()) / cellSize);
+            int curGz = (int)std::floor((startPos.z() - aabb.min.z()) / cellSize);
 
-            // [중요 2] 인덱스 안전 장치 (음수가 나오면 해시 키 오류 발생)
             if (curGx < 0) curGx = 0;
             if (curGy < 0) curGy = 0;
             if (curGz < 0) curGz = 0;
 
-            // 4. DDA 준비
-            int stepX = (ray.direction.x >= 0) ? 1 : -1;
-            int stepY = (ray.direction.y >= 0) ? 1 : -1;
-            int stepZ = (ray.direction.z >= 0) ? 1 : -1;
+            int stepX = (ray.direction.x() >= 0) ? 1 : -1;
+            int stepY = (ray.direction.y() >= 0) ? 1 : -1;
+            int stepZ = (ray.direction.z() >= 0) ? 1 : -1;
 
-            // 다음 경계까지의 거리 계산
-            float nextBoundX = aabb.min.x + (curGx + (stepX > 0 ? 1 : 0)) * cellSize;
-            float nextBoundY = aabb.min.y + (curGy + (stepY > 0 ? 1 : 0)) * cellSize;
-            float nextBoundZ = aabb.min.z + (curGz + (stepZ > 0 ? 1 : 0)) * cellSize;
+            float nextBoundX = aabb.min.x() + (curGx + (stepX > 0 ? 1 : 0)) * cellSize;
+            float nextBoundY = aabb.min.y() + (curGy + (stepY > 0 ? 1 : 0)) * cellSize;
+            float nextBoundZ = aabb.min.z() + (curGz + (stepZ > 0 ? 1 : 0)) * cellSize;
 
-            float tMaxX = (nextBoundX - ray.origin.x) * ray.inverseDirection.x;
-            float tMaxY = (nextBoundY - ray.origin.y) * ray.inverseDirection.y;
-            float tMaxZ = (nextBoundZ - ray.origin.z) * ray.inverseDirection.z;
+            float tMaxX = (nextBoundX - ray.origin.x()) * ray.inverseDirection.x();
+            float tMaxY = (nextBoundY - ray.origin.y()) * ray.inverseDirection.y();
+            float tMaxZ = (nextBoundZ - ray.origin.z()) * ray.inverseDirection.z();
 
-            float tDeltaX = std::abs(cellSize * ray.inverseDirection.x);
-            float tDeltaY = std::abs(cellSize * ray.inverseDirection.y);
-            float tDeltaZ = std::abs(cellSize * ray.inverseDirection.z);
+            float tDeltaX = std::abs(cellSize * ray.inverseDirection.x());
+            float tDeltaY = std::abs(cellSize * ray.inverseDirection.y());
+            float tDeltaZ = std::abs(cellSize * ray.inverseDirection.z());
 
-            // 5. 복셀 순회
-            // tExit보다 약간 더 여유 있게 순회
             while (tEntry <= tExit + cellSize * 0.5f)
             {
                 uint64_t key = GetKey(curGx, curGy, curGz);
@@ -608,7 +665,6 @@ namespace GeometricProcessingPipeline
                         float t = 0.0f;
                         if (ray.IntersectSphere(points[currIdx], pickRadius, t))
                         {
-                            // [핵심 수정] 기존에 찾은 거리보다 "더 가까운 경우에만" 업데이트
                             if (t < result.distance)
                             {
                                 result.hasHit = true;
@@ -620,9 +676,6 @@ namespace GeometricProcessingPipeline
                         currIdx = nextPoint[currIdx];
                     }
 
-                    // [최적화] 현재 복셀 영역 내에서 가장 가까운 히트를 찾았다면 조기 종료
-                    // 다음 복셀 경계(tNextBoundary)보다 현재 찾은 히트 거리(result.distance)가 짧다면
-                    // 더 멀리 있는 복셀을 탐색할 필요가 없음.
                     float tNextBoundary = std::min(std::min(tMaxX, tMaxY), tMaxZ);
                     if (result.hasHit && result.distance <= tNextBoundary)
                     {
@@ -630,7 +683,6 @@ namespace GeometricProcessingPipeline
                     }
                 }
 
-                // DDA Step (다음 복셀로 이동)
                 if (tMaxX < tMaxY) {
                     if (tMaxX < tMaxZ) {
                         curGx += stepX;
@@ -660,7 +712,7 @@ namespace GeometricProcessingPipeline
             return result;
         }
 
-        SparseGridPickResult PickBruteForce(const std::vector<glm::vec3>& points, const Ray& ray, float pickRadius)
+        SparseGridPickResult PickBruteForce(const std::vector<Eigen::Vector3f>& points, const Ray& ray, float pickRadius)
         {
             SparseGridPickResult result;
             float minT = FLT_MAX;
@@ -691,19 +743,19 @@ namespace GeometricProcessingPipeline
                 uint64_t gy = (key >> 21) & mask;
                 uint64_t gx = (key >> 42);
 
-                glm::vec3 cellMin = aabb.min + glm::vec3((float)gx * cellSize, (float)gy * cellSize, (float)gz * cellSize);
-                glm::vec3 cellMax = cellMin + glm::vec3(cellSize);
+                Eigen::Vector3f cellMin = aabb.min + Eigen::Vector3f((float)gx * cellSize, (float)gy * cellSize, (float)gz * cellSize);
+                Eigen::Vector3f cellMax = cellMin + Eigen::Vector3f::Constant(cellSize);
 
-                VD::AddWiredBox("SparseGridCells", { cellMin, cellMax }, glm::vec4(0.0f, 1.0f, 0.0f, 0.3f));
+                VD::AddWiredBox("SparseGridCells", { cellMin, cellMax }, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 0.3f));
 
                 int currIdx = headIdx;
                 while (currIdx != -1)
                 {
-                    const glm::vec3& p = pc.positions[currIdx];
-					const glm::vec3& n = glm::normalize(pc.normals[currIdx]);
-					const glm::vec3& c = pc.colors[currIdx];
+                    const Eigen::Vector3f& p = pc.positions[currIdx];
+                    const Eigen::Vector3f& n = pc.normals[currIdx].normalized();
+                    const Eigen::Vector3f& c = pc.colors[currIdx];
 
-                    VD::AddSphere("SparseGridPoints", p, n, GeometricProcessingPipeline::Configuration::pointVisualizationRadius, glm::vec4(c, 1.0f));
+                    VD::AddSphere("SparseGridPoints", p, n, GeometricProcessingPipeline::Configuration::pointVisualizationRadius, Eigen::Vector4f(c.x(), c.y(), c.z(), 1.0f));
 
                     currIdx = nextPoint[currIdx];
                 }
@@ -716,14 +768,12 @@ namespace GeometricProcessingPipeline
     class DataBlock
     {
     public:
-        glm::vec3 blockMin = glm::zero<glm::vec3>();
+        Eigen::Vector3f blockMin = Eigen::Vector3f::Zero();
         Voxel voxels[Configuration::voxelsPerBlock];
         std::mutex blockMutex;
 
         void Initialize()
         {
-            //memset(voxels, 0, sizeof(Voxel) * Configuration::voxelsPerBlock);
-
             for (int i = 0; i < Configuration::voxelsPerBlock; ++i)
             {
                 voxels[i] = Voxel();
@@ -734,7 +784,7 @@ namespace GeometricProcessingPipeline
     struct SparseDataBlock
     {
         float voxelSize = Configuration::voxelSize;
-        glm::vec3 gridOrigin = glm::zero<glm::vec3>();
+        Eigen::Vector3f gridOrigin = Eigen::Vector3f::Zero();
         std::unordered_map<DataBlockKey, std::unique_ptr<DataBlock>> dataBlocks;
 
         float blockSizePerAxis = voxelSize * Configuration::voxelsPerBlockAxis;
@@ -745,8 +795,8 @@ namespace GeometricProcessingPipeline
             int by = (int)floor((float)gy / Configuration::voxelsPerBlockAxis);
             int bz = (int)floor((float)gz / Configuration::voxelsPerBlockAxis);
 
-            glm::vec3 blockMin = gridOrigin + glm::vec3((float)bx * blockSizePerAxis, (float)by * blockSizePerAxis, (float)bz * blockSizePerAxis);
-            auto key = Morton3D::EncodeFromVec3(blockMin + glm::vec3(voxelSize * 0.1f), gridOrigin, blockSizePerAxis);
+            Eigen::Vector3f blockMin = gridOrigin + Eigen::Vector3f((float)bx * blockSizePerAxis, (float)by * blockSizePerAxis, (float)bz * blockSizePerAxis);
+            auto key = Morton3D::EncodeFromVec3(blockMin + Eigen::Vector3f::Constant(voxelSize * 0.1f), gridOrigin, blockSizePerAxis);
 
             auto it = dataBlocks.find(key);
             if (it == dataBlocks.end()) return nullptr;
@@ -763,17 +813,17 @@ namespace GeometricProcessingPipeline
             return &it->second->voxels[lz * Configuration::voxelsPerBlockAxis * Configuration::voxelsPerBlockAxis + ly * Configuration::voxelsPerBlockAxis + lx];
         }
 
-        void FromPointsData(const std::vector<glm::vec3>& points,
-            const std::vector<glm::vec3>& normals,
-            const std::vector<glm::vec3>& colors,
+        void FromPointsData(const std::vector<Eigen::Vector3f>& points,
+            const std::vector<Eigen::Vector3f>& normals,
+            const std::vector<Eigen::Vector3f>& colors,
             const std::vector<int>& clusterIds,
-            const glm::vec3& aabbMin)
+            const Eigen::Vector3f& aabbMin)
         {
             blockSizePerAxis = voxelSize * Configuration::voxelsPerBlockAxis;
 
-            gridOrigin.x = std::floor(aabbMin.x / blockSizePerAxis) * blockSizePerAxis;
-            gridOrigin.y = std::floor(aabbMin.y / blockSizePerAxis) * blockSizePerAxis;
-            gridOrigin.z = std::floor(aabbMin.z / blockSizePerAxis) * blockSizePerAxis;
+            gridOrigin.x() = std::floor(aabbMin.x() / blockSizePerAxis) * blockSizePerAxis;
+            gridOrigin.y() = std::floor(aabbMin.y() / blockSizePerAxis) * blockSizePerAxis;
+            gridOrigin.z() = std::floor(aabbMin.z() / blockSizePerAxis) * blockSizePerAxis;
 
             TS(Occupy);
 
@@ -783,11 +833,10 @@ namespace GeometricProcessingPipeline
             std::vector<size_t> indices(numPoints);
             std::iota(indices.begin(), indices.end(), 0);
 
-            // --- Pass 1: DataBlock 할당 (Allocation) ---
             {
                 TS(Pass1_Alloc);
 
-                using KeyPair = std::pair<DataBlockKey, glm::vec3>;
+                using KeyPair = std::pair<DataBlockKey, Eigen::Vector3f>;
 
                 std::vector<KeyPair> keysToAllocate;
                 keysToAllocate.reserve(numPoints * 2);
@@ -798,31 +847,31 @@ namespace GeometricProcessingPipeline
                         std::vector<KeyPair> localKeys;
                         localKeys.reserve(8);
 
-                        glm::vec3 p = points[i];
-                        glm::vec3 vecFromOrigin = p - gridOrigin;
+                        Eigen::Vector3f p = points[i];
+                        Eigen::Vector3f vecFromOrigin = p - gridOrigin;
 
-                        int centerGx = (int)std::floor(vecFromOrigin.x / voxelSize);
-                        int centerGy = (int)std::floor(vecFromOrigin.y / voxelSize);
-                        int centerGz = (int)std::floor(vecFromOrigin.z / voxelSize);
+                        int centerGx = (int)std::floor(vecFromOrigin.x() / voxelSize);
+                        int centerGy = (int)std::floor(vecFromOrigin.y() / voxelSize);
+                        int centerGz = (int)std::floor(vecFromOrigin.z() / voxelSize);
 
                         int bx = centerGx / Configuration::voxelsPerBlockAxis;
                         int by = centerGy / Configuration::voxelsPerBlockAxis;
                         int bz = centerGz / Configuration::voxelsPerBlockAxis;
 
-                        glm::vec3 blockMin = gridOrigin + glm::vec3((float)bx * blockSizePerAxis, (float)by * blockSizePerAxis, (float)bz * blockSizePerAxis);
-                        auto key = Morton3D::EncodeFromVec3(blockMin + glm::vec3(voxelSize * 0.1f), gridOrigin, blockSizePerAxis);
+                        Eigen::Vector3f blockMin = gridOrigin + Eigen::Vector3f((float)bx * blockSizePerAxis, (float)by * blockSizePerAxis, (float)bz * blockSizePerAxis);
+                        auto key = Morton3D::EncodeFromVec3(blockMin + Eigen::Vector3f::Constant(voxelSize * 0.1f), gridOrigin, blockSizePerAxis);
                         localKeys.push_back({ key, blockMin });
 
-                        glm::vec3 localP = p - blockMin;
+                        Eigen::Vector3f localP = p - blockMin;
 
                         float margin = truncDist + voxelSize * 0.5f;
 
-                        bool nearX_Neg = localP.x < margin;
-                        bool nearX_Pos = localP.x > blockSizePerAxis - margin;
-                        bool nearY_Neg = localP.y < margin;
-                        bool nearY_Pos = localP.y > blockSizePerAxis - margin;
-                        bool nearZ_Neg = localP.z < margin;
-                        bool nearZ_Pos = localP.z > blockSizePerAxis - margin;
+                        bool nearX_Neg = localP.x() < margin;
+                        bool nearX_Pos = localP.x() > blockSizePerAxis - margin;
+                        bool nearY_Neg = localP.y() < margin;
+                        bool nearY_Pos = localP.y() > blockSizePerAxis - margin;
+                        bool nearZ_Neg = localP.z() < margin;
+                        bool nearZ_Pos = localP.z() > blockSizePerAxis - margin;
 
                         if (nearX_Neg || nearX_Pos || nearY_Neg || nearY_Pos || nearZ_Neg || nearZ_Pos)
                         {
@@ -841,8 +890,8 @@ namespace GeometricProcessingPipeline
                                     {
                                         if (dx == 0 && dy == 0 && dz == 0) continue;
 
-                                        glm::vec3 nbMin = gridOrigin + glm::vec3((float)(bx + dx) * blockSizePerAxis, (float)(by + dy) * blockSizePerAxis, (float)(bz + dz) * blockSizePerAxis);
-                                        auto nKey = Morton3D::EncodeFromVec3(nbMin + glm::vec3(voxelSize * 0.1f), gridOrigin, blockSizePerAxis);
+                                        Eigen::Vector3f nbMin = gridOrigin + Eigen::Vector3f((float)(bx + dx) * blockSizePerAxis, (float)(by + dy) * blockSizePerAxis, (float)(bz + dz) * blockSizePerAxis);
+                                        auto nKey = Morton3D::EncodeFromVec3(nbMin + Eigen::Vector3f::Constant(voxelSize * 0.1f), gridOrigin, blockSizePerAxis);
                                         localKeys.push_back({ nKey, nbMin });
                                     }
                                 }
@@ -876,20 +925,19 @@ namespace GeometricProcessingPipeline
                 TE(Pass1_Alloc);
             }
 
-            // --- Pass 2: TSDF 계산 및 데이터 채우기 (Occupation) ---
             std::for_each(std::execution::par, indices.begin(), indices.end(), [&](size_t i)
                 {
                     auto p = points[i];
-                    glm::vec3 n = (normals.empty()) ? glm::vec3(0, 1, 0) : normals[i];
-                    glm::vec3 c = (colors.empty()) ? glm::vec3(1, 1, 1) : colors[i];
-                    int cid = (clusterIds.empty()) ? -1 : clusterIds[i]; // 포인트 클러스터 ID 가져오기
+                    Eigen::Vector3f n = (normals.empty()) ? Eigen::Vector3f(0, 1, 0) : normals[i];
+                    Eigen::Vector3f c = (colors.empty()) ? Eigen::Vector3f(1, 1, 1) : colors[i];
+                    int cid = (clusterIds.empty()) ? -1 : clusterIds[i];
 
-                    if (c.r > 1.0f) c /= 255.0f;
+                    if (c.x() > 1.0f) c /= 255.0f;
 
-                    glm::vec3 vecFromOrigin = p - gridOrigin;
-                    int centerGx = (int)std::floor(vecFromOrigin.x / voxelSize);
-                    int centerGy = (int)std::floor(vecFromOrigin.y / voxelSize);
-                    int centerGz = (int)std::floor(vecFromOrigin.z / voxelSize);
+                    Eigen::Vector3f vecFromOrigin = p - gridOrigin;
+                    int centerGx = (int)std::floor(vecFromOrigin.x() / voxelSize);
+                    int centerGy = (int)std::floor(vecFromOrigin.y() / voxelSize);
+                    int centerGz = (int)std::floor(vecFromOrigin.z() / voxelSize);
 
                     DataBlockKey lastKey = (DataBlockKey)-1;
                     DataBlock* cachedBlock = nullptr;
@@ -904,8 +952,8 @@ namespace GeometricProcessingPipeline
                                 int gy = centerGy + dy;
                                 int gz = centerGz + dz;
 
-                                glm::vec3 voxelCenter = gridOrigin + glm::vec3((gx + 0.5f) * voxelSize, (gy + 0.5f) * voxelSize, (gz + 0.5f) * voxelSize);
-                                float dist = glm::distance(p, voxelCenter);
+                                Eigen::Vector3f voxelCenter = gridOrigin + Eigen::Vector3f((gx + 0.5f) * voxelSize, (gy + 0.5f) * voxelSize, (gz + 0.5f) * voxelSize);
+                                float dist = (p - voxelCenter).norm();
                                 if (dist > truncDist) continue;
 
                                 int bx = (int)floor((float)gx / Configuration::voxelsPerBlockAxis);
@@ -913,8 +961,8 @@ namespace GeometricProcessingPipeline
                                 int bz = (int)floor((float)gz / Configuration::voxelsPerBlockAxis);
 
                                 float currBlockSize = blockSizePerAxis;
-                                glm::vec3 blockMin = gridOrigin + glm::vec3(bx * currBlockSize, by * currBlockSize, bz * currBlockSize);
-                                auto key = Morton3D::EncodeFromVec3(blockMin + glm::vec3(voxelSize * 0.1f), gridOrigin, currBlockSize);
+                                Eigen::Vector3f blockMin = gridOrigin + Eigen::Vector3f(bx * currBlockSize, by * currBlockSize, bz * currBlockSize);
+                                auto key = Morton3D::EncodeFromVec3(blockMin + Eigen::Vector3f::Constant(voxelSize * 0.1f), gridOrigin, currBlockSize);
 
                                 DataBlock* targetBlock = nullptr;
                                 if (key == lastKey && cachedBlock)
@@ -938,7 +986,7 @@ namespace GeometricProcessingPipeline
                                     int lz = gz % Configuration::voxelsPerBlockAxis; if (lz < 0) lz += Configuration::voxelsPerBlockAxis;
 
                                     float weight = 1.0f - (dist / truncDist);
-                                    float sdf = glm::clamp(glm::dot(voxelCenter - p, n), -truncDist, truncDist);
+                                    float sdf = std::clamp((voxelCenter - p).dot(n), -truncDist, truncDist);
 
                                     std::lock_guard<std::mutex> lock(targetBlock->blockMutex);
                                     Voxel& voxel = targetBlock->voxels[lz * Configuration::voxelsPerBlockAxis * Configuration::voxelsPerBlockAxis + ly * Configuration::voxelsPerBlockAxis + lx];
@@ -951,20 +999,16 @@ namespace GeometricProcessingPipeline
                                         voxel.weight = weight;
                                         voxel.valid = true;
                                         voxel.clusterId = cid;
-                                        voxel.divergence = 0.0f; // [Added] First point has no divergence
+                                        voxel.divergence = 0.0f;
                                     }
                                     else
                                     {
                                         float newW = voxel.weight + weight;
 
-                                        // [Added] Calculate Divergence
-                                        // Compare current accumulated normal with new input normal
-                                        // 0.0 means identical direction, 1.0 means 90 degrees or more difference
-                                        glm::vec3 currentDir = glm::normalize(voxel.normal);
-                                        float dotVal = glm::clamp(glm::dot(currentDir, n), -1.0f, 1.0f);
+                                        Eigen::Vector3f currentDir = voxel.normal.normalized();
+                                        float dotVal = std::clamp(currentDir.dot(n), -1.0f, 1.0f);
                                         float newDiv = 1.0f - dotVal;
 
-                                        // Accumulate divergence using weighted average
                                         voxel.divergence = (voxel.divergence * voxel.weight + newDiv * weight) / newW;
 
                                         voxel.signedDistance = (voxel.signedDistance * voxel.weight + sdf * weight) / newW;
@@ -985,8 +1029,8 @@ namespace GeometricProcessingPipeline
             for (const auto& pair : dataBlocks)
             {
                 const auto& block = pair.second;
-                glm::vec3 blockMax = block->blockMin + glm::vec3(blockSizePerAxis);
-                VD::AddWiredBox("Blocks", { block->blockMin, blockMax }, Color::yellow());
+                Eigen::Vector3f blockMax = block->blockMin + Eigen::Vector3f::Constant(blockSizePerAxis);
+                VD::AddWiredBox("Blocks", { glm::vec3(block->blockMin.x(), block->blockMin.y(), block->blockMin.z()), glm::vec3(blockMax.x(), blockMax.y(), blockMax.z()) }, Color::yellow());
 
                 for (int z = 0; z < Configuration::voxelsPerBlockAxis; ++z)
                 {
@@ -997,9 +1041,9 @@ namespace GeometricProcessingPipeline
                             const Voxel& voxel = block->voxels[z * Configuration::voxelsPerBlockAxis * Configuration::voxelsPerBlockAxis + y * Configuration::voxelsPerBlockAxis + x];
                             if (voxel.valid)
                             {
-                                glm::vec3 vMin = block->blockMin + glm::vec3((float)x * voxelSize, (float)y * voxelSize, (float)z * voxelSize);
-                                glm::vec3 vMax = vMin + glm::vec3(voxelSize);
-                                VD::AddWiredBox("Voxels", { vMin, vMax }, Color::red());
+                                Eigen::Vector3f vMin = block->blockMin + Eigen::Vector3f((float)x * voxelSize, (float)y * voxelSize, (float)z * voxelSize);
+                                Eigen::Vector3f vMax = vMin + Eigen::Vector3f::Constant(voxelSize);
+                                VD::AddWiredBox("Voxels", { glm::vec3(vMin.x(), vMin.y(), vMin.z()), glm::vec3(vMax.x(), vMax.y(), vMax.z()) }, Color::red());
                             }
                         }
                     }
@@ -1011,7 +1055,7 @@ namespace GeometricProcessingPipeline
     struct MeshGenerator
     {
         std::vector<Triangle> triangles;
-        std::vector<std::pair<glm::vec3, glm::vec3>> holeEdges;
+        std::vector<std::pair<Eigen::Vector3f, Eigen::Vector3f>> holeEdges;
 
         struct GridKey
         {
@@ -1035,9 +1079,9 @@ namespace GeometricProcessingPipeline
 
         struct SNVertex
         {
-            glm::vec3 pos;
-            glm::vec3 normal;
-            glm::vec3 color;
+            Eigen::Vector3f pos;
+            Eigen::Vector3f normal;
+            Eigen::Vector3f color;
         };
 
         void Generate(SparseDataBlock& sdb)
@@ -1059,7 +1103,7 @@ namespace GeometricProcessingPipeline
             std::mutex vertexMutex;
             std::mutex triMutex;
 
-            const glm::ivec3 corners[8] = { {0,0,0}, {1,0,0}, {1,0,1}, {0,0,1}, {0,1,0}, {1,1,0}, {1,1,1}, {0,1,1} };
+            const Eigen::Vector3i corners[8] = { {0,0,0}, {1,0,0}, {1,0,1}, {0,0,1}, {0,1,0}, {1,1,0}, {1,1,1}, {0,1,1} };
             const int edgePairs[12][2] = { {0,1}, {1,2}, {2,3}, {3,0}, {4,5}, {5,6}, {6,7}, {7,4}, {0,4}, {1,5}, {2,6}, {3,7} };
 
             std::for_each(std::execution::par, blocks.begin(), blocks.end(), [&](DataBlock* block)
@@ -1067,10 +1111,10 @@ namespace GeometricProcessingPipeline
                     std::vector<std::pair<GridKey, SNVertex>> localVerts;
                     localVerts.reserve(64);
 
-                    glm::vec3 diff = block->blockMin - sdb.gridOrigin;
-                    int startGx = (int)(diff.x / sdb.voxelSize + 0.5f);
-                    int startGy = (int)(diff.y / sdb.voxelSize + 0.5f);
-                    int startGz = (int)(diff.z / sdb.voxelSize + 0.5f);
+                    Eigen::Vector3f diff = block->blockMin - sdb.gridOrigin;
+                    int startGx = (int)(diff.x() / sdb.voxelSize + 0.5f);
+                    int startGy = (int)(diff.y() / sdb.voxelSize + 0.5f);
+                    int startGz = (int)(diff.z() / sdb.voxelSize + 0.5f);
 
                     for (int z = 0; z < Configuration::voxelsPerBlockAxis; ++z)
                     {
@@ -1080,12 +1124,12 @@ namespace GeometricProcessingPipeline
                             {
                                 int gx = startGx + x; int gy = startGy + y; int gz = startGz + z;
 
-                                float dists[8]; glm::vec3 colors[8], normals[8];
+                                float dists[8]; Eigen::Vector3f colors[8], normals[8];
                                 int insideCount = 0; bool allValid = true;
 
                                 for (int i = 0; i < 8; ++i)
                                 {
-                                    const auto* v = sdb.GetVoxelByIndex(gx + corners[i].x, gy + corners[i].y, gz + corners[i].z);
+                                    const auto* v = sdb.GetVoxelByIndex(gx + corners[i].x(), gy + corners[i].y(), gz + corners[i].z());
                                     if (!v || !v->valid)
                                     {
                                         allValid = false;
@@ -1097,7 +1141,7 @@ namespace GeometricProcessingPipeline
 
                                 if (!allValid || insideCount == 0 || insideCount == 8) continue;
 
-                                glm::vec3 avgPos(0.0f), avgColor(0.0f), avgNormal(0.0f);
+                                Eigen::Vector3f avgPos(0.0f, 0.0f, 0.0f), avgColor(0.0f, 0.0f, 0.0f), avgNormal(0.0f, 0.0f, 0.0f);
                                 int intersections = 0;
                                 for (int e = 0; e < 12; ++e)
                                 {
@@ -1105,11 +1149,12 @@ namespace GeometricProcessingPipeline
                                     if ((dists[idx1] < isoLevel) != (dists[idx2] < isoLevel))
                                     {
                                         float t = (isoLevel - dists[idx1]) / (dists[idx2] - dists[idx1]);
-                                        glm::vec3 p1 = sdb.gridOrigin + glm::vec3(gx + corners[idx1].x, gy + corners[idx1].y, gz + corners[idx1].z) * sdb.voxelSize;
-                                        glm::vec3 p2 = sdb.gridOrigin + glm::vec3(gx + corners[idx2].x, gy + corners[idx2].y, gz + corners[idx2].z) * sdb.voxelSize;
-                                        avgPos += glm::mix(p1, p2, t);
-                                        avgColor += glm::mix(colors[idx1], colors[idx2], t);
-                                        avgNormal += glm::mix(normals[idx1], normals[idx2], t);
+                                        Eigen::Vector3f p1 = sdb.gridOrigin + Eigen::Vector3f(gx + corners[idx1].x(), gy + corners[idx1].y(), gz + corners[idx1].z()) * sdb.voxelSize;
+                                        Eigen::Vector3f p2 = sdb.gridOrigin + Eigen::Vector3f(gx + corners[idx2].x(), gy + corners[idx2].y(), gz + corners[idx2].z()) * sdb.voxelSize;
+
+                                        avgPos += (p1 * (1.0f - t) + p2 * t);
+                                        avgColor += (colors[idx1] * (1.0f - t) + colors[idx2] * t);
+                                        avgNormal += (normals[idx1] * (1.0f - t) + normals[idx2] * t);
                                         intersections++;
                                     }
                                 }
@@ -1119,7 +1164,7 @@ namespace GeometricProcessingPipeline
                                     SNVertex v;
                                     v.pos = avgPos / (float)intersections;
                                     v.color = avgColor / (float)intersections;
-                                    v.normal = glm::normalize(avgNormal);
+                                    v.normal = avgNormal.normalized();
                                     localVerts.push_back({ {gx, gy, gz}, v });
                                 }
                             }
@@ -1137,10 +1182,10 @@ namespace GeometricProcessingPipeline
                     std::vector<Triangle> localTris;
                     localTris.reserve(128);
 
-                    glm::vec3 diff = block->blockMin - sdb.gridOrigin;
-                    int startGx = (int)(diff.x / sdb.voxelSize + 0.5f);
-                    int startGy = (int)(diff.y / sdb.voxelSize + 0.5f);
-                    int startGz = (int)(diff.z / sdb.voxelSize + 0.5f);
+                    Eigen::Vector3f diff = block->blockMin - sdb.gridOrigin;
+                    int startGx = (int)(diff.x() / sdb.voxelSize + 0.5f);
+                    int startGy = (int)(diff.y() / sdb.voxelSize + 0.5f);
+                    int startGz = (int)(diff.z() / sdb.voxelSize + 0.5f);
 
                     for (int z = 0; z < Configuration::voxelsPerBlockAxis; ++z)
                     {
@@ -1197,7 +1242,7 @@ namespace GeometricProcessingPipeline
         {
             if (showMesh)
             {
-                std::vector<glm::vec3> v, n, c; std::vector<uint32_t> ind;
+                std::vector<Eigen::Vector3f> v, n, c; std::vector<uint32_t> ind;
                 size_t cnt = triangles.size() * 3;
                 v.reserve(cnt); n.reserve(cnt); c.reserve(cnt); ind.reserve(cnt);
                 uint32_t i = 0;
@@ -1214,6 +1259,7 @@ namespace GeometricProcessingPipeline
                 renderable->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
                 renderable->AddShader(Feather.CreateShader("TwoSide", File("../../res/Shaders/TwoSide.vs"), File("../../res/Shaders/TwoSide.fs")));
                 renderable->SetActiveShaderIndex(0);
+
                 renderable->AddVertices(v); renderable->AddNormals(n); renderable->AddColors(c); renderable->AddIndices(ind);
 
                 Feather.CreateEventCallback<KeyEvent>(entity, [](Entity e, const KeyEvent& event) {
@@ -1222,7 +1268,10 @@ namespace GeometricProcessingPipeline
             }
             if (showHoles)
             {
-                for (const auto& edge : holeEdges) VD::AddLine("Holes", edge.first, edge.second, Color::red());
+                for (const auto& edge : holeEdges)
+                {
+                    VD::AddLine("Holes", glm::vec3(edge.first.x(), edge.first.y(), edge.first.z()), glm::vec3(edge.second.x(), edge.second.y(), edge.second.z()), Color::red());
+                }
             }
         }
 
@@ -1231,9 +1280,9 @@ namespace GeometricProcessingPipeline
             PLYFormat ply;
             for (const auto& t : triangles)
             {
-                ply.AddPoint(t.v[0].x, t.v[0].y, t.v[0].z); ply.AddNormal(t.n[0].x, t.n[0].y, t.n[0].z); ply.AddColor(t.c[0].x, t.c[0].y, t.c[0].z);
-                ply.AddPoint(t.v[1].x, t.v[1].y, t.v[1].z); ply.AddNormal(t.n[1].x, t.n[1].y, t.n[1].z); ply.AddColor(t.c[1].x, t.c[1].y, t.c[1].z);
-                ply.AddPoint(t.v[2].x, t.v[2].y, t.v[2].z); ply.AddNormal(t.n[2].x, t.n[2].y, t.n[2].z); ply.AddColor(t.c[2].x, t.c[2].y, t.c[2].z);
+                ply.AddPoint(t.v[0].x(), t.v[0].y(), t.v[0].z()); ply.AddNormal(t.n[0].x(), t.n[0].y(), t.n[0].z()); ply.AddColor(t.c[0].x(), t.c[0].y(), t.c[0].z());
+                ply.AddPoint(t.v[1].x(), t.v[1].y(), t.v[1].z()); ply.AddNormal(t.n[1].x(), t.n[1].y(), t.n[1].z()); ply.AddColor(t.c[1].x(), t.c[1].y(), t.c[1].z());
+                ply.AddPoint(t.v[2].x(), t.v[2].y(), t.v[2].z()); ply.AddNormal(t.n[2].x(), t.n[2].y(), t.n[2].z()); ply.AddColor(t.c[2].x(), t.c[2].y(), t.c[2].z());
                 size_t s = ply.GetPoints().size() / 3;
                 ply.AddFace((uint32_t)s - 3, (uint32_t)s - 2, (uint32_t)s - 1);
             }
@@ -1248,13 +1297,13 @@ namespace GeometricProcessingPipeline
             vMap.reserve(triangles.size());
             int vCount = 0;
             std::vector<int> triIndices; triIndices.reserve(triangles.size() * 3);
-            std::vector<glm::vec3> tempVerts; tempVerts.reserve(triangles.size());
+            std::vector<Eigen::Vector3f> tempVerts; tempVerts.reserve(triangles.size());
 
             for (const auto& t : triangles)
             {
                 for (int i = 0; i < 3; ++i)
                 {
-                    GridKey key = { (int)(t.v[i].x / tol), (int)(t.v[i].y / tol), (int)(t.v[i].z / tol) };
+                    GridKey key = { (int)(t.v[i].x() / tol), (int)(t.v[i].y() / tol), (int)(t.v[i].z() / tol) };
                     if (vMap.find(key) == vMap.end())
                     {
                         vMap[key] = vCount++;
@@ -1283,15 +1332,15 @@ namespace GeometricProcessingPipeline
 
     struct GeometricProcessingOperatorParameter
     {
-		std::map<std::string, std::any> parameters;
+        std::map<std::string, std::any> parameters;
 
-		template<typename T>
+        template<typename T>
         void SetParameter(const std::string& name, const T& value)
         {
             parameters[name] = value;
         }
 
-		template<typename T>
+        template<typename T>
         T GetParameter(const std::string& name, const T& defaultValue) const
         {
             auto it = parameters.find(name);
@@ -1307,7 +1356,7 @@ namespace GeometricProcessingPipeline
                 }
             }
             return defaultValue;
-		}
+        }
 
         bool needToDeleteSpatialPartitioning = false;
         bool needToRebuildSpatialPartitioning = false;
@@ -1316,13 +1365,14 @@ namespace GeometricProcessingPipeline
 
     class IGeometricProcessingOperatorBase {};
 
-	template<typename SpatialPartitioningType>
-	class IGeometricProcessingOperator : public IGeometricProcessingOperatorBase
+    template<typename SpatialPartitioningType>
+    class IGeometricProcessingOperator : public IGeometricProcessingOperatorBase
     {
     public:
-		IGeometricProcessingOperator(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
-            : pipeline(pipeline), parameter(parameter) {}
-		virtual ~IGeometricProcessingOperator()
+        IGeometricProcessingOperator(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+            : pipeline(pipeline), parameter(parameter) {
+        }
+        virtual ~IGeometricProcessingOperator()
         {
             if (parameter.needToDeleteSpatialPartitioning)
             {
@@ -1333,26 +1383,26 @@ namespace GeometricProcessingPipeline
         virtual void Process(PointCloud* currentPointCloud) = 0;
         void Process(PointCloud* currentPointCloud, SpatialPartitioningType* spatialPartitioning)
         {
-			this->spatialPartitioning = spatialPartitioning;
-			Process(currentPointCloud);
+            this->spatialPartitioning = spatialPartitioning;
+            Process(currentPointCloud);
         }
 
-		virtual void Visualize() = 0;
+        virtual void Visualize() = 0;
 
-		inline SpatialPartitioningType* GetSpatialPartitioning() const { return spatialPartitioning; }
+        inline SpatialPartitioningType* GetSpatialPartitioning() const { return spatialPartitioning; }
 
-		inline GeometricProcessingOperatorParameter& GetParameter() { return parameter; }
-		inline void SetGeometricProcessingOperatorParameter(const GeometricProcessingOperatorParameter& param) { parameter = param; }
+        inline GeometricProcessingOperatorParameter& GetParameter() { return parameter; }
+        inline void SetGeometricProcessingOperatorParameter(const GeometricProcessingOperatorParameter& param) { parameter = param; }
         inline const std::vector<int>& GetPointTags() const { return pointTags; }
-		inline void SetPointTags(const std::vector<int>& tags) { pointTags = tags; }
+        inline void SetPointTags(const std::vector<int>& tags) { pointTags = tags; }
 
     protected:
-		Pipeline* pipeline = nullptr;
+        Pipeline* pipeline = nullptr;
         GeometricProcessingOperatorParameter parameter;
         SpatialPartitioningType* spatialPartitioning = nullptr;
         std::vector<int> pointTags;
-		PointCloud* cachedPointCloud = nullptr;
-	};
+        PointCloud* cachedPointCloud = nullptr;
+    };
 
     class Pipeline
     {
@@ -1376,14 +1426,14 @@ namespace GeometricProcessingPipeline
         void Clear();
 
         void CreatePointCloud();
-		void StorePointCloud();
+        void StorePointCloud();
         void RestoreInitialPointCloud();
         void RestoreLastPointCloud();
 
         inline SparseGrid* GetSparseGrid() const { return sparseGrid; }
 
-		inline PointCloud* GetCurrentPointCloud() const { return currentPointCloud; }
-		inline PointCloud* GetLastPointCloud() { return (pointClouds.size() >= 2) ? &pointClouds[pointClouds.size() - 2] : nullptr; }
+        inline PointCloud* GetCurrentPointCloud() const { return currentPointCloud; }
+        inline PointCloud* GetLastPointCloud() { return (pointClouds.size() >= 2) ? &pointClouds[pointClouds.size() - 2] : nullptr; }
 
     protected:
         std::vector<std::tuple<std::string, std::shared_ptr<IGeometricProcessingOperator<SparseGrid>>>> operators;

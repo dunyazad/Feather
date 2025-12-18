@@ -518,6 +518,20 @@ void Renderable::AddVertices(const glm::vec3* vertices, ui32 numberOfElements)
 	this->vertices.AddData(vertices, numberOfElements);
 }
 
+void Renderable::AddVertices(const std::vector<Eigen::Vector3f>& vertices)
+{
+	dirty = true;
+
+	this->vertices.AddData((glm::vec3*)vertices.data(), vertices.size());
+}
+
+void Renderable::AddVertices(const Eigen::Vector3f* vertices, ui32 numberOfElements)
+{
+	dirty = true;
+
+	this->vertices.AddData((glm::vec3*)vertices, numberOfElements);
+}
+
 void Renderable::AddNormals(const std::vector<glm::vec3>& normals)
 {
 	dirty = true;
@@ -532,6 +546,20 @@ void Renderable::AddNormals(const glm::vec3* normals, ui32 numberOfElements)
 	this->normals.AddData(normals, numberOfElements);
 }
 
+void Renderable::AddNormals(const std::vector<Eigen::Vector3f>& normals)
+{
+	dirty = true;
+
+	this->normals.AddData((glm::vec3*)normals.data(), normals.size());
+}
+
+void Renderable::AddNormals(const Eigen::Vector3f* normals, ui32 numberOfElements)
+{
+	dirty = true;
+
+	this->normals.AddData((glm::vec3*)normals, numberOfElements);
+}
+
 void Renderable::AddColors(const std::vector<glm::vec3>& colors)
 {
 	dirty = true;
@@ -544,6 +572,20 @@ void Renderable::AddColors(const glm::vec3* colors, ui32 numberOfElements)
 	dirty = true;
 
 	this->colors3.AddData(colors, numberOfElements);
+}
+
+void Renderable::AddColors(const std::vector<Eigen::Vector3f>& colors)
+{
+	dirty = true;
+
+	this->colors3.AddData((glm::vec3*)colors.data(), colors.size());
+}
+
+void Renderable::AddColors(const Eigen::Vector3f* colors, ui32 numberOfElements)
+{
+	dirty = true;
+
+	this->colors3.AddData((glm::vec3*)colors, numberOfElements);
 }
 
 void Renderable::AddColors(const std::vector<glm::vec4>& colors)
@@ -574,6 +616,36 @@ void Renderable::AddColors(const glm::vec4* colors, ui32 numberOfElements)
 	}
 
 	this->colors4.AddData(colors, numberOfElements);
+}
+
+void Renderable::AddColors(const std::vector<Eigen::Vector4f>& colors)
+{
+	dirty = true;
+	for (auto& color : colors)
+	{
+		if (color.w() < 0.999f)
+		{
+			useAlpha = true;
+			break;
+		}
+	}
+
+	this->colors4.AddData((glm::vec4*)colors.data(), colors.size());
+}
+
+void Renderable::AddColors(const Eigen::Vector4f* colors, ui32 numberOfElements)
+{
+	dirty = true;
+	for (ui32 i = 0; i < numberOfElements; ++i)
+	{
+		if (colors[i].w() < 0.999f)
+		{
+			useAlpha = true;
+			break;
+		}
+	}
+
+	this->colors4.AddData((glm::vec4*)colors, numberOfElements);
 }
 
 void Renderable::AddUVs(const std::vector<glm::vec2>& uvs)

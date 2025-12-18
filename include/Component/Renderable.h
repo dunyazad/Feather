@@ -229,14 +229,26 @@ public:
 	void AddVertices(const std::vector<glm::vec3>& vertices);
 	void AddVertices(const glm::vec3* vertices, ui32 numberOfElements);
 
+	void AddVertices(const std::vector<Eigen::Vector3f>& vertices);
+	void AddVertices(const Eigen::Vector3f* vertices, ui32 numberOfElements);
+
 	void AddNormals(const std::vector<glm::vec3>& normals);
 	void AddNormals(const glm::vec3* normals, ui32 numberOfElements);
+
+	void AddNormals(const std::vector<Eigen::Vector3f>& normals);
+	void AddNormals(const Eigen::Vector3f* normals, ui32 numberOfElements);
 
 	void AddColors(const std::vector<glm::vec3>& colors);
 	void AddColors(const glm::vec3* colors, ui32 numberOfElements);
 
+	void AddColors(const std::vector<Eigen::Vector3f>& colors);
+	void AddColors(const Eigen::Vector3f* colors, ui32 numberOfElements);
+
 	void AddColors(const std::vector<glm::vec4>& colors);
 	void AddColors(const glm::vec4* colors, ui32 numberOfElements);
+
+	void AddColors(const std::vector<Eigen::Vector4f>& colors);
+	void AddColors(const Eigen::Vector4f* colors, ui32 numberOfElements);
 
 	void AddUVs(const std::vector<glm::vec2>& uvs);
 	void AddUVs(const glm::vec2* uvs, ui32 numberOfElements);

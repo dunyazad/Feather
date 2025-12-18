@@ -38,11 +38,14 @@
 #include <stack>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+
 
 #define SAFE_DELETE(p) { if(nullptr != (p)) { delete (p); (p) = nullptr; } }
 #define SAFE_DELETE_ARRAY(p) { if(nullptr != (p)) { delete[] (p); (p) = nullptr; } }
@@ -107,6 +110,14 @@ const std::string EmptyString = "";
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <Eigen/LU>
+
+namespace Eigen {
+    template <typename Type, int Size>
+    using Vector = Matrix<Type, Size, 1>;
+
+    using Vector3b = Vector<unsigned char, 3>;
+    using Vector3ui = Vector<unsigned int, 3>;
+}
 
 #include <stb_connected_components.h>
 #include <stb_c_lexer.h>
