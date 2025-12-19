@@ -241,7 +241,7 @@ int main(int argc, char** argv)
 
             for (size_t i = 0; i < 1; i++)
             {
-                { // OperatorPointCloudErosionDilation
+                { // OperatorPointCloudErosion
                     GPP::GeometricProcessingOperatorParameter parameter;
 
                     float radius = 0.05f;

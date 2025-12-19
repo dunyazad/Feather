@@ -2157,23 +2157,6 @@ namespace GeometricProcessingPipeline
 					}
 				}
 			});
-
-		PLYFormat ply;
-		size_t count = cloud->numberOfElements;
-		for (size_t i = 0; i < count; i++)
-		{
-			if (cloud->marks[i] == 1)
-			{
-				const auto& p = cloud->positions[i];
-				if (FLT_MAX == p.x() || FLT_MAX == p.y() || FLT_MAX == p.z())
-				{
-					continue;
-				}
-				ply.AddPointFloat3(p.data());
-			}
-		}
-
-		ply.Serialize("D:\\Temp\\PLY\\Morphology_OverlappingPoints.ply");
 	}
 #pragma endregion
 	
@@ -3148,10 +3131,7 @@ namespace GeometricProcessingPipeline
 	{
 		if (!pointCloudA || matchedFlags.empty()) return;
 
-		size_t count = pointCloudA->numberOfElements;
-		PLYFormat ply;
-
-		for (size_t i = 0; i < count; ++i)
+		for (size_t i = 0; i < pointCloudA->numberOfElements; ++i)
 		{
 			const auto& p = pointCloudA->positions[i];
 			const auto& n = pointCloudA->normals[i].normalized();
@@ -3171,12 +3151,8 @@ namespace GeometricProcessingPipeline
 					p, n,
 					Configuration::pointVisualizationRadius,
 					Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
-
-				if (FLT_MAX != p.x()) ply.AddPointFloat3(p.data());
 			}
 		}
-
-		ply.Serialize("D:\\Debug\\PLY\\Compare_Ordered_Deleted.ply");
 	}
 #pragma endregion
 
@@ -3263,11 +3239,7 @@ namespace GeometricProcessingPipeline
 		if (!pointCloudA || matchedFlags.empty())
 			return;
 
-		size_t count = pointCloudA->numberOfElements;
-
-		PLYFormat ply;
-
-		for (size_t i = 0; i < count; ++i)
+		for (size_t i = 0; i < pointCloudA->numberOfElements; ++i)
 		{
 			const auto& p = pointCloudA->positions[i];
 			const auto& n = pointCloudA->normals[i].normalized();
@@ -3287,15 +3259,8 @@ namespace GeometricProcessingPipeline
 					p, n,
 					Configuration::pointVisualizationRadius,
 					Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
-
-				if (FLT_MAX != p.x() && FLT_MAX != p.y() && FLT_MAX != p.z())
-				{
-					ply.AddPointFloat3(p.data());
-				}
 			}
 		}
-
-		ply.Serialize("D:\\Temp\\PLY\\ComparePointCloud.ply");
 	}
 #pragma endregion
 
