@@ -17,6 +17,8 @@ public:
 	static void Initialize();
 	static void Terminate();
 
+	static void DispatchCommands();
+
 	static void CreateLineEntity(const std::string& tag);
 	static void CreateTriangleEntity(const std::string& tag);
 	static void CreateBoxEntity(const std::string& tag);
@@ -70,6 +72,9 @@ public:
 
 private:
 	static bool initialized;
+	static std::mutex commandMutex;
+	static std::vector<std::function<void()>> commandQueue;
+	static std::vector<std::function<void()>> pendingCommands;
 	static std::map<std::string, Entity> entities;
 	static std::map<std::string, DebuggingRenderable*> debuggingRenderables;
 	static std::map<std::string, TextBlock*> textBlocks;

@@ -100,6 +100,7 @@ void libFeather::Run()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		VisualDebugging::DispatchCommands();
 
 		inputSystem->Update(frameNo, timeDelta);
         eventSystem->Update(frameNo, timeDelta);

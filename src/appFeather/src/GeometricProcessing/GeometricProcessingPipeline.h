@@ -151,7 +151,7 @@ namespace GeometricProcessingPipeline
 		std::vector<Eigen::Vector3f> colors;
 		std::vector<int> pointDeepLearningClassIDs;
 		std::vector<int> pointClusterIDs;
-		std::vector<int> marks;
+		std::map<std::string, std::vector<int>> marks;
 
 		Eigen::AABB aabb;
 
@@ -213,7 +213,7 @@ namespace GeometricProcessingPipeline
 		
 		SparseGridPickResult Pick(const std::vector<Eigen::Vector3f>& points, const Eigen::Ray& ray, float pickRadius);
 
-		SparseGridPickResult PickBruteForce(const std::vector<Eigen::Vector3f>& points, const Ray& ray, float pickRadius);
+		SparseGridPickResult PickBruteForce(const std::vector<Eigen::Vector3f>& points, const Eigen::Ray& ray, float pickRadius);
 
 		void Visualize(const GeometricProcessingPipeline::PointCloud& pc);		
 	};
@@ -372,6 +372,14 @@ namespace GeometricProcessingPipeline
 		void BuildSparseGrid(PointCloud& pointCloud);
 
 		template<typename OperatorType>
+		std::shared_ptr<OperatorType> AddOperator(const std::string& tag)
+		{
+			auto op = std::make_shared<OperatorType>(this, GeometricProcessingOperatorParameter());
+			operators.emplace_back(std::make_tuple(tag, op));
+			return op;
+		}
+
+		template<typename OperatorType>
 		std::shared_ptr<OperatorType> AddOperator(const std::string& tag, const GeometricProcessingOperatorParameter& parameter)
 		{
 			auto op = std::make_shared<OperatorType>(this, parameter);
@@ -406,6 +414,24 @@ namespace GeometricProcessingPipeline
 			else return pointClouds[index];
 		}
 
+		inline std::shared_ptr<IGeometricProcessingOperator<SparseGrid>> GetOperator(int index)
+		{
+			if (-1 == index)
+			{
+				auto& [opTag, op] = operators.back();
+				return op;
+			}
+			else if (index >= operators.size())
+			{
+				return nullptr;
+			}
+			else
+			{
+				auto& [opTag, op] = operators[index];
+				return op;
+			}
+		}
+
 	protected:
 		std::vector<std::tuple<std::string, std::shared_ptr<IGeometricProcessingOperator<SparseGrid>>>> operators;
 		SparseGrid* sparseGrid = nullptr;
@@ -419,6 +445,21 @@ namespace GeometricProcessingPipeline
 	{
 	public:
 		OperatorPointCloudLoader(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+
+		virtual void Process() override;
+		virtual void Visualize() override;
+
+		inline const std::string& GetPLYFilename() const { return plyFilename; }
+		inline void SetPLYFilename(const std::string& filename) { plyFilename = filename; }
+
+	protected:
+		std::string plyFilename;
+	};
+
+	class OperatorPointCloudSaver : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorPointCloudSaver(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
 
 		virtual void Process() override;
 		virtual void Visualize() override;
@@ -463,8 +504,47 @@ namespace GeometricProcessingPipeline
 		OperatorPointCloudVisualization(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
 
 		virtual void Process() override;
-
 		virtual void Visualize() override;
+	};
+
+	class OperatorPointCloudDensity : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorPointCloudDensity(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+
+		virtual void Process() override;
+		virtual void Visualize() override;
+
+	private:
+		std::vector<float> pointDensities;
+
+		float densityMean = 0.0f;
+		float densityStdDev = 0.0f;
+
+		float searchRadiusMultiplier = 1.5f;
+		float visualizationScale = 1.0f;
+		int neighborSearchOffset = 1;
+	};
+
+	class OperatorMeanShift : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorMeanShift(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+
+		virtual void Process() override;
+		virtual void Visualize() override;
+
+	private:
+		std::vector<Eigen::Vector3f> shiftedPositions;
+		std::vector<float> shiftDistances;
+
+		float bandwidthMultiplier = 2.0f;
+		float convergenceThreshold = 0.01f;
+		int maxIterations = 10;
+		bool updatePositions = false;
+		float visualizationScale = 1.0f;
+		bool invertDirection = false;
+		bool markedPointsOnly = false;
 	};
 
 	class OperatorPointCloudLaplacianSmoothing : public IGeometricProcessingOperator<SparseGrid>
@@ -625,6 +705,62 @@ namespace GeometricProcessingPipeline
 		float maxAngle = 15.0f;
 		bool markingOnly = false;
 	};
+
+	class OperatorErosionAndClustering : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorErosionAndClustering(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+
+		virtual void Process() override;
+		virtual void Visualize() override;
+
+		struct AtomicDisjointSet
+		{
+			std::unique_ptr<std::atomic<int>[]> parent;
+			void Initialize(size_t n)
+			{
+				parent = std::make_unique<std::atomic<int>[]>(n);
+				std::vector<int> indices(n);
+				std::iota(indices.begin(), indices.end(), 0);
+				std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i) {
+					parent[i].store(i, std::memory_order_relaxed);
+					});
+			}
+			int Find(int i)
+			{
+				int p = parent[i].load(std::memory_order_relaxed);
+				while (p != i) {
+					int pp = parent[p].load(std::memory_order_relaxed);
+					parent[i].store(pp, std::memory_order_relaxed);
+					i = pp;
+					p = parent[i].load(std::memory_order_relaxed);
+				}
+				return i;
+			}
+			void Union(int i, int j)
+			{
+				int rootA = Find(i);
+				int rootB = Find(j);
+				while (rootA != rootB) {
+					if (rootA > rootB) std::swap(rootA, rootB);
+					int expected = rootB;
+					if (parent[rootB].compare_exchange_weak(expected, rootA)) return;
+					rootA = Find(rootA);
+					rootB = Find(expected);
+				}
+			}
+		};
+
+	private:
+		float erosionRadius = 0.05f;
+		int erosionIterations = 5;
+		float clusterDistance = 0.06f;
+		int minClusterSize = 50;
+		int neighborSearchOffset = 3;
+		bool visualizeErodedOnly = false;
+
+		std::vector<Eigen::Vector3f> erodedPositions;
+	};
 #pragma endregion
 
 #pragma region About Normal
@@ -676,6 +812,35 @@ namespace GeometricProcessingPipeline
 		float visualizationSigma = 3.0f;
 		float gradientMean = 0.0f;
 		float gradientStdDev = 0.0f;
+	};
+
+	class OperatorNormalVariance : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorNormalVariance(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+
+		virtual void Process() override;
+		virtual void Visualize() override;
+
+		// Setter / Getter
+		inline void SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; }
+		inline void SetVisualizationSigma(float sigma) { visualizationSigma = sigma; }
+
+		inline float GetVarianceMean() const { return varianceMean; }
+		inline float GetVarianceStdDev() const { return varianceStdDev; }
+
+	private:
+		// 결과 데이터: 각 점의 법선 분산값
+		std::vector<float> normalVariances;
+
+		// 파라미터
+		float searchRadiusMultiplier = 1.5f;
+		int neighborSearchOffset = 1;
+		float visualizationSigma = 3.0f;
+
+		// 통계
+		float varianceMean = 0.0f;
+		float varianceStdDev = 0.0f;
 	};
 
 	class OperatorNormalDivergence : public IGeometricProcessingOperator<SparseGrid>
@@ -767,11 +932,18 @@ namespace GeometricProcessingPipeline
 							currentPointCloud->pointClusterIDs[writeIdx] = currentPointCloud->pointClusterIDs[readIdx];
 
 						if (hasMarks)
-							currentPointCloud->marks[writeIdx] = currentPointCloud->marks[readIdx];
+						{
+							for (auto& [k, v] : currentPointCloud->marks)
+							{
+								v[writeIdx] = v[readIdx];
+							}
+						}
 					}
 					writeIdx++;
 				}
 			}
+
+			printf("CustomFilter: %zu points removed\n", currentPointCloud->numberOfElements - writeIdx);
 
 			currentPointCloud->numberOfElements = writeIdx;
 			currentPointCloud->positions.resize(writeIdx);
@@ -780,7 +952,13 @@ namespace GeometricProcessingPipeline
 
 			if (hasClassIDs) currentPointCloud->pointDeepLearningClassIDs.resize(writeIdx);
 			if (hasClusterIDs) currentPointCloud->pointClusterIDs.resize(writeIdx);
-			if (hasMarks) currentPointCloud->marks.resize(writeIdx);
+			if (hasMarks)
+			{
+				for (auto& [k, v] : currentPointCloud->marks)
+				{
+					v.resize(writeIdx);
+				}
+			}
 
 			cachedPointCloud = currentPointCloud;
 
@@ -809,6 +987,38 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process() override;
 		virtual void Visualize() override;
+	};
+
+	class OperatorLocalPlaneFitting : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorLocalPlaneFitting(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+
+		virtual void Process() override;
+		virtual void Visualize() override;
+
+		inline Eigen::Vector3f GetFittedPoint(int index) const
+		{
+			if(index >= 0 && index < fittedPoints.size()) return fittedPoints[index];
+			return Eigen::Vector3f::Zero();
+		}
+
+		inline std::vector<Eigen::Vector3f>& GetFiitedPoints() { return fittedPoints; }
+		inline const std::vector<Eigen::Vector3f>& GetFiitedPoints() const { return fittedPoints; }
+
+	private:
+		float searchRadiusMultiplier = 2.0f;
+		float visualizationScale = 2.0f;
+		bool updatePositions = false;
+		float updateThreshold = 0.01f;
+		bool markedPointsOnly = false;
+
+		int neighborSearchOffset = 3;
+
+		std::vector<float> fittingResiduals;
+		std::vector<Eigen::Vector3f> fittedPoints;
+		float residualMean = 0.0f;
+		float residualStdDev = 0.0f;
 	};
 
 	class OperatorCompareSameIndexOrderedPointCloud : public IGeometricProcessingOperator<SparseGrid>
@@ -1020,18 +1230,6 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process() override;
 		virtual void Visualize() override;
-
-		inline float GetCurvatureThreshold() const { return curvatureThreshold; }
-		inline void SetCurvatureThreshold(float threshold) { curvatureThreshold = threshold; }
-
-		inline int GetNeighborSearchOffset() const { return neighborSearchOffset; }
-		inline void SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; }
-
-		inline float GetSearchRadiusScale() const { return searchRadiusScale; }
-		inline void SetSearchRadiusScale(float scale) { searchRadiusScale = scale; }
-
-		inline float GetVisualizationScale() const { return visualScale; }
-		inline void SetVisualizationScale(float scale) { visualScale = scale; }
 
 	private:
 		float curvatureThreshold = 0.1f;
