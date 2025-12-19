@@ -53,7 +53,7 @@ public:
 	static void AddText(const std::string& tag, const std::string& text, const Eigen::Vector3f& position, const Eigen::Vector4f& color, float fontSize = 32.0f);
 
 	static void ClearSelectionList();
-	static bool AddToSelectionList(const std::string& tag);
+	static void AddToSelectionList(const std::string& tag);
 	static unsigned int ShowNextSelection();
 	static unsigned int ShowPreviousSelection();
 };

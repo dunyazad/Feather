@@ -196,9 +196,9 @@ void IVisualDebugging::ClearSelectionList()
 	VisualDebugging::ClearSelectionList();
 }
 
-bool IVisualDebugging::AddToSelectionList(const std::string& tag)
+void IVisualDebugging::AddToSelectionList(const std::string& tag)
 {
-	return VisualDebugging::AddToSelectionList(tag);
+	VisualDebugging::AddToSelectionList(tag);
 }
 
 unsigned int IVisualDebugging::ShowNextSelection()
