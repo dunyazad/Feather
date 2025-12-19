@@ -2,7 +2,7 @@
 
 #include <libFeather.h>
 
-#include "GeometricProcessing/GeometricProcessingPipeline.hpp"
+#include "GeometricProcessing/GeometricProcessingPipeline.h"
 
 static inline std::string FormatWithCommas(size_t value)
 {
