@@ -619,17 +619,24 @@ void VisualDebugging::ClearSelectionList()
 	selectionIndex = 0;
 }
 
-bool VisualDebugging::AddToSelectionList(const std::string& tag)
+void VisualDebugging::AddToSelectionList(const std::string& tag)
 {
-	if (debuggingRenderables.end() != debuggingRenderables.find(tag))
-	{
-		selectionRenderables.push_back(tag);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	std::lock_guard<std::mutex> lock(commandMutex);
+	commandQueue.emplace_back([=]()
+		{
+			if (false == initialized) Initialize();
+
+			if (debuggingRenderables.end() != debuggingRenderables.find(tag))
+			{
+				//if (std::find(selectionRenderables.begin(), selectionRenderables.end(), tag) == selectionRenderables.end())
+
+				selectionRenderables.push_back(tag);
+			}
+			else
+			{
+				printf("Warning: Tag not found %s\n", tag.c_str());
+			}
+		});
 }
 
 unsigned int VisualDebugging::ShowNextSelection()
