@@ -20,6 +20,8 @@ namespace GPP = GeometricProcessingPipeline;
 #define OPERATOR_PARAMETER(operatorName, parameter) pipeline.AddOperator<GPP::operatorName>(#operatorName, parameter);
 #define EXECUTE_AND_VISUALIZE_RETURN() { pipeline.Execute(); pipeline.VisualizeLast(); return; }
 
+std::string plyFilename = "D:\\Temp\\PLY\\Compound_D.ply";
+
 int main(int argc, char** argv)
 {
     std::cout << "AppFeather - Final Optimized" << std::endl;
@@ -62,40 +64,86 @@ int main(int argc, char** argv)
             else if (GLFW_KEY_F3 == event.keyCode && event.action == 0) VD::ToggleVisibility("CurvatureDivergence_source");
             else if (GLFW_KEY_F9 == event.keyCode && event.action == 0)
             {
-                std::ifstream in("camera_state.txt");
+                json j;
+
+				std::ifstream in("camera_state.json");
                 if (in.is_open())
                 {
-                    glm::vec3 eye, target, up;
-                    in >> eye.x >> eye.y >> eye.z;
-                    in >> target.x >> target.y >> target.z;
-                    in >> up.x >> up.y >> up.z;
-
-                    auto camEnt = Feather.GetEntityByName("Camera");
-                    if (camEnt != entt::null)
+                    in >> j;
+                    if (j.contains(plyFilename))
                     {
-                        auto cam = Feather.GetComponent<Camera>(camEnt);
-                        auto manipulator = Feather.GetComponent<CameraManipulatorTrackball>(camEnt);
+                        glm::vec3 eye, target, up;
+                        eye.x = j[plyFilename]["eye"][0];
+                        eye.y = j[plyFilename]["eye"][1];
+                        eye.z = j[plyFilename]["eye"][2];
 
-                        if (cam)
+                        target.x = j[plyFilename]["target"][0];
+                        target.y = j[plyFilename]["target"][1];
+                        target.z = j[plyFilename]["target"][2];
+
+                        up.x = j[plyFilename]["up"][0];
+                        up.y = j[plyFilename]["up"][1];
+                        up.z = j[plyFilename]["up"][2];
+
+                        auto camEnt = Feather.GetEntityByName("Camera");
+                        if (camEnt != entt::null)
                         {
-                            cam->SetEye(eye);
-                            cam->SetTarget(target);
-                            cam->SetUp(up);
-                            cam->SetDirty(true);
-
-                            if (manipulator)
+                            auto cam = Feather.GetComponent<Camera>(camEnt);
+                            auto manipulator = Feather.GetComponent<CameraManipulatorTrackball>(camEnt);
+                            if (cam)
                             {
-                                manipulator->SyncRadius();
+                                cam->SetEye(eye);
+                                cam->SetTarget(target);
+                                cam->SetUp(up);
+                                cam->SetDirty(true);
+                                if (manipulator)
+                                {
+                                    manipulator->SyncRadius();
+                                }
+                                std::cout << "[System] Camera state RESTORED from JSON." << std::endl;
                             }
-
-                            std::cout << "[System] Camera state RESTORED." << std::endl;
                         }
                     }
                 }
                 else
                 {
-                    std::cout << "[System] No saved camera state file found." << std::endl;
-                }
+                    std::cout << "[System] No saved camera state JSON file found." << std::endl;
+				}
+
+                //std::ifstream in("camera_state.txt");
+                //if (in.is_open())
+                //{
+                //    glm::vec3 eye, target, up;
+                //    in >> eye.x >> eye.y >> eye.z;
+                //    in >> target.x >> target.y >> target.z;
+                //    in >> up.x >> up.y >> up.z;
+
+                //    auto camEnt = Feather.GetEntityByName("Camera");
+                //    if (camEnt != entt::null)
+                //    {
+                //        auto cam = Feather.GetComponent<Camera>(camEnt);
+                //        auto manipulator = Feather.GetComponent<CameraManipulatorTrackball>(camEnt);
+
+                //        if (cam)
+                //        {
+                //            cam->SetEye(eye);
+                //            cam->SetTarget(target);
+                //            cam->SetUp(up);
+                //            cam->SetDirty(true);
+
+                //            if (manipulator)
+                //            {
+                //                manipulator->SyncRadius();
+                //            }
+
+                //            std::cout << "[System] Camera state RESTORED." << std::endl;
+                //        }
+                //    }
+                //}
+                //else
+                //{
+                //    std::cout << "[System] No saved camera state file found." << std::endl;
+                //}
             }
             else if (GLFW_KEY_F12 == event.keyCode && event.action == 0)
             {
@@ -105,25 +153,20 @@ int main(int argc, char** argv)
                     auto cam = Feather.GetComponent<Camera>(camEnt);
                     if (cam)
                     {
-                        std::ofstream out("camera_state.txt");
-                        if (out.is_open())
-                        {
-                            glm::vec3 eye = cam->GetEye();
-                            glm::vec3 target = cam->GetTarget();
-                            glm::vec3 up = cam->GetUp();
+                        json j;
+                        
+                        glm::vec3 eye = cam->GetEye();
+                        glm::vec3 target = cam->GetTarget();
+                        glm::vec3 up = cam->GetUp();
 
-                            // Eye, Target, Up 순서로 저장
-                            out << eye.x << " " << eye.y << " " << eye.z << std::endl;
-                            out << target.x << " " << target.y << " " << target.z << std::endl;
-                            out << up.x << " " << up.y << " " << up.z << std::endl;
+                        j[plyFilename] = {
+                            { "eye",    { eye.x,    eye.y,    eye.z } },
+                            { "target", { target.x, target.y, target.z } },
+                            { "up",     { up.x,     up.y,     up.z } }
+                        };
 
-                            std::cout << "[System] Camera state SAVED to 'camera_state.txt'" << std::endl;
-                            std::cout << "  Eye: " << eye.x << ", " << eye.y << ", " << eye.z << std::endl;
-                        }
-                        else
-                        {
-                            std::cout << "[Error] Failed to open file for saving." << std::endl;
-                        }
+                        std::ofstream out("camera_state.json");
+                        out << j.dump(4);
                     }
                 }
             }
@@ -245,69 +288,74 @@ int main(int argc, char** argv)
                     // OperatorPointCloudLoader
                     {
                         GPP::GeometricProcessingOperatorParameter parameter;
-                        parameter.SetParameter<std::string>("plyFilename", "D:\\Temp\\PLY\\Compound_C.ply");
+                        parameter.SetParameter<std::string>("plyFilename", plyFilename);
                         OPERATOR_PARAMETER(OperatorPointCloudLoader, parameter);
                     }
 
-                    OPERATOR(OperatorStorePointCloud);
 
-                    OPERATOR(OperatorClustering);
-
-                    OPERATOR(OperatorFilterLeaveLargestOnly);
-
-                    OPERATOR(OperatorMeanShift);
-
-                    OPERATOR(OperatorMeshGeneration);
-
-                    EXECUTE_AND_VISUALIZE_RETURN();
-
-                    OPERATOR(OperatorNormalDeviation);
-
-                    OPERATOR(OperatorClustering);
-
-                    //OPERATOR(OperatorNormalDivergence);
-
-                    //OPERATOR(OperatorMeanShift);
-
-                    OPERATOR(OperatorClustering);
-
-
-                    OPERATOR(OperatorCurvatureEstimationAppliedNormal);
-
-                    OPERATOR(OperatorNormalDivergence);
-
-                    //OPERATOR(OperatorFilterUnmarked);
-
-                    OPERATOR(OperatorClustering);
-
-					EXECUTE_AND_VISUALIZE_RETURN();
-
-                    //OPERATOR(OperatorFilterETC);
-
+                    #pragma region Working
                     {
-                        GPP::GeometricProcessingOperatorParameter parameter;
-                        parameter.needToRebuildSpatialPartitioning = true;
-                        OPERATOR_PARAMETER(OperatorNormalDivergence, parameter);
+                        OPERATOR(OperatorStorePointCloud);
+
+                        OPERATOR(OperatorNormalDeviation);
+                        
+                        //{
+                        //    GPP::GeometricProcessingOperatorParameter parameter;
+                        //    parameter.SetParameter<float>("range_min", 0.0f);
+                        //    parameter.SetParameter<float>("range_max", 0.005f);
+                        //    OPERATOR_PARAMETER(OperatorPointCloudDensity, parameter);
+                        //}
+
+                        EXECUTE_AND_VISUALIZE_RETURN();
                     }
+                    #pragma endregion
 
-                    OPERATOR(OperatorPointCloudDensity);
 
-                    EXECUTE_AND_VISUALIZE_RETURN();
+//#pragma region Working
+//                    {
+//                        OPERATOR(OperatorStorePointCloud);
+//
+//                        //OPERATOR(OperatorFilterETC);
+//
+//                        OPERATOR(OperatorClustering);
+//
+//                        OPERATOR(OperatorCurvatureEstimationAppliedNormal);
+//
+//                        OPERATOR(OperatorNormalDivergence);
+//
+//                        OPERATOR(OperatorFilterMarked);
+//
+//                        {
+//                            GPP::GeometricProcessingOperatorParameter parameter;
+//                            parameter.SetParameter<float>("range_min", 0.0f)
+//                            OPERATOR(OperatorPointCloudDensity);
+//                        }
+//
+//                        OPERATOR(OperatorShowMarks);
+//
+//                        EXECUTE_AND_VISUALIZE_RETURN();
+//                    }
+//#pragma endregion
 
+#pragma region Candidate
                     {
-                        GPP::GeometricProcessingOperatorParameter parameter;
-                        parameter.SetParameter<std::string>("targetMarkName", "OperatorNormalDivergence");
-                        OPERATOR_PARAMETER(OperatorExpandMarks, parameter);
-                    }// EXECUTE_AND_VISUALIZE_RETURN();
+                        OPERATOR(OperatorStorePointCloud);
+
+                        //OPERATOR(OperatorFilterETC);
+
+                        OPERATOR(OperatorClustering);
+
+                        OPERATOR(OperatorCurvatureEstimationAppliedNormal);
+
+                        OPERATOR(OperatorNormalDivergence);
+
+                        OPERATOR(OperatorShowMarks);
+
+                        EXECUTE_AND_VISUALIZE_RETURN();
+                    }
+#pragma endregion
 
                     EXECUTE_AND_VISUALIZE_RETURN();
-
-                    //OPERATOR(OperatorCurvatureEstimation);
-
-                    //OPERATOR(OperatorPointCloudDensity);
-
-                    EXECUTE_AND_VISUALIZE_RETURN();
-
                 }).detach();
         });
 

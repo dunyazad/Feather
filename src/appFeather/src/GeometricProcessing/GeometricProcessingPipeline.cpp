@@ -223,6 +223,14 @@ namespace GeometricProcessingPipeline
 		return ((uint64_t)x << 42) | ((uint64_t)y << 21) | (uint64_t)z;
 	}
 
+	Eigen::Vector3i SparseGrid::GetIndex(const Eigen::Vector3f& position) const
+	{
+		int gx = (int)std::floor((position.x() - aabb.min.x()) / cellSize);
+		int gy = (int)std::floor((position.y() - aabb.min.y()) / cellSize);
+		int gz = (int)std::floor((position.z() - aabb.min.z()) / cellSize);
+		return { gx, gy, gz };
+	}
+
 	void SparseGrid::Build(const GeometricProcessingPipeline::PointCloud& pc, float cellSize)
 	{
 		if (pc.numberOfElements == 0)
@@ -1364,6 +1372,58 @@ namespace GeometricProcessingPipeline
 	}
 #pragma endregion
 
+#pragma region OperatorShowMarks
+	OperatorShowMarks::OperatorShowMarks(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
+	{
+	}
+
+	void OperatorShowMarks::Process(int operatorIndex)
+	{
+		TS(ShowMarks);
+
+		auto currentPointCloud = pipeline->GetCurrentPointCloud();
+		if (currentPointCloud->numberOfElements == 0) return;
+
+		if (nullptr == spatialPartitioning)
+		{
+			spatialPartitioning = new SparseGrid();
+			spatialPartitioning->Build(*currentPointCloud, Configuration::voxelSize);
+			parameter.needToDeleteSpatialPartitioning = true;
+		}
+
+		cachedPointCloud = currentPointCloud;
+
+		TE(ShowMarks);
+	}
+
+	void OperatorShowMarks::Visualize()
+	{
+		size_t numberOfPoints = cachedPointCloud->numberOfElements;
+		for (size_t i = 0; i < numberOfPoints; i++)
+		{
+			auto& mark = cachedPointCloud->marks[i];
+			if (1 == mark)
+			{
+				VD::AddSphere(
+					"MarkedPoints",
+					cachedPointCloud->positions[i],
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
+			}
+			else
+			{
+				VD::AddSphere(
+					"MarkedPoints",
+					cachedPointCloud->positions[i],
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f));
+			}
+		}
+	}
+#pragma endregion
+
+
 #pragma region OperatorExpandMarks
 	OperatorExpandMarks::OperatorExpandMarks(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
 		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
@@ -1491,7 +1551,6 @@ namespace GeometricProcessingPipeline
 	}
 #pragma endregion
 
-
 #pragma region OperatorPointCloudVisualization
 	OperatorPointCloudVisualization::OperatorPointCloudVisualization(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
 		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
@@ -1556,6 +1615,8 @@ namespace GeometricProcessingPipeline
 			searchRadiusMultiplier = parameter.GetParameter<float>("searchRadiusMultiplier", searchRadiusMultiplier);
 			visualizationScale = parameter.GetParameter<float>("visualizationScale", visualizationScale);
 			neighborSearchOffset = parameter.GetParameter<int>("neighborSearchOffset", neighborSearchOffset);
+			range_min = parameter.GetParameter<float>("range_min", range_min);
+			range_max = parameter.GetParameter<float>("range_max", range_max);
 		}
 
 		pointDensities.assign(numberOfPoints, 0.0f);
@@ -1614,6 +1675,39 @@ namespace GeometricProcessingPipeline
 		double variance = (sqSum / numberOfPoints) - (densityMean * densityMean);
 		densityStdDev = std::sqrt(std::max(0.0, variance));
 
+
+		{
+			size_t count = cachedPointCloud->numberOfElements;
+
+			float rangeHalf = densityStdDev * visualizationScale;
+			float minVal = std::max(0.0f, densityMean - rangeHalf);
+			float maxVal = densityMean + rangeHalf;
+			float range = maxVal - minVal;
+			if (range < 1e-6f) range = 1.0f;
+
+			for (size_t i = 0; i < count; ++i)
+			{
+				float val = pointDensities[i];
+				//float t = std::clamp((val - minVal) / range, 0.0f, 1.0f);
+
+				//if (range_min <= t && t <= range_max)
+				//{
+				//	currentPointCloud->marks[i] = 1;
+				//}
+
+				//Eigen::Vector3f color;
+				//if (t < 0.05f)
+				//{
+				//	currentPointCloud->marks[i] = 1;
+				//}
+
+				if (50 > val)
+				{
+					currentPointCloud->marks[i] = 1;
+				}
+			}
+		}
+
 		printf("Density Analysis: Mean=%.2f, StdDev=%.2f (Neighbors within R=%.3f, Offset=%d)\n",
 			densityMean, densityStdDev, searchRadius, neighborSearchOffset);
 
@@ -1660,11 +1754,7 @@ namespace GeometricProcessingPipeline
 		*/
 		for (size_t i = 0; i < count; ++i)
 		{
-			float val = pointDensities[i];
-			float t = std::clamp((val - minVal) / range, 0.0f, 1.0f);
-
-			Eigen::Vector3f color;
-			if (t > 0.75f)
+			if (cachedPointCloud->marks[i] == 1)
 			{
 				VD::AddSphere(
 					"DensityHeatmap",
@@ -1675,12 +1765,11 @@ namespace GeometricProcessingPipeline
 			}
 			else
 			{
-				auto& color = cachedPointCloud->colors[i];
 				VD::AddSphere(
 					"DensityHeatmap",
 					cachedPointCloud->positions[i],
 					Configuration::pointVisualizationRadius,
-					Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f)
+					Eigen::Vector4f(0.0f, 0.0f, 1.0f, 0.1f)
 				);
 			}
 		}
@@ -3068,7 +3157,8 @@ namespace GeometricProcessingPipeline
 
 	void OperatorNormalDeviation::Visualize()
 	{
-		VisualizeDefault();
+		//VisualizeDefault();
+		VisualizeHeatmap();
 	}
 
 	void OperatorNormalDeviation::VisualizeDefault()
@@ -4439,300 +4529,300 @@ namespace GeometricProcessingPipeline
 	}
 #pragma endregion
 
-//#pragma region OperatorCompareSameIndexOrderedPointCloud
-//	OperatorCompareSameIndexOrderedPointCloud::OperatorCompareSameIndexOrderedPointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
-//		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
-//	{
-//	}
-//
-//	void OperatorCompareSameIndexOrderedPointCloud::Process(int operatorIndex)
-//	{
-//		TS(CompareOrderedPointCloud);
-//
-//		int indexA = parameter.GetParameter<int>("indexA", 0);
-//		int indexB = parameter.GetParameter<int>("indexB", -1);
-//
-//		pointCloudA = pipeline->GetPointCloud(indexA);
-//		pointCloudB = pipeline->GetPointCloud(indexB);
-//
-//		if (!pointCloudA || !pointCloudB)
-//		{
-//			TE(CompareOrderedPointCloud);
-//			return;
-//		}
-//
-//		size_t countA = pointCloudA->numberOfElements;
-//		size_t countB = pointCloudB->numberOfElements;
-//
-//		matchedFlags.assign(countA, 0);
-//		deletedCount = 0;
-//
-//		size_t idxB = 0;
-//		for (size_t idxA = 0; idxA < countA; ++idxA)
-//		{
-//			bool isMatch = false;
-//
-//			if (idxB < countB)
-//			{
-//				const Eigen::Vector3f& pA = pointCloudA->positions[idxA];
-//				const Eigen::Vector3f& pB = pointCloudB->positions[idxB];
-//
-//				if ((pA - pB).squaredNorm() <= comparisonDistanceThresholdSq)
-//				{
-//					isMatch = true;
-//				}
-//			}
-//
-//			if (isMatch)
-//			{
-//				matchedFlags[idxA] = 1;
-//				idxB++;
-//			}
-//			else
-//			{
-//				matchedFlags[idxA] = 0;
-//				deletedCount++;
-//			}
-//		}
-//
-//		alog("Ordered Compare Result: Total A(%zu), Total B(%zu), Deleted(%d)\n", countA, countB, deletedCount);
-//
-//		cachedPointCloud = pointCloudA;
-//		TE(CompareOrderedPointCloud);
-//	}
-//
-//	void OperatorCompareSameIndexOrderedPointCloud::Visualize()
-//	{
-//		if (!pointCloudA || matchedFlags.empty()) return;
-//
-//		for (size_t i = 0; i < pointCloudA->numberOfElements; ++i)
-//		{
-//			const auto& p = pointCloudA->positions[i];
-//			const auto& n = pointCloudA->normals[i].normalized();
-//
-//			if (matchedFlags[i])
-//			{
-//				VD::AddSphere(
-//					"OrderedCompare_Matched",
-//					p, n,
-//					Configuration::pointVisualizationRadius,
-//					Eigen::Vector4f(0.0f, 1.0f, 0.0f, 0.2f));
-//			}
-//			else
-//			{
-//				VD::AddSphere(
-//					"OrderedCompare_Deleted",
-//					p, n,
-//					Configuration::pointVisualizationRadius,
-//					Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
-//			}
-//		}
-//	}
-//#pragma endregion
+#pragma region OperatorCompareSameIndexOrderedPointCloud
+	OperatorCompareSameIndexOrderedPointCloud::OperatorCompareSameIndexOrderedPointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
+	{
+	}
 
-//#pragma region OperatorComparePointCloudUsingDistance
-//	OperatorComparePointCloudUsingDistance::OperatorComparePointCloudUsingDistance(Pipeline* pipeline,
-//		const GeometricProcessingOperatorParameter& parameter) : IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
-//	{
-//	}
-//
-//	void OperatorComparePointCloudUsingDistance::Process(int operatorIndex)
-//	{
-//		TS(ComparePointCloudUsingDistance);
-//
-//		int indexA = parameter.GetParameter<int>("indexA", 0);
-//		int indexB = parameter.GetParameter<int>("indexB", -1);
-//
-//		pointCloudA = pipeline->GetPointCloud(indexA);
-//		pointCloudB = pipeline->GetPointCloud(indexB);
-//
-//		if (!pointCloudA || !pointCloudB ||
-//			pointCloudA->numberOfElements == 0 ||
-//			pointCloudB->numberOfElements == 0)
-//		{
-//			TE(ComparePointCloudUsingDistance);
-//			return;
-//		}
-//
-//		SparseGrid gridB;
-//		gridB.Build(*pointCloudB, Configuration::voxelSize);
-//
-//		size_t countA = pointCloudA->numberOfElements;
-//		matchedFlags.assign(countA, 0);
-//
-//		float thresholdSq = comparisonDistanceThreshold * comparisonDistanceThreshold;
-//
-//		std::vector<int> indices(countA);
-//		std::iota(indices.begin(), indices.end(), 0);
-//
-//		std::for_each(std::execution::par, indices.begin(), indices.end(),
-//			[&](int i)
-//			{
-//				const Eigen::Vector3f& pA = pointCloudA->positions[i];
-//
-//				int gx = (int)std::floor((pA.x() - gridB.aabb.min.x()) / gridB.cellSize);
-//				int gy = (int)std::floor((pA.y() - gridB.aabb.min.y()) / gridB.cellSize);
-//				int gz = (int)std::floor((pA.z() - gridB.aabb.min.z()) / gridB.cellSize);
-//
-//				bool matched = false;
-//
-//				for (int dz = -1; dz <= 1 && !matched; ++dz)
-//				{
-//					for (int dy = -1; dy <= 1 && !matched; ++dy)
-//					{
-//						for (int dx = -1; dx <= 1 && !matched; ++dx)
-//						{
-//							uint64_t key = gridB.GetKey(gx + dx, gy + dy, gz + dz);
-//							auto it = gridB.voxelPointListHead.find(key);
-//							if (it == gridB.voxelPointListHead.end())
-//								continue;
-//
-//							int curr = it->second;
-//							while (curr != -1)
-//							{
-//								if ((pA - pointCloudB->positions[curr]).squaredNorm() <= thresholdSq)
-//								{
-//									matched = true;
-//									break;
-//								}
-//								curr = gridB.nextPoint[curr];
-//							}
-//						}
-//					}
-//				}
-//
-//				matchedFlags[i] = matched ? 1 : 0;
-//			});
-//
-//		cachedPointCloud = pointCloudA;
-//		TE(ComparePointCloudUsingDistance);
-//	}
-//
-//	void OperatorComparePointCloudUsingDistance::Visualize()
-//	{
-//		if (!pointCloudA || matchedFlags.empty())
-//			return;
-//
-//		for (size_t i = 0; i < pointCloudA->numberOfElements; ++i)
-//		{
-//			const auto& p = pointCloudA->positions[i];
-//			const auto& n = pointCloudA->normals[i].normalized();
-//
-//			if (matchedFlags[i])
-//			{
-//				VD::AddSphere(
-//					"Compare_Matched",
-//					p, n,
-//					Configuration::pointVisualizationRadius,
-//					Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f));
-//			}
-//			else
-//			{
-//				VD::AddSphere(
-//					"Compare_Unmatched",
-//					p, n,
-//					Configuration::pointVisualizationRadius,
-//					Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
-//			}
-//		}
-//	}
-//#pragma endregion
+	void OperatorCompareSameIndexOrderedPointCloud::Process(int operatorIndex)
+	{
+		TS(CompareOrderedPointCloud);
 
-//#pragma region OperatorCompareWithLastPointCloud
-//	OperatorCompareWithLastPointCloud::OperatorCompareWithLastPointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
-//		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
-//	{
-//	}
-//
-//	void OperatorCompareWithLastPointCloud::Process(int operatorIndex)
-//	{
-//		TS(CompareWithLastPointCloud);
-//
-//		auto currentPointCloud = pipeline->GetCurrentPointCloud();
-//
-//		if (currentPointCloud->numberOfElements == 0) return;
-//		if (nullptr == pipeline->GetLastPointCloud()) return;
-//		cachedPointCloud = currentPointCloud;
-//
-//		auto cp = currentPointCloud;
-//		auto lp = pipeline->GetLastPointCloud();
-//
-//		size_t numberOfPoints = cp->numberOfElements > lp->numberOfElements ? cp->numberOfElements : lp->numberOfElements;
-//		matchedFlags.resize(numberOfPoints, false);
-//		for (size_t i = 0; i < numberOfPoints; i++)
-//		{
-//			if (i < cp->numberOfElements && i < lp->numberOfElements)
-//			{
-//				if (comparisonDistanceThreshold < (cp->positions[i] - lp->positions[i]).norm())
-//				{
-//					matchedFlags[i] = true;
-//				}
-//				else
-//				{
-//					matchedFlags[i] = false;
-//				}
-//			}
-//			else
-//			{
-//				matchedFlags[i] = false;
-//			}
-//		}
-//
-//		TE(CompareWithLastPointCloud);
-//	}
-//
-//	void OperatorCompareWithLastPointCloud::Visualize()
-//	{
-//		if (nullptr == cachedPointCloud) return;
-//		if (cachedPointCloud->numberOfElements == 0) return;
-//		if (nullptr == pipeline->GetLastPointCloud()) return;
-//
-//		auto cp = cachedPointCloud;
-//		auto lp = pipeline->GetLastPointCloud();
-//
-//		size_t numberOfPoints = cp->numberOfElements > lp->numberOfElements ? cp->numberOfElements : lp->numberOfElements;
-//		auto pc = cp->numberOfElements > lp->numberOfElements ? cp : lp;
-//		for (size_t i = 0; i < numberOfPoints; ++i)
-//		{
-//			auto& p = cp->positions[i];
-//			auto& n = cp->normals[i].normalized();
-//			auto& c = cp->colors[i];
-//
-//			if (cp->numberOfElements > lp->numberOfElements)
-//			{
-//				if (matchedFlags[i])
-//				{
-//					VD::AddSphere("ComparisonResult_Matched", p, n, Configuration::pointVisualizationRadius, Eigen::Vector4f(c.x(), c.y(), c.z(), 1.0f));
-//				}
-//				else
-//				{
-//					VD::AddSphere("ComparisonResult_Unmatched", p, n, Configuration::pointVisualizationRadius, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
-//				}
-//			}
-//			else
-//			{
-//				if (i < cp->numberOfElements)
-//				{
-//					if (matchedFlags[i])
-//					{
-//						VD::AddSphere("ComparisonResult_Matched", p, n, Configuration::pointVisualizationRadius, Eigen::Vector4f(c.x(), c.y(), c.z(), 1.0f));
-//					}
-//					else
-//					{
-//						VD::AddSphere("ComparisonResult_Unmatched", p, n, Configuration::pointVisualizationRadius, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
-//					}
-//				}
-//				else
-//				{
-//					auto& p2 = lp->positions[i];
-//					auto& n2 = lp->normals[i].normalized();
-//					auto& c2 = lp->colors[i];
-//					VD::AddSphere("ComparisonResult_Unmatched", p2, n2, Configuration::pointVisualizationRadius, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f));
-//				}
-//			}
-//		}
-//	}
-//#pragma endregion
+		int indexA = parameter.GetParameter<int>("indexA", 0);
+		int indexB = parameter.GetParameter<int>("indexB", -1);
+
+		pointCloudA = pipeline->GetPointCloud(indexA);
+		pointCloudB = pipeline->GetPointCloud(indexB);
+
+		if (!pointCloudA || !pointCloudB)
+		{
+			TE(CompareOrderedPointCloud);
+			return;
+		}
+
+		size_t countA = pointCloudA->numberOfElements;
+		size_t countB = pointCloudB->numberOfElements;
+
+		matchedFlags.assign(countA, 0);
+		deletedCount = 0;
+
+		size_t idxB = 0;
+		for (size_t idxA = 0; idxA < countA; ++idxA)
+		{
+			bool isMatch = false;
+
+			if (idxB < countB)
+			{
+				const Eigen::Vector3f& pA = pointCloudA->positions[idxA];
+				const Eigen::Vector3f& pB = pointCloudB->positions[idxB];
+
+				if ((pA - pB).squaredNorm() <= comparisonDistanceThresholdSq)
+				{
+					isMatch = true;
+				}
+			}
+
+			if (isMatch)
+			{
+				matchedFlags[idxA] = 1;
+				idxB++;
+			}
+			else
+			{
+				matchedFlags[idxA] = 0;
+				deletedCount++;
+			}
+		}
+
+		alog("Ordered Compare Result: Total A(%zu), Total B(%zu), Deleted(%d)\n", countA, countB, deletedCount);
+
+		cachedPointCloud = pointCloudA;
+		TE(CompareOrderedPointCloud);
+	}
+
+	void OperatorCompareSameIndexOrderedPointCloud::Visualize()
+	{
+		if (!pointCloudA || matchedFlags.empty()) return;
+
+		for (size_t i = 0; i < pointCloudA->numberOfElements; ++i)
+		{
+			const auto& p = pointCloudA->positions[i];
+			const auto& n = pointCloudA->normals[i].normalized();
+
+			if (matchedFlags[i])
+			{
+				VD::AddSphere(
+					"OrderedCompare_Matched",
+					p, n,
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(0.0f, 1.0f, 0.0f, 0.2f));
+			}
+			else
+			{
+				VD::AddSphere(
+					"OrderedCompare_Deleted",
+					p, n,
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
+			}
+		}
+	}
+#pragma endregion
+
+#pragma region OperatorComparePointCloudUsingDistance
+	OperatorComparePointCloudUsingDistance::OperatorComparePointCloudUsingDistance(Pipeline* pipeline,
+		const GeometricProcessingOperatorParameter& parameter) : IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
+	{
+	}
+
+	void OperatorComparePointCloudUsingDistance::Process(int operatorIndex)
+	{
+		TS(ComparePointCloudUsingDistance);
+
+		int indexA = parameter.GetParameter<int>("indexA", 0);
+		int indexB = parameter.GetParameter<int>("indexB", -1);
+
+		pointCloudA = pipeline->GetPointCloud(indexA);
+		pointCloudB = pipeline->GetPointCloud(indexB);
+
+		if (!pointCloudA || !pointCloudB ||
+			pointCloudA->numberOfElements == 0 ||
+			pointCloudB->numberOfElements == 0)
+		{
+			TE(ComparePointCloudUsingDistance);
+			return;
+		}
+
+		SparseGrid gridB;
+		gridB.Build(*pointCloudB, Configuration::voxelSize);
+
+		size_t countA = pointCloudA->numberOfElements;
+		matchedFlags.assign(countA, 0);
+
+		float thresholdSq = comparisonDistanceThreshold * comparisonDistanceThreshold;
+
+		std::vector<int> indices(countA);
+		std::iota(indices.begin(), indices.end(), 0);
+
+		std::for_each(std::execution::par, indices.begin(), indices.end(),
+			[&](int i)
+			{
+				const Eigen::Vector3f& pA = pointCloudA->positions[i];
+
+				int gx = (int)std::floor((pA.x() - gridB.aabb.min.x()) / gridB.cellSize);
+				int gy = (int)std::floor((pA.y() - gridB.aabb.min.y()) / gridB.cellSize);
+				int gz = (int)std::floor((pA.z() - gridB.aabb.min.z()) / gridB.cellSize);
+
+				bool matched = false;
+
+				for (int dz = -1; dz <= 1 && !matched; ++dz)
+				{
+					for (int dy = -1; dy <= 1 && !matched; ++dy)
+					{
+						for (int dx = -1; dx <= 1 && !matched; ++dx)
+						{
+							uint64_t key = gridB.GetKey(gx + dx, gy + dy, gz + dz);
+							auto it = gridB.voxelPointListHead.find(key);
+							if (it == gridB.voxelPointListHead.end())
+								continue;
+
+							int curr = it->second;
+							while (curr != -1)
+							{
+								if ((pA - pointCloudB->positions[curr]).squaredNorm() <= thresholdSq)
+								{
+									matched = true;
+									break;
+								}
+								curr = gridB.nextPoint[curr];
+							}
+						}
+					}
+				}
+
+				matchedFlags[i] = matched ? 1 : 0;
+			});
+
+		cachedPointCloud = pointCloudA;
+		TE(ComparePointCloudUsingDistance);
+	}
+
+	void OperatorComparePointCloudUsingDistance::Visualize()
+	{
+		if (!pointCloudA || matchedFlags.empty())
+			return;
+
+		for (size_t i = 0; i < pointCloudA->numberOfElements; ++i)
+		{
+			const auto& p = pointCloudA->positions[i];
+			const auto& n = pointCloudA->normals[i].normalized();
+
+			if (matchedFlags[i])
+			{
+				VD::AddSphere(
+					"Compare_Matched",
+					p, n,
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f));
+			}
+			else
+			{
+				VD::AddSphere(
+					"Compare_Unmatched",
+					p, n,
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
+			}
+		}
+	}
+#pragma endregion
+
+#pragma region OperatorCompareWithLastPointCloud
+	OperatorCompareWithLastPointCloud::OperatorCompareWithLastPointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
+	{
+	}
+
+	void OperatorCompareWithLastPointCloud::Process(int operatorIndex)
+	{
+		TS(CompareWithLastPointCloud);
+
+		auto currentPointCloud = pipeline->GetCurrentPointCloud();
+
+		if (currentPointCloud->numberOfElements == 0) return;
+		if (nullptr == pipeline->GetLastPointCloud()) return;
+		cachedPointCloud = currentPointCloud;
+
+		auto cp = currentPointCloud;
+		auto lp = pipeline->GetLastPointCloud();
+
+		size_t numberOfPoints = cp->numberOfElements > lp->numberOfElements ? cp->numberOfElements : lp->numberOfElements;
+		matchedFlags.resize(numberOfPoints, false);
+		for (size_t i = 0; i < numberOfPoints; i++)
+		{
+			if (i < cp->numberOfElements && i < lp->numberOfElements)
+			{
+				if (comparisonDistanceThreshold < (cp->positions[i] - lp->positions[i]).norm())
+				{
+					matchedFlags[i] = true;
+				}
+				else
+				{
+					matchedFlags[i] = false;
+				}
+			}
+			else
+			{
+				matchedFlags[i] = false;
+			}
+		}
+
+		TE(CompareWithLastPointCloud);
+	}
+
+	void OperatorCompareWithLastPointCloud::Visualize()
+	{
+		if (nullptr == cachedPointCloud) return;
+		if (cachedPointCloud->numberOfElements == 0) return;
+		if (nullptr == pipeline->GetLastPointCloud()) return;
+
+		auto cp = cachedPointCloud;
+		auto lp = pipeline->GetLastPointCloud();
+
+		size_t numberOfPoints = cp->numberOfElements > lp->numberOfElements ? cp->numberOfElements : lp->numberOfElements;
+		auto pc = cp->numberOfElements > lp->numberOfElements ? cp : lp;
+		for (size_t i = 0; i < numberOfPoints; ++i)
+		{
+			auto& p = cp->positions[i];
+			auto& n = cp->normals[i].normalized();
+			auto& c = cp->colors[i];
+
+			if (cp->numberOfElements > lp->numberOfElements)
+			{
+				if (matchedFlags[i])
+				{
+					VD::AddSphere("ComparisonResult_Matched", p, n, Configuration::pointVisualizationRadius, Eigen::Vector4f(c.x(), c.y(), c.z(), 1.0f));
+				}
+				else
+				{
+					VD::AddSphere("ComparisonResult_Unmatched", p, n, Configuration::pointVisualizationRadius, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
+				}
+			}
+			else
+			{
+				if (i < cp->numberOfElements)
+				{
+					if (matchedFlags[i])
+					{
+						VD::AddSphere("ComparisonResult_Matched", p, n, Configuration::pointVisualizationRadius, Eigen::Vector4f(c.x(), c.y(), c.z(), 1.0f));
+					}
+					else
+					{
+						VD::AddSphere("ComparisonResult_Unmatched", p, n, Configuration::pointVisualizationRadius, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
+					}
+				}
+				else
+				{
+					auto& p2 = lp->positions[i];
+					auto& n2 = lp->normals[i].normalized();
+					auto& c2 = lp->colors[i];
+					VD::AddSphere("ComparisonResult_Unmatched", p2, n2, Configuration::pointVisualizationRadius, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f));
+				}
+			}
+		}
+	}
+#pragma endregion
 
 #pragma region OperatorClustering
 	OperatorClustering::OperatorClustering(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)

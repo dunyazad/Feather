@@ -201,6 +201,8 @@ namespace GeometricProcessingPipeline
 		float cellSize = 0.1f;
 
 		uint64_t GetKey(int x, int y, int z) const;
+
+		Eigen::Vector3i GetIndex(const Eigen::Vector3f& position) const;
 		
 		void Build(const GeometricProcessingPipeline::PointCloud& pc, float cellSize);
 		
@@ -541,6 +543,14 @@ namespace GeometricProcessingPipeline
 		virtual void Visualize() override;
 	};
 
+	class OperatorShowMarks : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorShowMarks(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		virtual void Process(int pipelineIndex) override;
+		virtual void Visualize() override;
+	};
+
 	class OperatorExpandMarks : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
@@ -579,6 +589,9 @@ namespace GeometricProcessingPipeline
 		float searchRadiusMultiplier = 1.5f;
 		float visualizationScale = 1.0f;
 		int neighborSearchOffset = 1;
+
+		float range_min = 0.0f;
+		float range_max = 1.0f;
 	};
 
 	class OperatorMeanShift : public IGeometricProcessingOperator<SparseGrid>
@@ -593,10 +606,10 @@ namespace GeometricProcessingPipeline
 		std::vector<Eigen::Vector3f> shiftedPositions;
 		std::vector<float> shiftDistances;
 
-		float bandwidthMultiplier = 2.0f;
+		float bandwidthMultiplier = 5.0f;
 		float convergenceThreshold = 0.01f;
 		int maxIterations = 10;
-		bool updatePositions = false;
+		bool updatePositions = true;
 		float visualizationScale = 1.0f;
 		bool invertDirection = false;
 		bool markedPointsOnly = false;

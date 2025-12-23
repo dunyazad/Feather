@@ -10,3 +10,6 @@
 [submodule "External/eigen"]
 	path = External/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "External/json"]
+	path = External/json
+	url = https://github.com/nlohmann/json.git

@@ -140,6 +140,9 @@ namespace Eigen {
 #include <stb_truetype.h>
 #include <stb_voxel_render.h>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
