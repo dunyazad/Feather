@@ -152,7 +152,7 @@ namespace Color
 	inline glm::vec4 yellow() { return { 1.0f, 1.0f, 0.0f, 1.0f }; }
 	inline glm::vec4 white() { return { 1.0f, 1.0f, 1.0f, 1.0f }; }
 
-	inline glm::vec4 FromRGB(float r, float g, float b, float a = 1.0f) 
+	inline glm::vec4 FromRGB(float r, float g, float b, float a = 1.0f)
 	{
 		return glm::vec4(r, g, b, a);
 	}
@@ -446,6 +446,125 @@ namespace Color
 			// 보간
 			glm::vec4 c = colors[segmentIndex] * (1.0f - localT) + colors[segmentIndex + 1] * localT;
 			result.push_back(c);
+		}
+
+		return result;
+	}
+
+	inline std::vector<glm::vec4> GetPalette(int numberOfColors)
+	{
+		if (numberOfColors <= 0)
+		{
+			return {};
+		}
+
+		// 1. 후보군이 될 모든 색상 정의 (static으로 선언하여 최초 1회만 초기화)
+		static const std::vector<glm::vec4> allColors = {
+			aliceblue(), antiquewhite(), aqua(), aquamarine(), azure(), beige(), bisque(), black(),
+			blanchedalmond(), blue(), blueviolet(), brown(), burlywood(), cadetblue(), chartreuse(),
+			chocolate(), coral(), cornflowerblue(), cornsilk(), crimson(), cyan(), darkblue(),
+			darkcyan(), darkgoldenrod(), darkgray(), darkgreen(), darkkhaki(), darkmagenta(),
+			darkolivegreen(), darkorange(), darkorchid(), darkred(), darksalmon(), darkseagreen(),
+			darkslateblue(), darkslategray(), darkturquoise(), darkviolet(), deeppink(), deepskyblue(),
+			dimgray(), dodgerblue(), firebrick(), floralwhite(), forestgreen(), fuchsia(),
+			gainsboro(), ghostwhite(), gold(), goldenrod(), gray(), green(), greenyellow(),
+			honeydew(), hotpink(), indianred(), indigo(), ivory(), khaki(), lavender(),
+			lavenderblush(), lawngreen(), lemonchiffon(), lightblue(), lightcoral(), lightcyan(),
+			lightgoldenrodyellow(), lightgray(), lightgreen(), lightpink(), lightsalmon(),
+			lightseagreen(), lightskyblue(), lightslategray(), lightsteelblue(), lightyellow(),
+			lime(), limegreen(), linen(), magenta(), maroon(), mediumaquamarine(), mediumblue(),
+			mediumorchid(), mediumpurple(), mediumseagreen(), mediumslateblue(), mediumspringgreen(),
+			mediumturquoise(), mediumvioletred(), midnightblue(), mintcream(), mistyrose(),
+			moccasin(), navajowhite(), navy(), oldlace(), olive(), olivedrab(), orange(),
+			orangered(), orchid(), palegoldenrod(), palegreen(), paleturquoise(), palevioletred(),
+			papayawhip(), peachpuff(), peru(), pink(), plum(), powderblue(), purple(),
+			rebeccapurple(), red(), rosybrown(), royalblue(), saddlebrown(), salmon(), sandybrown(),
+			seagreen(), seashell(), sienna(), silver(), skyblue(), slateblue(), slategray(), snow(),
+			springgreen(), steelblue(), tan(), teal(), thistle(), tomato(), turquoise(), violet(),
+			wheat(), white(), whitesmoke(), yellow(), yellowgreen()
+		};
+
+		// 2. 흰색/검은색 계열을 제외한 유효 후보군 생성 (최초 1회만 수행)
+		static std::vector<glm::vec4> validCandidates;
+		if (validCandidates.empty())
+		{
+			validCandidates.reserve(allColors.size());
+			for (const auto& c : allColors)
+			{
+				// 밝기(Luminance) 혹은 RGB 값을 기준으로 너무 어둡거나 너무 밝은 색 제외
+				// (0.05 미만은 거의 검은색, 0.95 초과는 거의 흰색으로 간주)
+				bool isTooDark = (c.r < 0.05f && c.g < 0.05f && c.b < 0.05f);
+				bool isTooBright = (c.r > 0.95f && c.g > 0.95f && c.b > 0.95f);
+
+				if (!isTooDark && !isTooBright)
+				{
+					validCandidates.push_back(c);
+				}
+			}
+		}
+
+		// 요청된 개수가 유효 후보군보다 많으면 전체 반환
+		if (static_cast<size_t>(numberOfColors) >= validCandidates.size())
+		{
+			return validCandidates;
+		}
+
+		std::vector<glm::vec4> result;
+		result.reserve(numberOfColors);
+
+		std::vector<bool> usedIndices(validCandidates.size(), false);
+
+		// 3. 첫 번째 색상 선택
+		// 검은색/흰색이 없으므로, 시각적으로 강렬한 'Red' 혹은 'Blue'를 시작점으로 잡는 것이 좋습니다.
+		// 여기서는 빨간색과 가장 가까운 색을 시작점으로 잡거나, 목록의 첫 번째를 사용합니다.
+		// (알고리즘의 안정성을 위해 0번 인덱스보다는 명시적인 유색 컬러를 시작점으로 추천)
+		size_t startIndex = 0;
+		float minDistToRed = std::numeric_limits<float>::max();
+
+		for (size_t i = 0; i < validCandidates.size(); ++i)
+		{
+			float d = glm::distance(validCandidates[i], glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)); // Red
+			if (d < minDistToRed)
+			{
+				minDistToRed = d;
+				startIndex = i;
+			}
+		}
+
+		result.push_back(validCandidates[startIndex]);
+		usedIndices[startIndex] = true;
+
+		// 4. Maximin Distance 알고리즘으로 나머지 색상 선택
+		for (int i = 1; i < numberOfColors; ++i)
+		{
+			float maxMinDist = -1.0f;
+			size_t bestIndex = 0;
+
+			for (size_t j = 0; j < validCandidates.size(); ++j)
+			{
+				if (usedIndices[j]) continue;
+
+				// 현재 후보 색상(candidate)이 기존 결과(result)들에 대해 가지는 최소 거리 계산
+				float minDistToExisting = std::numeric_limits<float>::max();
+				for (const auto& existing : result)
+				{
+					float d = glm::distance(validCandidates[j], existing);
+					if (d < minDistToExisting)
+					{
+						minDistToExisting = d;
+					}
+				}
+
+				// 그 최소 거리가 가장 큰(멀리 떨어진) 색상을 선택
+				if (minDistToExisting > maxMinDist)
+				{
+					maxMinDist = minDistToExisting;
+					bestIndex = j;
+				}
+			}
+
+			result.push_back(validCandidates[bestIndex]);
+			usedIndices[bestIndex] = true;
 		}
 
 		return result;

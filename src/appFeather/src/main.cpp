@@ -145,9 +145,6 @@ int main(int argc, char** argv)
 
             if (event.button == GLFW_MOUSE_BUTTON_LEFT && event.action == 1)
             {
-                VD::Clear("PickedPoint");
-                VD::Clear("PickedCell");
-
                 auto window = Feather.GetFeatherWindow();
                 GLFWwindow* nativeWin = window->GetGLFWwindow();
 
@@ -190,6 +187,9 @@ int main(int argc, char** argv)
 
                 if (result.hasHit)
                 {
+                    VD::Clear("PickedPoint");
+                    VD::Clear("PickedCell");
+
                     auto p = pipeline.GetCurrentPointCloud()->positions[result.pointIndex];
                     VD::AddSphere("PickedPoint", p, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
 
@@ -214,18 +214,18 @@ int main(int argc, char** argv)
                     alog("Hit! Idx:%d, Cell(%d,%d,%d), Dist:%.2f\n", result.pointIndex, result.gx, result.gy, result.gz, result.distance);
 
                     {
-                        auto op = pipeline.GetOperator(-1);
-                        auto operatorLocalPlaneFitting = std::dynamic_pointer_cast<GPP::OperatorLocalPlaneFitting>(op);
-                        if (operatorLocalPlaneFitting)
-                        {
-                            auto fittedPoints = operatorLocalPlaneFitting->GetFiitedPoints();
-                            if (result.pointIndex < fittedPoints.size())
-                            {
-                                auto fp = fittedPoints[result.pointIndex];
-                                VD::AddSphere("FittedPoint", fp, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f));
-                                VD::AddLine("FittedPointLine", p, fp, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
-                            }
-                        }
+                        //auto op = pipeline.GetOperator(-1);
+                        //auto operatorLocalPlaneFitting = std::dynamic_pointer_cast<GPP::OperatorLocalPlaneFitting>(op);
+                        //if (operatorLocalPlaneFitting)
+                        //{
+                        //    auto fittedPoints = operatorLocalPlaneFitting->GetFiitedPoints();
+                        //    if (result.pointIndex < fittedPoints.size())
+                        //    {
+                        //        auto fp = fittedPoints[result.pointIndex];
+                        //        VD::AddSphere("FittedPoint", fp, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f));
+                        //        VD::AddLine("FittedPointLine", p, fp, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
+                        //    }
+                        //}
                     }
                 }
             }
@@ -242,71 +242,61 @@ int main(int argc, char** argv)
         {
             std::thread([&]()
                 {
-				
-            // OperatorPointCloudLoader
-            {
-                GPP::GeometricProcessingOperatorParameter parameter;
-                parameter.SetParameter<std::string>("plyFilename", "D:\\Temp\\PLY\\Compound_A.ply");
-                OPERATOR_PARAMETER(OperatorPointCloudLoader, parameter);
-            }
-
-            OPERATOR(OperatorStorePointCloud);
-
-            // OperatorNormalDivergence
-            {
-                GPP::GeometricProcessingOperatorParameter parameter;
-                parameter.SetParameter<float>("searchRadiusMultiplier", 5.0f);
-                parameter.SetParameter<int>("neighborSearchOffset", 3);
-                parameter.SetParameter<float>("visualizationScale", 5.0f);
-
-                OPERATOR_PARAMETER(OperatorNormalDivergence, parameter);
-            }
-
-            EXECUTE_AND_VISUALIZE_RETURN();
-
-            OPERATOR(OperatorNormalVariance);
-
-            { // OperatorCustomFilter
-                struct FilterFunctor
-                {
-                    GPP::OperatorCustomFilter<FilterFunctor>* filter = nullptr;
-
-                    bool operator()(GPP::PointCloud& pointCloud, size_t index)
+                    // OperatorPointCloudLoader
                     {
-                        if (pointCloud.marks.end() == pointCloud.marks.find("OperatorNormalVariance"))
-                            return true;
-
-                        auto& marks = pointCloud.marks["OperatorNormalVariance"];
-
-                        if (1 == marks[index])
-                        {
-                            pointCloud.colors[index] = { 1.0f, 0.0f, 0.0f };
-
-                            auto& p = pointCloud.positions[index];
-                            auto n = pointCloud.normals[index].normalized();
-
-                            p += -n * GPP::Configuration::voxelSize;
-
-                            return true;
-                        }
-                        else
-                        {
-                            pointCloud.colors[index] = { 0.0f, 0.0f, 1.0f };
-
-                            return true;
-                        }
+                        GPP::GeometricProcessingOperatorParameter parameter;
+                        parameter.SetParameter<std::string>("plyFilename", "D:\\Temp\\PLY\\Compound_C.ply");
+                        OPERATOR_PARAMETER(OperatorPointCloudLoader, parameter);
                     }
-                };
-                FilterFunctor filterFunctor;
 
-                GPP::GeometricProcessingOperatorParameter parameter;
-                parameter.needToRebuildSpatialPartitioning = true;
-                auto operatorCustomFilter = pipeline.AddOperator<GPP::OperatorCustomFilter<FilterFunctor>>("OperatorCustomFilter", parameter);
-            }
+                    OPERATOR(OperatorStorePointCloud);
 
-            OPERATOR(OperatorClustering);
+                    OPERATOR(OperatorClustering);
 
-            EXECUTE_AND_VISUALIZE_RETURN();
+                    OPERATOR(OperatorFilterLeaveLargestOnly);
+
+                    OPERATOR(OperatorNormalDeviation);
+
+                    OPERATOR(OperatorClustering);
+
+                    EXECUTE_AND_VISUALIZE_RETURN();
+
+                    OPERATOR(OperatorCurvatureEstimationAppliedNormal);
+
+                    OPERATOR(OperatorNormalDivergence);
+
+                    //OPERATOR(OperatorFilterUnmarked);
+
+                    OPERATOR(OperatorClustering);
+
+					EXECUTE_AND_VISUALIZE_RETURN();
+
+                    //OPERATOR(OperatorFilterETC);
+
+                    {
+                        GPP::GeometricProcessingOperatorParameter parameter;
+                        parameter.needToRebuildSpatialPartitioning = true;
+                        OPERATOR_PARAMETER(OperatorNormalDivergence, parameter);
+                    }
+
+                    OPERATOR(OperatorPointCloudDensity);
+
+                    EXECUTE_AND_VISUALIZE_RETURN();
+
+                    {
+                        GPP::GeometricProcessingOperatorParameter parameter;
+                        parameter.SetParameter<std::string>("targetMarkName", "OperatorNormalDivergence");
+                        OPERATOR_PARAMETER(OperatorExpandMarks, parameter);
+                    }// EXECUTE_AND_VISUALIZE_RETURN();
+
+                    EXECUTE_AND_VISUALIZE_RETURN();
+
+                    //OPERATOR(OperatorCurvatureEstimation);
+
+                    //OPERATOR(OperatorPointCloudDensity);
+
+                    EXECUTE_AND_VISUALIZE_RETURN();
+
                 }).detach();
         });
 
