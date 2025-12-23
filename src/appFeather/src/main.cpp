@@ -20,7 +20,7 @@ namespace GPP = GeometricProcessingPipeline;
 #define OPERATOR_PARAMETER(operatorName, parameter) pipeline.AddOperator<GPP::operatorName>(#operatorName, parameter);
 #define EXECUTE_AND_VISUALIZE_RETURN() { pipeline.Execute(); pipeline.VisualizeLast(); return; }
 
-std::string plyFilename = "D:\\Temp\\PLY\\Compound_D.ply";
+std::string plyFilename = "D:\\Temp\\PLY\\Compound_E.ply";
 
 int main(int argc, char** argv)
 {
@@ -153,20 +153,25 @@ int main(int argc, char** argv)
                     auto cam = Feather.GetComponent<Camera>(camEnt);
                     if (cam)
                     {
-                        json j;
-                        
-                        glm::vec3 eye = cam->GetEye();
-                        glm::vec3 target = cam->GetTarget();
-                        glm::vec3 up = cam->GetUp();
+                        std::ifstream in("camera_state.json");
+                        if (in.is_open())
+                        {
+                            json j;
+                            in >> j;
 
-                        j[plyFilename] = {
-                            { "eye",    { eye.x,    eye.y,    eye.z } },
-                            { "target", { target.x, target.y, target.z } },
-                            { "up",     { up.x,     up.y,     up.z } }
-                        };
+                            glm::vec3 eye = cam->GetEye();
+                            glm::vec3 target = cam->GetTarget();
+                            glm::vec3 up = cam->GetUp();
 
-                        std::ofstream out("camera_state.json");
-                        out << j.dump(4);
+                            j[plyFilename] = {
+                                { "eye",    { eye.x,    eye.y,    eye.z } },
+                                { "target", { target.x, target.y, target.z } },
+                                { "up",     { up.x,     up.y,     up.z } }
+                            };
+
+                            std::ofstream out("camera_state.json");
+                            out << j.dump(4);
+                        }
                     }
                 }
             }
