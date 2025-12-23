@@ -1027,29 +1027,15 @@ namespace GeometricProcessingPipeline
 	{
 		if (showMesh)
 		{
-			std::vector<Eigen::Vector3f> v, n, c; std::vector<uint32_t> ind;
-			size_t cnt = triangles.size() * 3;
-			v.reserve(cnt); n.reserve(cnt); c.reserve(cnt); ind.reserve(cnt);
-			uint32_t i = 0;
-			for (const auto& t : triangles)
+			for (size_t i = 0; i < triangles.size(); i++)
 			{
-				v.push_back(t.v[0]); v.push_back(t.v[1]); v.push_back(t.v[2]);
-				n.push_back(t.n[0]); n.push_back(t.n[1]); n.push_back(t.n[2]);
-				c.push_back(t.c[0]); c.push_back(t.c[1]); c.push_back(t.c[2]);
-				ind.push_back(i++); ind.push_back(i++); ind.push_back(i++);
+				auto& t = triangles[i];
+				VD::AddTriangle("Mesh",
+					t.v[0], t.v[1], t.v[2],
+					Eigen::Vector4f(t.c[0].x(), t.c[0].y(), t.c[0].z(), 1.0f),
+					Eigen::Vector4f(t.c[1].x(), t.c[1].y(), t.c[1].z(), 1.0f),
+					Eigen::Vector4f(t.c[2].x(), t.c[2].y(), t.c[2].z(), 1.0f));
 			}
-			auto entity = Feather.CreateEntity("Mesh");
-			auto renderable = Feather.CreateComponent<Renderable>(entity);
-			renderable->Initialize(Renderable::GeometryMode::Triangles);
-			renderable->AddShader(Feather.CreateShader("Default", File("../../res/Shaders/Default.vs"), File("../../res/Shaders/Default.fs")));
-			renderable->AddShader(Feather.CreateShader("TwoSide", File("../../res/Shaders/TwoSide.vs"), File("../../res/Shaders/TwoSide.fs")));
-			renderable->SetActiveShaderIndex(0);
-
-			renderable->AddVertices(v); renderable->AddNormals(n); renderable->AddColors(c); renderable->AddIndices(ind);
-
-			Feather.CreateEventCallback<KeyEvent>(entity, [](Entity e, const KeyEvent& event) {
-				if (event.action == 0 && event.keyCode == GLFW_KEY_GRAVE_ACCENT) Feather.GetComponent<Renderable>(e)->NextDrawingMode();
-				});
 		}
 		if (showHoles)
 		{

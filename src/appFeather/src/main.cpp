@@ -255,11 +255,22 @@ int main(int argc, char** argv)
 
                     OPERATOR(OperatorFilterLeaveLargestOnly);
 
+                    OPERATOR(OperatorMeanShift);
+
+                    OPERATOR(OperatorMeshGeneration);
+
+                    EXECUTE_AND_VISUALIZE_RETURN();
+
                     OPERATOR(OperatorNormalDeviation);
 
                     OPERATOR(OperatorClustering);
 
-                    EXECUTE_AND_VISUALIZE_RETURN();
+                    //OPERATOR(OperatorNormalDivergence);
+
+                    //OPERATOR(OperatorMeanShift);
+
+                    OPERATOR(OperatorClustering);
+
 
                     OPERATOR(OperatorCurvatureEstimationAppliedNormal);
 
