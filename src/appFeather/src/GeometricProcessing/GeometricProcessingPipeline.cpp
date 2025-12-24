@@ -585,21 +585,21 @@ namespace GeometricProcessingPipeline
 			uint64_t gx = (key >> 42);
 
 			Eigen::Vector3f cellMin = aabb.min + Eigen::Vector3f((float)gx * cellSize, (float)gy * cellSize, (float)gz * cellSize);
-			Eigen::Vector3f cellMax = cellMin + Eigen::Vector3f::Constant(cellSize);
+			Eigen::Vector3f cellMax = cellMin + Eigen::Vector3f(cellSize, cellSize, cellSize);
 
-			VD::AddWiredBox("SparseGridCells", { cellMin, cellMax }, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 0.3f));
+			VD::AddWiredBox("SparseGridCells", { cellMin, cellMax }, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f));
 
-			int currIdx = headIdx;
-			while (currIdx != -1)
-			{
-				const Eigen::Vector3f& p = pc.positions[currIdx];
-				const Eigen::Vector3f& n = pc.normals[currIdx].normalized();
-				const Eigen::Vector3f& c = pc.colors[currIdx];
+			//int currIdx = headIdx;
+			//while (currIdx != -1)
+			//{
+			//	const Eigen::Vector3f& p = pc.positions[currIdx];
+			//	const Eigen::Vector3f& n = pc.normals[currIdx].normalized();
+			//	const Eigen::Vector3f& c = pc.colors[currIdx];
 
-				VD::AddSphere("SparseGridPoints", p, n, GeometricProcessingPipeline::Configuration::pointVisualizationRadius, Eigen::Vector4f(c.x(), c.y(), c.z(), 1.0f));
+			//	VD::AddSphere("SparseGridPoints", p, n, GeometricProcessingPipeline::Configuration::pointVisualizationRadius, Eigen::Vector4f(c.x(), c.y(), c.z(), 1.0f));
 
-				currIdx = nextPoint[currIdx];
-			}
+			//	currIdx = nextPoint[currIdx];
+			//}
 		}
 	}
 #pragma endregion
@@ -1238,8 +1238,6 @@ namespace GeometricProcessingPipeline
 
 	void OperatorPointCloudLoader::Process(int operatorIndex)
 	{
-		plyFilename = parameter.GetParameter<std::string>("plyFilename", "");
-
 		if (plyFilename.empty()) return;
 
 		auto currentPointCloud = pipeline->GetCurrentPointCloud();
@@ -1285,8 +1283,6 @@ namespace GeometricProcessingPipeline
 
 	void OperatorPointCloudSaver::Process(int operatorIndex)
 	{
-		plyFilename = parameter.GetParameter<std::string>("plyFilename", "");
-
 		if (plyFilename.empty()) return;
 
 		auto currentPointCloud = pipeline->GetCurrentPointCloud();
@@ -1588,6 +1584,207 @@ namespace GeometricProcessingPipeline
 	}
 #pragma endregion
 
+#pragma region OperatorSOR
+	OperatorSOR::OperatorSOR(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
+	{
+	}
+
+	void OperatorSOR::Process(int operatorIndex)
+	{
+		TS(SOR_StatisticalOutlierRemoval);
+
+		auto currentPointCloud = pipeline->GetCurrentPointCloud();
+		if (currentPointCloud->numberOfElements == 0) return;
+
+		// SparseGrid가 없으면 빌드 (KNN 검색용)
+		if (nullptr == spatialPartitioning)
+		{
+			spatialPartitioning = new SparseGrid();
+			spatialPartitioning->Build(*currentPointCloud, Configuration::voxelSize);
+			parameter.needToDeleteSpatialPartitioning = true;
+		}
+
+		cachedPointCloud = currentPointCloud;
+		size_t numberOfPoints = currentPointCloud->numberOfElements;
+
+		pointMeanDistances.resize(numberOfPoints);
+		outlierIndices.clear();
+
+		std::vector<int> indices(numberOfPoints);
+		std::iota(indices.begin(), indices.end(), 0);
+
+		// 1단계: 각 점의 K-Nearest Neighbors 평균 거리 계산
+		TS(Pass1_CalcMeanDist);
+		std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+			{
+				const Eigen::Vector3f& p = currentPointCloud->positions[i];
+
+				std::vector<unsigned int> neighbors;
+				std::vector<float> distances;
+				neighbors.reserve(kNeighbors);
+				distances.reserve(kNeighbors);
+
+				// SparseGrid의 KNN 함수 활용
+				spatialPartitioning->GetKNearestNeighbors(
+					currentPointCloud->positions,
+					p,
+					kNeighbors, // 자기 자신 포함될 수 있으므로 +1 고려 가능하나, 구현상 필터링됨
+					neighbors,
+					distances
+				);
+
+				double sumDist = 0.0;
+				int validCount = 0;
+				for (float d : distances)
+				{
+					if (d > 1e-6f) // 자기 자신(거리 0) 제외
+					{
+						sumDist += d;
+						validCount++;
+					}
+				}
+
+				if (validCount > 0)
+					pointMeanDistances[i] = (float)(sumDist / validCount);
+				else
+					pointMeanDistances[i] = 0.0f;
+			});
+		TE(Pass1_CalcMeanDist);
+
+		// 2단계: 전역 통계(Mean, StdDev) 계산
+		double totalSum = 0.0;
+		double totalSqSum = 0.0;
+		for (float d : pointMeanDistances)
+		{
+			totalSum += d;
+			totalSqSum += d * d;
+		}
+
+		globalMean = (float)(totalSum / numberOfPoints);
+		double variance = (totalSqSum / numberOfPoints) - (globalMean * globalMean);
+		globalStdDev = std::sqrt(std::max(0.0, variance));
+
+		// 임계값 설정
+		distanceThreshold = globalMean + stdDevMultiplier * globalStdDev;
+
+		printf("[SOR] Mean: %.4f, StdDev: %.4f, Threshold: %.4f (k=%d, mul=%.1f)\n",
+			globalMean, globalStdDev, distanceThreshold, kNeighbors, stdDevMultiplier);
+
+		// 3단계: 아웃라이어 식별
+		auto& marks = currentPointCloud->marks;
+		marks.assign(numberOfPoints, 0);
+		int outlierCount = 0;
+
+		for (size_t i = 0; i < numberOfPoints; ++i)
+		{
+			if (pointMeanDistances[i] > distanceThreshold)
+			{
+				marks[i] = 1; // Outlier 마킹
+				outlierIndices.push_back((int)i);
+				outlierCount++;
+			}
+		}
+
+		// 4단계: 제거 (옵션)
+		if (removeOutliers && outlierCount > 0)
+		{
+			TS(Pass4_Remove);
+			size_t writeIdx = 0;
+			bool hasClassIDs = !currentPointCloud->pointDeepLearningClassIDs.empty();
+			bool hasClusterIDs = !currentPointCloud->pointClusterIDs.empty();
+
+			for (size_t readIdx = 0; readIdx < numberOfPoints; ++readIdx)
+			{
+				if (marks[readIdx] == 1) continue; // Skip outliers
+
+				if (writeIdx != readIdx)
+				{
+					currentPointCloud->positions[writeIdx] = currentPointCloud->positions[readIdx];
+					currentPointCloud->normals[writeIdx] = currentPointCloud->normals[readIdx];
+					currentPointCloud->colors[writeIdx] = currentPointCloud->colors[readIdx];
+
+					if (hasClassIDs)
+						currentPointCloud->pointDeepLearningClassIDs[writeIdx] = currentPointCloud->pointDeepLearningClassIDs[readIdx];
+					if (hasClusterIDs)
+						currentPointCloud->pointClusterIDs[writeIdx] = currentPointCloud->pointClusterIDs[readIdx];
+				}
+				writeIdx++;
+			}
+
+			// 리사이징
+			currentPointCloud->numberOfElements = writeIdx;
+			currentPointCloud->positions.resize(writeIdx);
+			currentPointCloud->normals.resize(writeIdx);
+			currentPointCloud->colors.resize(writeIdx);
+			if (hasClassIDs) currentPointCloud->pointDeepLearningClassIDs.resize(writeIdx);
+			if (hasClusterIDs) currentPointCloud->pointClusterIDs.resize(writeIdx);
+			currentPointCloud->marks.resize(writeIdx); // 마크 정보는 초기화됨
+
+			// 공간 분할 재구축 필요 표시
+			parameter.needToRebuildSpatialPartitioning = true;
+			printf("[SOR] Removed %d outliers. Remaining: %zu\n", outlierCount, currentPointCloud->numberOfElements);
+
+			TE(Pass4_Remove);
+		}
+		else
+		{
+			printf("[SOR] Found %d outliers (Removal skipped).\n", outlierCount);
+		}
+
+		TE(SOR_StatisticalOutlierRemoval);
+	}
+
+	void OperatorSOR::Visualize()
+	{
+		if (nullptr == cachedPointCloud) return;
+
+		// 제거 옵션이 켜져 있었다면, 이미 포인트 클라우드에서 아웃라이어가 사라졌을 수 있음.
+		// 제거되지 않은 경우(removeOutliers=false)에만 빨간색으로 표시
+		if (!removeOutliers)
+		{
+			size_t count = cachedPointCloud->numberOfElements;
+			for (size_t i = 0; i < count; ++i)
+			{
+				if (cachedPointCloud->marks[i] == 1)
+				{
+					// Outlier: Red
+					VD::AddSphere(
+						"SOR_Outliers",
+						cachedPointCloud->positions[i],
+						Configuration::pointVisualizationRadius * 1.2f,
+						Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f)
+					);
+				}
+				else
+				{
+					// Inlier: Blue (Transparent)
+					VD::AddSphere(
+						"SOR_Inliers",
+						cachedPointCloud->positions[i],
+						Configuration::pointVisualizationRadius,
+						Eigen::Vector4f(0.0f, 0.0f, 1.0f, 0.1f)
+					);
+				}
+			}
+		}
+		else
+		{
+			// 이미 제거된 상태라면 남은 점들을 녹색으로 표시
+			size_t count = cachedPointCloud->numberOfElements;
+			for (size_t i = 0; i < count; ++i)
+			{
+				VD::AddSphere(
+					"SOR_Cleaned",
+					cachedPointCloud->positions[i],
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(0.0f, 1.0f, 0.0f, 0.5f)
+				);
+			}
+		}
+	}
+#pragma endregion
+
 #pragma region OperatorPointCloudDensity
 	OperatorPointCloudDensity::OperatorPointCloudDensity(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
 		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
@@ -1613,7 +1810,6 @@ namespace GeometricProcessingPipeline
 
 		{
 			searchRadiusMultiplier = parameter.GetParameter<float>("searchRadiusMultiplier", searchRadiusMultiplier);
-			visualizationScale = parameter.GetParameter<float>("visualizationScale", visualizationScale);
 			neighborSearchOffset = parameter.GetParameter<int>("neighborSearchOffset", neighborSearchOffset);
 			range_min = parameter.GetParameter<float>("range_min", range_min);
 			range_max = parameter.GetParameter<float>("range_max", range_max);
@@ -1679,7 +1875,7 @@ namespace GeometricProcessingPipeline
 		{
 			size_t count = cachedPointCloud->numberOfElements;
 
-			float rangeHalf = densityStdDev * visualizationScale;
+			float rangeHalf = densityStdDev;
 			float minVal = std::max(0.0f, densityMean - rangeHalf);
 			float maxVal = densityMean + rangeHalf;
 			float range = maxVal - minVal;
@@ -1720,28 +1916,27 @@ namespace GeometricProcessingPipeline
 
 		size_t count = cachedPointCloud->numberOfElements;
 
-		float rangeHalf = densityStdDev * visualizationScale;
+		float rangeHalf = densityStdDev;
 		float minVal = std::max(0.0f, densityMean - rangeHalf);
 		float maxVal = densityMean + rangeHalf;
 		float range = maxVal - minVal;
 		if (range < 1e-6f) range = 1.0f;
 
-		/*
 		for (size_t i = 0; i < count; ++i)
 		{
 			float val = pointDensities[i];
 			float t = std::clamp((val - minVal) / range, 0.0f, 1.0f);
 
 			Eigen::Vector3f color;
-			if (t < 0.5f)
+			if (t < 0.005f)
 			{
 				float localT = t / 0.5f;
-				color = Eigen::Vector3f(0.0f, localT, 1.0f - localT);
+				color = Eigen::Vector3f(1.0f - localT, localT, 0.0f);
 			}
 			else
 			{
 				float localT = (t - 0.5f) / 0.5f;
-				color = Eigen::Vector3f(localT, 1.0f - localT, 0.0f);
+				color = Eigen::Vector3f(0.0f, 1.0f - localT, localT);
 			}
 
 			VD::AddSphere(
@@ -1751,7 +1946,8 @@ namespace GeometricProcessingPipeline
 				Eigen::Vector4f(color.x(), color.y(), color.z(), 1.0f)
 			);
 		}
-		*/
+
+		/*
 		for (size_t i = 0; i < count; ++i)
 		{
 			if (cachedPointCloud->marks[i] == 1)
@@ -1773,6 +1969,7 @@ namespace GeometricProcessingPipeline
 				);
 			}
 		}
+		*/
 	}
 #pragma endregion
 
@@ -3157,8 +3354,8 @@ namespace GeometricProcessingPipeline
 
 	void OperatorNormalDeviation::Visualize()
 	{
-		//VisualizeDefault();
-		VisualizeHeatmap();
+		VisualizeDefault();
+		//VisualizeHeatmap();
 	}
 
 	void OperatorNormalDeviation::VisualizeDefault()
@@ -3730,38 +3927,38 @@ namespace GeometricProcessingPipeline
 			Eigen::Vector3f normal = cachedPointCloud->normals[i];
 			Eigen::Vector3f color;
 
-			//if (t < 0.25f)
-			//{
-			//	float localT = t / 0.25f;
-			//	color = Eigen::Vector3f(0.0f, localT, 1.0f);
-			//}
-			//else if (t < 0.5f)
-			//{
-			//	float localT = (t - 0.25f) / 0.25f;
-			//	color = Eigen::Vector3f(0.0f, 1.0f, 1.0f - localT);
-			//}
-			//else if (t < 0.75f)
-			//{
-			//	float localT = (t - 0.5f) / 0.25f;
-			//	color = Eigen::Vector3f(localT, 1.0f, 0.0f);
-			//}
-			//else
-			//{
-			//	float localT = (t - 0.75f) / 0.25f;
-			//	color = Eigen::Vector3f(1.0f, 1.0f - localT, 0.0f);
-			//}
-
-			if(1 == marks[i])
+			if (t < 0.25f)
 			{
-				color = Eigen::Vector3f(1.0f, 0.0f, 0.0f);
-				
-				//position += normal * Configuration::pointVisualizationRadius * 10;
-				//position = Eigen::Vector3f::Zero();
+				float localT = t / 0.25f;
+				color = Eigen::Vector3f(0.0f, localT, 1.0f);
+			}
+			else if (t < 0.5f)
+			{
+				float localT = (t - 0.25f) / 0.25f;
+				color = Eigen::Vector3f(0.0f, 1.0f, 1.0f - localT);
+			}
+			else if (t < 0.75f)
+			{
+				float localT = (t - 0.5f) / 0.25f;
+				color = Eigen::Vector3f(localT, 1.0f, 0.0f);
 			}
 			else
 			{
-				color = Eigen::Vector3f(0.0f, 1.0f, 0.0f);
+				float localT = (t - 0.75f) / 0.25f;
+				color = Eigen::Vector3f(1.0f, 1.0f - localT, 0.0f);
 			}
+
+			//if(1 == marks[i])
+			//{
+			//	color = Eigen::Vector3f(1.0f, 0.0f, 0.0f);
+			//	
+			//	//position += normal * Configuration::pointVisualizationRadius * 10;
+			//	//position = Eigen::Vector3f::Zero();
+			//}
+			//else
+			//{
+			//	color = Eigen::Vector3f(0.0f, 1.0f, 0.0f);
+			//}
 
 			VD::AddSphere(
 				"NormalDivergenceHeatmap",
@@ -4298,15 +4495,6 @@ namespace GeometricProcessingPipeline
 		cachedPointCloud = currentPointCloud;
 		size_t numberOfPoints = currentPointCloud->numberOfElements;
 
-		{
-			searchRadiusMultiplier = parameter.GetParameter<float>("searchRadiusMultiplier", searchRadiusMultiplier);
-			visualizationScale = parameter.GetParameter<float>("visualizationScale", visualizationScale);
-			updatePositions = parameter.GetParameter<bool>("updatePositions", updatePositions);
-			updateThreshold = parameter.GetParameter<float>("updateThreshold", updateThreshold);
-			neighborSearchOffset = parameter.GetParameter<int>("neighborSearchOffset", neighborSearchOffset);
-			markedPointsOnly = parameter.GetParameter<bool>("markedPointsOnly", markedPointsOnly);
-		}
-
 		fittingResiduals.assign(numberOfPoints, 0.0f);
 		fittedPoints.resize(numberOfPoints);
 
@@ -4317,23 +4505,30 @@ namespace GeometricProcessingPipeline
 		std::iota(indices.begin(), indices.end(), 0);
 
 		auto& marks = currentPointCloud->marks;
-		marks.resize(numberOfPoints, 0);
+		if (marks.size() != numberOfPoints)
+		{
+			marks.resize(numberOfPoints, 0);
+		}
 
 		std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
 			{
 				const Eigen::Vector3f& p = currentPointCloud->positions[i];
 
-				if (markedPointsOnly && marks[i] != 1)
+				if (markedPointsOnly)
 				{
-					fittingResiduals[i] = 0.0f;
-					fittedPoints[i] = p;
-					return;
+					if (marks[i] != 1)
+					{
+						fittingResiduals[i] = 0.0f;
+						fittedPoints[i] = p;
+						return;
+					}
 				}
 
 				std::vector<int> neighbors;
 				neighbors.reserve(64);
 				Eigen::Vector3f centroid = Eigen::Vector3f::Zero();
 
+				// Sparse Grid를 이용한 이웃 검색
 				int gx = (int)std::floor((p.x() - spatialPartitioning->aabb.min.x()) / spatialPartitioning->cellSize);
 				int gy = (int)std::floor((p.y() - spatialPartitioning->aabb.min.y()) / spatialPartitioning->cellSize);
 				int gz = (int)std::floor((p.z() - spatialPartitioning->aabb.min.z()) / spatialPartitioning->cellSize);
@@ -4370,6 +4565,7 @@ namespace GeometricProcessingPipeline
 
 				centroid /= (float)k;
 
+				// Covariance Matrix
 				float xx = 0.0f, xy = 0.0f, xz = 0.0f;
 				float yy = 0.0f, yz = 0.0f, zz = 0.0f;
 
@@ -4386,9 +4582,10 @@ namespace GeometricProcessingPipeline
 				cov(2, 0) = xz; cov(2, 1) = yz; cov(2, 2) = zz;
 				cov /= (float)k;
 
+				// PCA
 				Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> solver(cov);
 
-				float lambda_min = solver.eigenvalues()[0];
+				float lambda_min = solver.eigenvalues()[0]; // 최소 고유값
 				float sum_lambda = solver.eigenvalues().sum();
 				Eigen::Vector3f planeNormal = solver.eigenvectors().col(0);
 
@@ -4401,27 +4598,45 @@ namespace GeometricProcessingPipeline
 					fittingResiduals[i] = 0.0f;
 				}
 
+				// 점을 평면에 투영 (Projection)
 				Eigen::Vector3f diff = p - centroid;
 				float distToPlane = diff.dot(planeNormal);
 
-				fittedPoints[i] = p - planeNormal * distToPlane;
+				fittedPoints[i] = p - planeNormal * distToPlane * updateRatio;
 			});
 
+		// 통계 계산
 		double sum = 0.0;
 		double sqSum = 0.0;
+		int activeCount = 0;
 
-		for (float v : fittingResiduals)
+		for (size_t i = 0; i < numberOfPoints; ++i)
 		{
+			// 통계에서도 마킹되지 않은 점은 제외 (0.0f 잔차로 인해 평균이 왜곡되는 것 방지)
+			if (markedPointsOnly && marks[i] != 1) continue;
+
+			float v = fittingResiduals[i];
 			sum += v;
 			sqSum += v * v;
+			activeCount++;
 		}
-		residualMean = (float)(sum / numberOfPoints);
-		float variance = (float)((sqSum / numberOfPoints) - (residualMean * residualMean));
-		residualStdDev = std::sqrt(std::max(0.0f, variance));
 
+		if (activeCount > 0)
+		{
+			residualMean = (float)(sum / activeCount);
+			float variance = (float)((sqSum / activeCount) - (residualMean * residualMean));
+			residualStdDev = std::sqrt(std::max(0.0f, variance));
+		}
+		else
+		{
+			residualMean = 0.0f;
+			residualStdDev = 0.0f;
+		}
+
+		// [2단계] 위치 업데이트 (옵션)
 		if (updatePositions)
 		{
-			float maxVal = residualMean + residualStdDev * visualizationScale;
+			float maxVal = residualMean + residualStdDev;
 			float minVal = 0.0f;
 			float range = maxVal - minVal;
 			if (range < 1e-6f) range = 1.0f;
@@ -4430,10 +4645,14 @@ namespace GeometricProcessingPipeline
 
 			for (size_t i = 0; i < numberOfPoints; ++i)
 			{
-				float val = fittingResiduals[i];
+				// [옵션 구현] 업데이트 시에도 마킹 확인
+				if (markedPointsOnly && marks[i] != 1) continue;
 
+				float val = fittingResiduals[i];
 				float t = std::clamp((val - minVal) / range, 0.0f, 1.0f);
 
+				// 임계값 이상인 경우(평면성이 깨진 노이즈 등) 혹은 이하인 경우 등 정책에 따라 적용
+				// 여기서는 "잔차가 threshold 이상이면 피팅된 위치로 이동"하는 로직 유지
 				if (t >= updateThreshold)
 				{
 					currentPointCloud->positions[i] = fittedPoints[i];
@@ -4446,7 +4665,8 @@ namespace GeometricProcessingPipeline
 				parameter.needToRebuildSpatialPartitioning = true;
 			}
 
-			printf("Local Plane Fitting: Updated %d points based on fitting residuals.\n", updatedCount);
+			printf("Local Plane Fitting: Updated %d points (MarkedOnly: %s).\n",
+				updatedCount, markedPointsOnly ? "True" : "False");
 		}
 
 		TE(LocalPlaneFitting);
@@ -4458,7 +4678,7 @@ namespace GeometricProcessingPipeline
 
 		size_t count = cachedPointCloud->numberOfElements;
 
-		float maxVal = residualMean + residualStdDev * visualizationScale;
+		float maxVal = residualMean + residualStdDev;
 		float minVal = 0.0f;
 		float range = maxVal - minVal;
 		if (range < 1e-6f) range = 1.0f;
@@ -4493,6 +4713,7 @@ namespace GeometricProcessingPipeline
 			}
 
 			float sizeScale = 1.0f + t * 0.5f;
+			sizeScale = 1.0f;
 
 			VD::AddSphere(
 				"PlaneFittingHeatmap",
@@ -4859,7 +5080,7 @@ namespace GeometricProcessingPipeline
 		AtomicDisjointSet dsu;
 		dsu.Initialize(numberOfPoints);
 
-		float searchRadius = Configuration::voxelSize * 0.5f;
+		float searchRadius = Configuration::voxelSize * searchRadiusMultiplier;
 		float searchRadiusSq = searchRadius * searchRadius;
 
 		float strictAngleThreshold = 0.9f;
@@ -5362,7 +5583,6 @@ namespace GeometricProcessingPipeline
 			curvatureThreshold = parameter.GetParameter<float>("curvatureThreshold", curvatureThreshold);
 			neighborSearchOffset = parameter.GetParameter<int>("neighborSearchOffset", neighborSearchOffset);
 			searchRadiusScale = parameter.GetParameter<float>("searchRadiusScale", searchRadiusScale);
-			visualScale = parameter.GetParameter<float>("visualScale", visualScale);
 		}
 
 		curvatures.resize(numberOfPoints);
@@ -5478,29 +5698,77 @@ namespace GeometricProcessingPipeline
 
 		size_t count = cachedPointCloud->numberOfElements;
 
-		auto [curvatureMin, curvatureMax] = std::minmax_element(curvatures.begin(), curvatures.end());
+		double sum = 0.0;
+		double sqSum = 0.0;
 
-		auto& marks = cachedPointCloud->marks;
+		for (float v : curvatures)
+		{
+			sum += v;
+			sqSum += v * v;
+		}
+
+		double mean = sum / count;
+		double variance = (sqSum / count) - (mean * mean);
+		double stdDev = std::sqrt(std::max(0.0, variance));
+
+		float sigmaMultiplier = 2.0f;
+
+		float limit = (float)(stdDev * sigmaMultiplier);
+
+		if (limit < 1e-6f) limit = 1.0f;
+
+		const auto& marks = cachedPointCloud->marks;
 
 		for (size_t i = 0; i < count; ++i)
 		{
 			float val = curvatures[i];
 
-			Eigen::Vector4f color = Eigen::Vector4f(cachedPointCloud->colors[i].x(), cachedPointCloud->colors[i].y(), cachedPointCloud->colors[i].z(), 1.0f);
-			if (marks[i] == 1)
+			float clampedVal = std::clamp(val, -limit, limit);
+
+			float t = (clampedVal + limit) / (2.0f * limit);
+
+			Eigen::Vector3f& position = cachedPointCloud->positions[i];
+			Eigen::Vector3f normal = cachedPointCloud->normals[i];
+			Eigen::Vector3f color;
+
+			//if (t < 0.25f)
+			//{
+			//	float localT = t / 0.25f;
+			//	color = Eigen::Vector3f(0.0f, localT, 1.0f);
+			//}
+			//else if (t < 0.5f)
+			//{
+			//	float localT = (t - 0.25f) / 0.25f;
+			//	color = Eigen::Vector3f(0.0f, 1.0f, 1.0f - localT);
+			//}
+			//else if (t < 0.75f)
+			//{
+			//	float localT = (t - 0.5f) / 0.25f;
+			//	color = Eigen::Vector3f(localT, 1.0f, 0.0f);
+			//}
+			//else
+			//{
+			//	float localT = (t - 0.75f) / 0.25f;
+			//	color = Eigen::Vector3f(1.0f, 1.0f - localT, 0.0f);
+			//}
+
+			if(1 == marks[i])
 			{
-				color = Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f);
+				color = Eigen::Vector3f(1.0f, 0.0f, 0.0f);
+				
+				//position += normal * Configuration::pointVisualizationRadius * 10;
+				//position = Eigen::Vector3f::Zero();
 			}
 			else
 			{
-				color = Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f);
+				color = Eigen::Vector3f(0.0f, 1.0f, 0.0f);
 			}
 
 			VD::AddSphere(
-				"CurvatureEstimation",
+				"CurvatureHeatmap",
 				cachedPointCloud->positions[i],
 				Configuration::pointVisualizationRadius,
-				color
+				Eigen::Vector4f(color.x(), color.y(), color.z(), 1.0f)
 			);
 		}
 	}
@@ -5862,6 +6130,306 @@ namespace GeometricProcessingPipeline
 				);
 			}
 		}
+	}
+#pragma endregion
+
+#pragma region OperatorCurvatureDeviation
+	OperatorCurvatureDeviation::OperatorCurvatureDeviation(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+		: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
+	{
+	}
+
+	void OperatorCurvatureDeviation::Process(int operatorIndex)
+	{
+		TS(CurvatureDeviation);
+
+		auto currentPointCloud = pipeline->GetCurrentPointCloud();
+		if (currentPointCloud->numberOfElements == 0) return;
+
+		if (nullptr == spatialPartitioning)
+		{
+			spatialPartitioning = new SparseGrid();
+			spatialPartitioning->Build(*currentPointCloud, Configuration::voxelSize);
+			parameter.needToDeleteSpatialPartitioning = true;
+		}
+
+		cachedPointCloud = currentPointCloud;
+		size_t numberOfPoints = currentPointCloud->numberOfElements;
+
+		// 초기화
+		curvatures.assign(numberOfPoints, 0.0f);
+		deviations.assign(numberOfPoints, 0.0f);
+
+		float searchRadius = spatialPartitioning->cellSize * searchRadiusMultiplier;
+		float searchRadiusSq = searchRadius * searchRadius;
+
+		std::vector<int> indices(numberOfPoints);
+		std::iota(indices.begin(), indices.end(), 0);
+
+		// 1단계: 곡률(Curvature) 계산
+		TS(Pass1_CalcCurvature);
+		std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+			{
+				const Eigen::Vector3f& p = currentPointCloud->positions[i];
+
+				// 이웃 수집
+				std::vector<int> neighbors;
+				neighbors.reserve(32);
+				Eigen::Vector3f centroid = Eigen::Vector3f::Zero();
+
+				int gx = (int)std::floor((p.x() - spatialPartitioning->aabb.min.x()) / spatialPartitioning->cellSize);
+				int gy = (int)std::floor((p.y() - spatialPartitioning->aabb.min.y()) / spatialPartitioning->cellSize);
+				int gz = (int)std::floor((p.z() - spatialPartitioning->aabb.min.z()) / spatialPartitioning->cellSize);
+
+				for (int dz = -neighborSearchOffset; dz <= neighborSearchOffset; ++dz) {
+					for (int dy = -neighborSearchOffset; dy <= neighborSearchOffset; ++dy) {
+						for (int dx = -neighborSearchOffset; dx <= neighborSearchOffset; ++dx) {
+							uint64_t key = spatialPartitioning->GetKey(gx + dx, gy + dy, gz + dz);
+							auto it = spatialPartitioning->voxelPointListHead.find(key);
+							if (it == spatialPartitioning->voxelPointListHead.end()) continue;
+
+							int curr = it->second;
+							while (curr != -1) {
+								if (curr != i) {
+									if ((p - currentPointCloud->positions[curr]).squaredNorm() <= searchRadiusSq) {
+										neighbors.push_back(curr);
+										centroid += currentPointCloud->positions[curr];
+									}
+								}
+								curr = spatialPartitioning->nextPoint[curr];
+							}
+						}
+					}
+				}
+
+				size_t k = neighbors.size();
+				if (k < 4) return; // 이웃이 너무 적으면 곡률 0
+
+				centroid /= (float)k;
+
+				// 공분산 행렬 계산
+				float xx = 0, xy = 0, xz = 0, yy = 0, yz = 0, zz = 0;
+				for (int idx : neighbors) {
+					Eigen::Vector3f r = currentPointCloud->positions[idx] - centroid;
+					xx += r.x() * r.x(); xy += r.x() * r.y(); xz += r.x() * r.z();
+					yy += r.y() * r.y(); yz += r.y() * r.z(); zz += r.z() * r.z();
+				}
+
+				Eigen::Matrix3f cov;
+				cov(0, 0) = xx; cov(0, 1) = xy; cov(0, 2) = xz;
+				cov(1, 0) = xy; cov(1, 1) = yy; cov(1, 2) = yz;
+				cov(2, 0) = xz; cov(2, 1) = yz; cov(2, 2) = zz;
+				cov /= (float)k;
+
+				// 고유값 분해를 통한 곡률 근사
+				Eigen::Vector3f evals = ComputeEigenValuesSymmetric(cov);
+				float l0 = evals.x(), l1 = evals.y(), l2 = evals.z();
+				// 정렬 (Smallest -> Largest)
+				if (l0 > l1) std::swap(l0, l1);
+				if (l1 > l2) std::swap(l1, l2);
+				if (l0 > l1) std::swap(l0, l1);
+
+				float sum = l0 + l1 + l2;
+				if (sum > 1e-9f) curvatures[i] = l0 / sum;
+			});
+		TE(Pass1_CalcCurvature);
+
+		// 2단계: 곡률 편차(Deviation) 계산
+		// 주변 이웃들의 곡률 평균과 내 곡률의 차이, 또는 이웃간 곡률 변화량의 가중 평균
+		TS(Pass2_CalcDeviation);
+		std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+			{
+				const Eigen::Vector3f& p = currentPointCloud->positions[i];
+				float myCurv = curvatures[i];
+
+				float diffSum = 0.0f;
+				float weightSum = 0.0f;
+
+				int gx = (int)std::floor((p.x() - spatialPartitioning->aabb.min.x()) / spatialPartitioning->cellSize);
+				int gy = (int)std::floor((p.y() - spatialPartitioning->aabb.min.y()) / spatialPartitioning->cellSize);
+				int gz = (int)std::floor((p.z() - spatialPartitioning->aabb.min.z()) / spatialPartitioning->cellSize);
+
+				for (int dz = -neighborSearchOffset; dz <= neighborSearchOffset; ++dz) {
+					for (int dy = -neighborSearchOffset; dy <= neighborSearchOffset; ++dy) {
+						for (int dx = -neighborSearchOffset; dx <= neighborSearchOffset; ++dx) {
+							uint64_t key = spatialPartitioning->GetKey(gx + dx, gy + dy, gz + dz);
+							auto it = spatialPartitioning->voxelPointListHead.find(key);
+							if (it == spatialPartitioning->voxelPointListHead.end()) continue;
+
+							int curr = it->second;
+							while (curr != -1) {
+								if (curr != i) {
+									float distSq = (p - currentPointCloud->positions[curr]).squaredNorm();
+									if (distSq <= searchRadiusSq && distSq > 1e-8f) {
+										float dist = std::sqrt(distSq);
+										float weight = 1.0f / dist; // 거리가 가까울수록 가중치 높음
+
+										// 이웃 곡률과의 절대 차이 누적
+										diffSum += std::abs(myCurv - curvatures[curr]) * weight;
+										weightSum += weight;
+									}
+								}
+								curr = spatialPartitioning->nextPoint[curr];
+							}
+						}
+					}
+				}
+
+				if (weightSum > 1e-6f)
+				{
+					deviations[i] = diffSum / weightSum;
+
+					if(deviations[i] > deviationThreshold)
+					{
+						currentPointCloud->marks[i] = 1;
+					}
+				}
+			});
+		TE(Pass2_CalcDeviation);
+
+		// 통계 계산 (시각화 범위 자동 설정을 위해)
+		double sum = 0.0;
+		double sqSum = 0.0;
+		for (float v : deviations) {
+			sum += v;
+			sqSum += v * v;
+		}
+		deviationMean = (float)(sum / numberOfPoints);
+		double variance = (sqSum / numberOfPoints) - (deviationMean * deviationMean);
+		deviationStdDev = std::sqrt(std::max(0.0, variance));
+
+		auto [minIt, maxIt] = std::minmax_element(deviations.begin(), deviations.end());
+		float deviationMin = (minIt != deviations.end()) ? *minIt : 0.0f;
+		float deviationMax = (maxIt != deviations.end()) ? *maxIt : 0.0f;
+
+		printf("Curvature Deviation: Min = %.6f, Max = %.6f, Mean = %.6f\n", deviationMin, deviationMax, deviationMean);
+
+		TE(CurvatureDeviation);
+	}
+
+	void OperatorCurvatureDeviation::Visualize()
+	{
+		VisualizeMarker();
+	}
+
+	void OperatorCurvatureDeviation::VisualizeHeatmap()
+	{
+		if (nullptr == cachedPointCloud || deviations.empty()) return;
+
+		size_t count = cachedPointCloud->numberOfElements;
+
+		float thresholdLow = deviationMean;
+		float thresholdHigh = deviationMean + deviationStdDev * visualizationSigma;
+		float range = thresholdHigh - thresholdLow;
+		if (range < 1e-6f) range = 1.0f;
+
+		for (size_t i = 0; i < count; ++i)
+		{
+			float val = deviations[i];
+
+			if (val < thresholdLow)
+			{
+				VD::AddSphere(
+					"CurvatureDeviation_Low",
+					cachedPointCloud->positions[i],
+					Configuration::pointVisualizationRadius * 0.8f,
+					Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f)
+				);
+				continue;
+			}
+
+			// 2. 평균 이상: Heatmap 적용
+			// 범위 정규화 [0.0 ~ 1.0]
+			float t = std::clamp((val - thresholdLow) / range, 0.0f, 1.0f);
+
+			// [사용자 로직 적용] 상위 10% 구간만 0.0~1.0으로 확장 (나머지는 음수가 됨)
+			t = t * 10.0f - 9.0f;
+
+			// [안전장치 추가] t가 음수면 색상 계산이 깨지므로 0.0으로 보정
+			// (상위 10%에 못 미치는 값은 가장 차가운 색(Blue)으로 고정)
+			t = std::max(0.0f, t);
+
+			Eigen::Vector3f color;
+			// Heatmap coloring (Blue -> Cyan -> Green -> Yellow -> Red)
+			if (t < 0.25f)
+			{
+				float lt = t / 0.25f;
+				color = Eigen::Vector3f(0.0f, lt, 1.0f);
+			}
+			else if (t < 0.5f)
+			{
+				float lt = (t - 0.25f) / 0.25f;
+				color = Eigen::Vector3f(0.0f, 1.0f, 1.0f - lt);
+			}
+			else if (t < 0.75f)
+			{
+				float lt = (t - 0.5f) / 0.25f;
+				color = Eigen::Vector3f(lt, 1.0f, 0.0f);
+			}
+			else
+			{
+				float lt = (t - 0.75f) / 0.25f;
+				color = Eigen::Vector3f(1.0f, 1.0f - lt, 0.0f);
+			}
+
+			// 중요도가 높을수록(t가 클수록) 점의 크기도 키움
+			float sizeScale = 1.0f + t * 0.8f;
+
+			VD::AddSphere(
+				"CurvatureDeviation_High",
+				cachedPointCloud->positions[i],
+				Configuration::pointVisualizationRadius,// * sizeScale,
+				Eigen::Vector4f(color.x(), color.y(), color.z(), 1.0f)
+			);
+		}
+	}
+
+	void OperatorCurvatureDeviation::VisualizeMarker()
+	{
+		for (size_t i = 0; i < cachedPointCloud->numberOfElements; i++)
+		{
+			auto& p = cachedPointCloud->positions[i];
+			auto& n = cachedPointCloud->normals[i];
+
+			auto mark = cachedPointCloud->marks[i];
+			if(mark == 1)
+			{
+				VD::AddSphere(
+					"CurvatureDeviation_Marker",
+					p,
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f)
+				);
+			}
+			else
+			{
+				VD::AddSphere(
+					"CurvatureDeviation_Marker",
+					p,
+					Configuration::pointVisualizationRadius,
+					Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f)
+				);
+			}
+		}
+	}
+
+	// Helper: 3x3 대칭 행렬 고유값 계산 (Closed-form)
+	inline Eigen::Vector3f OperatorCurvatureDeviation::ComputeEigenValuesSymmetric(const Eigen::Matrix3f& M)
+	{
+		double m = (M(0, 0) + M(1, 1) + M(2, 2)) / 3.0;
+		double p = (std::pow(M(0, 0) - m, 2.0) + std::pow(M(1, 1) - m, 2.0) + std::pow(M(2, 2) - m, 2.0) +
+			2.0 * (std::pow(M(0, 1), 2.0) + std::pow(M(0, 2), 2.0) + std::pow(M(1, 2), 2.0))) / 6.0;
+
+		double q = (M - Eigen::Matrix3f::Identity() * m).determinant() / 2.0;
+		double phi = 0.0;
+		if (p > 1e-9) phi = std::atan2(std::sqrt(std::max(0.0, p * p * p - q * q)), q) / 3.0;
+		if (phi < 0) phi += 3.14159265358979323846 / 3.0;
+
+		double eig1 = m + 2.0 * std::sqrt(p) * std::cos(phi);
+		double eig2 = m + 2.0 * std::sqrt(p) * std::cos(phi + 2.0 * 3.14159265358979323846 / 3.0);
+		double eig3 = 3.0 * m - eig1 - eig2;
+
+		return Eigen::Vector3f((float)eig1, (float)eig2, (float)eig3);
 	}
 #pragma endregion
 

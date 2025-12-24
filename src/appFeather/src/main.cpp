@@ -16,11 +16,119 @@ namespace GPP = GeometricProcessingPipeline;
 
 #include <Eigen/Core>
 
-#define OPERATOR(operatorName) pipeline.AddOperator<GPP::operatorName>(#operatorName);
+#define OPERATOR(operatorName) pipeline.AddOperator<GPP::operatorName>(#operatorName)
 #define OPERATOR_PARAMETER(operatorName, parameter) pipeline.AddOperator<GPP::operatorName>(#operatorName, parameter);
 #define EXECUTE_AND_VISUALIZE_RETURN() { pipeline.Execute(); pipeline.VisualizeLast(); return; }
 
 std::string plyFilename = "D:\\Temp\\PLY\\Compound_E.ply";
+
+void LoadPointCloudFromPLY(const std::string& filename, GPP::PointCloud& pointCloud)
+{
+    auto entity = Feather.CreateEntity("PointCloud");
+
+    Feather.CreateEventCallback<KeyEvent>(entity, [](Entity entity, const KeyEvent& event) {
+        auto renderable = Feather.GetComponent<Renderable>(entity);
+        if (nullptr == renderable) return;
+
+        if (0 == event.action)
+        {
+            if (GLFW_KEY_GRAVE_ACCENT == event.keyCode)
+            {
+                renderable->NextDrawingMode();
+            }
+            else if (GLFW_KEY_1 == event.keyCode)
+            {
+                renderable->SetActiveShaderIndex(0);
+            }
+            else if (GLFW_KEY_2 == event.keyCode)
+            {
+                renderable->SetActiveShaderIndex(1);
+            }
+        }
+        });
+
+    auto renderable = Feather.CreateComponent<Renderable>(entity);
+
+    PLYFormat ply;
+    ply.Deserialize(plyFilename);
+
+    renderable->Initialize(Renderable::GeometryMode::Triangles);
+
+    renderable->Initialize(Renderable::GeometryMode::Triangles);
+    renderable->AddShader(Feather.CreateShader("Instancing", File("../../res/Shaders/Instancing.vs"), File("../../res/Shaders/Instancing.fs")));
+    renderable->AddShader(Feather.CreateShader("InstancingWithoutNormal", File("../../res/Shaders/InstancingWithoutNormal.vs"), File("../../res/Shaders/InstancingWithoutNormal.fs")));
+    renderable->SetActiveShaderIndex(1);
+
+    auto [indices, vertices, normals, colors, uvs] = GeometryBuilder::BuildSphere({ 0.0f, 0.0f, 0.0f }, 0.5f, 6, 6);
+    renderable->AddIndices(indices);
+    renderable->AddVertices(vertices);
+    renderable->AddNormals(normals);
+    renderable->AddColors(colors);
+    renderable->AddUVs(uvs);
+
+	pointCloud.Resize(ply.GetPoints().size() / 3);
+
+    for (size_t i = 0; i < ply.GetPoints().size() / 3; i++)
+    {
+        auto px = ply.GetPoints()[3 * i];
+        auto py = ply.GetPoints()[3 * i + 1];
+        auto pz = ply.GetPoints()[3 * i + 2];
+
+        auto nx = ply.GetNormals()[3 * i];
+        auto ny = ply.GetNormals()[3 * i + 1];
+        auto nz = ply.GetNormals()[3 * i + 2];
+
+        renderable->AddInstanceNormal({ nx, ny, nz });
+
+        if (ply.UseAlpha())
+        {
+            auto r = ply.GetColors()[4 * i];
+            auto g = ply.GetColors()[4 * i + 1];
+            auto b = ply.GetColors()[4 * i + 2];
+            auto a = ply.GetColors()[4 * i + 3];
+
+            renderable->AddInstanceColor({ r, g, b, a });
+
+			pointCloud.colors[i] = Eigen::Vector3f(r, g, b);
+        }
+        else
+        {
+            auto r = ply.GetColors()[3 * i];
+            auto g = ply.GetColors()[3 * i + 1];
+            auto b = ply.GetColors()[3 * i + 2];
+
+            renderable->AddInstanceColor({ r, g, b, 1.0f });
+
+            pointCloud.colors[i] = Eigen::Vector3f(r, g, b);
+        }
+
+		pointCloud.positions[i] = Eigen::Vector3f(px, py, pz);
+		pointCloud.normals[i] = Eigen::Vector3f(nx, ny, nz);
+        if (false == ply.GetDeepLearningClasses().empty())
+        {
+            pointCloud.pointDeepLearningClassIDs[i] = ply.GetDeepLearningClasses()[i];
+        }
+
+        glm::mat4 tm = glm::identity<glm::mat4>();
+        glm::mat4 rot = glm::mat4(1.0f);
+        if (glm::length(glm::vec3(nx, ny, nz)) > 0.0001f)
+        {
+            glm::vec3 axis = glm::normalize(glm::cross(glm::vec3(0, 0, 1), glm::vec3(nx, ny, nz)));
+            float angle = acos(glm::dot(glm::normalize(glm::vec3(nx, ny, nz)), glm::vec3(0, 0, 1)));
+            if (glm::length(axis) > 0.0001f)
+                rot = glm::rotate(glm::mat4(1.0f), angle, axis);
+        }
+
+        tm = glm::translate(tm, glm::vec3(px, py, pz)) * rot * glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
+
+        renderable->AddInstanceTransform(tm);
+        renderable->IncreaseNumberOfInstances();
+    }
+
+	auto [mx, my, mz] = ply.GetAABBMin();
+	auto [Mx, My, Mz] = ply.GetAABBMax();
+    pointCloud.aabb = Eigen::AABB{ Eigen::Vector3f(mx, my, mz), Eigen::Vector3f(Mx, My, Mz) };
+}
 
 int main(int argc, char** argv)
 {
@@ -66,7 +174,7 @@ int main(int argc, char** argv)
             {
                 json j;
 
-				std::ifstream in("camera_state.json");
+                std::ifstream in("camera_state.json");
                 if (in.is_open())
                 {
                     in >> j;
@@ -108,7 +216,7 @@ int main(int argc, char** argv)
                 else
                 {
                     std::cout << "[System] No saved camera state JSON file found." << std::endl;
-				}
+                }
 
                 //std::ifstream in("camera_state.txt");
                 //if (in.is_open())
@@ -239,7 +347,7 @@ int main(int argc, char** argv)
                     VD::Clear("PickedCell");
 
                     auto p = pipeline.GetCurrentPointCloud()->positions[result.pointIndex];
-                    VD::AddSphere("PickedPoint", p, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
+                    //VD::AddSphere("PickedPoint", p, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
 
                     if (Feather.IsKeyPressed(GLFW_KEY_LEFT_CONTROL) || Feather.IsKeyPressed(GLFW_KEY_RIGHT_CONTROL))
                     {
@@ -288,59 +396,185 @@ int main(int argc, char** argv)
 
     Feather.AddOnInitializeCallback([&]()
         {
+#if 0
+            {
+                GPP::PointCloud pointCloud;
+                GPP::SparseGrid sparseGrid;
+
+                LoadPointCloudFromPLY(plyFilename, pointCloud);
+
+                TS(BuildingSparseGrid);
+                sparseGrid.Build(pointCloud, GPP::Configuration::voxelSize);
+                TE(BuildingSparseGrid);
+
+                int minNeighborCount = 0;
+                int maxNeighborCount = 0;
+                std::vector<int> neighborCounts(pointCloud.numberOfElements, 0);
+
+                TS(NeighborCount);
+                {
+                    std::vector<int> indices(pointCloud.numberOfElements);
+                    std::iota(indices.begin(), indices.end(), 0);
+
+
+                    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
+                        {
+                            const Eigen::Vector3f& p = pointCloud.positions[i];
+
+                            int neighborCount = 0;
+                            int neighborOffset = 1;
+
+                            auto cellIdx = sparseGrid.GetIndex(p);
+                            for (int zo = -neighborOffset; zo <= neighborOffset; zo++)
+                            {
+                                for (int yo = -neighborOffset; yo <= neighborOffset; yo++)
+                                {
+                                    for (int xo = -neighborOffset; xo <= neighborOffset; xo++)
+                                    {
+                                        auto neighborKey = sparseGrid.GetKey(cellIdx.x() + xo, cellIdx.y() + yo, cellIdx.z() + zo);
+                                        auto neighborIt = sparseGrid.voxelPointListHead.find(neighborKey);
+                                        if (neighborIt != sparseGrid.voxelPointListHead.end())
+                                        {
+                                            int neighborHeadIndex = neighborIt->second;
+                                            int currentIndex = neighborHeadIndex;
+                                            while (currentIndex != -1)
+                                            {
+                                                neighborCount++;
+                                                currentIndex = sparseGrid.nextPoint[currentIndex];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            neighborCounts[i] = neighborCount;
+                        });
+
+                    auto result = std::minmax_element(std::execution::par, neighborCounts.begin(), neighborCounts.end());
+
+                    minNeighborCount = *result.first;
+                    maxNeighborCount = *result.second;
+                }
+                TE(NeighborCount);
+
+                TS(Visualize);
+                {
+                    auto entity = Feather.GetEntityByName("PointCloud");
+                    auto renderable = Feather.GetComponent<Renderable>(entity);
+
+                    for (size_t i = 0; i < pointCloud.numberOfElements; i++)
+                    {
+                        auto& color = pointCloud.colors[i];
+
+                        auto nc = neighborCounts[i];
+
+                        float t = 0.0f;
+                        if (maxNeighborCount > minNeighborCount)
+                            t = (float)(nc - minNeighborCount) / (float)(maxNeighborCount - minNeighborCount);
+                        color = Eigen::Vector3f(1.0f - t, 0.0f, t);
+
+                        renderable->SetInstanceColor(i, glm::vec4(color.x(), color.y(), color.z(), 1.0f));
+                    }
+                }
+                TE(Visualize);
+            }
+#endif // 0
+
+
             std::thread([&]()
                 {
-                    // OperatorPointCloudLoader
-                    {
-                        GPP::GeometricProcessingOperatorParameter parameter;
-                        parameter.SetParameter<std::string>("plyFilename", plyFilename);
-                        OPERATOR_PARAMETER(OperatorPointCloudLoader, parameter);
-                    }
+                    OPERATOR(OperatorPointCloudLoader)->SetPLYFilename(plyFilename);
 
-
-                    #pragma region Working
+#pragma region Working
                     {
                         OPERATOR(OperatorStorePointCloud);
 
-                        OPERATOR(OperatorNormalDeviation);
-                        
-                        //{
-                        //    GPP::GeometricProcessingOperatorParameter parameter;
-                        //    parameter.SetParameter<float>("range_min", 0.0f);
-                        //    parameter.SetParameter<float>("range_max", 0.005f);
-                        //    OPERATOR_PARAMETER(OperatorPointCloudDensity, parameter);
-                        //}
+                        OPERATOR(OperatorCurvatureDeviation)->
+                            SetNeighborSearchOffset(1)->
+                            SetSearchRadiusMultiplier(0.3333333f)->
+                            SetDeviationThreshold(0.06f);
+
+                        OPERATOR(OperatorFilterMarked);
+
+                        OPERATOR(OperatorClustering)->SetSearchRadiusMultiplier(0.3f);
+
+                        OPERATOR(OperatorFilterLeaveLargestOnly);
+
+                        OPERATOR(OperatorComparePointCloudUsingDistance);
+
+                        EXECUTE_AND_VISUALIZE_RETURN();
+
+                        OPERATOR(OperatorClustering)->SetSearchRadiusMultiplier(0.3f);
+
+                        OPERATOR(OperatorFilterLeaveLargestOnly);
+
+                        OPERATOR(OperatorComparePointCloudUsingDistance);
 
                         EXECUTE_AND_VISUALIZE_RETURN();
                     }
-                    #pragma endregion
+#pragma endregion
+
+#pragma region Candidate
+                    {
+                        OPERATOR(OperatorStorePointCloud);
+
+ /*                       OPERATOR(OperatorCurvatureDeviation)->
+                            SetNeighborSearchOffset(1)->
+                            SetSearchRadiusMultiplier(0.3333333f)->
+                            SetDeviationThreshold(0.0125f);
+
+                        EXECUTE_AND_VISUALIZE_RETURN();*/
+
+                        for (size_t i = 0; i < 1; i++)
+                        {
+                            OPERATOR(OperatorCurvatureDeviation)->
+                            SetNeighborSearchOffset(1)->
+                            SetSearchRadiusMultiplier(0.3333333f)->
+                            SetDeviationThreshold(0.0125f);
+
+                            OPERATOR(OperatorLocalPlaneFitting)->
+								SetNeighborSearchOffset(1)->
+                                //SetSearchRadiusMultiplier(0.333333f)->
+                                SetMarkedPointsOnly(true)->
+                                SetUpdatePositions(true);
+
+                            OPERATOR(OperatorClustering)->SetUseMarksForClustering(false);
+
+                            OPERATOR(OperatorFilterLeaveLargestOnly);
+
+							OPERATOR(OperatorPointCloudSaver)->SetPLYFilename("D:\\Temp\\PLY\\Compound_E_Filtered.ply");
+
+                            OPERATOR(OperatorComparePointCloudUsingDistance);
+
+                            //OPERATOR(OperatorSOR)->SetStdDevMultiplier(2.0f)->SetKNeighbors(15);
+
+                            //OPERATOR(OperatorLocalPlaneFitting)->
+                            //    SetNeighborSearchOffset(3)->
+                            //    SetSearchRadiusMultiplier(5.0f)->
+                            //    SetMarkedPointsOnly(true)->
+                            //    SetUpdatePositions(true);
+
+                            //OPERATOR(OperatorSOR)->SetStdDevMultiplier(2.0f)->SetKNeighbors(10);
+                        }
+
+                        //OPERATOR(OperatorCurvatureDeviation)->
+                        //    SetNeighborSearchOffset(1)->
+                        //    SetSearchRadiusMultiplier(0.3333333f)->
+                        //    SetDeviationThreshold(0.0125f);
+
+                        EXECUTE_AND_VISUALIZE_RETURN();
+                    }
+#pragma endregion
 
 
-//#pragma region Working
-//                    {
-//                        OPERATOR(OperatorStorePointCloud);
-//
-//                        //OPERATOR(OperatorFilterETC);
-//
-//                        OPERATOR(OperatorClustering);
-//
-//                        OPERATOR(OperatorCurvatureEstimationAppliedNormal);
-//
-//                        OPERATOR(OperatorNormalDivergence);
-//
-//                        OPERATOR(OperatorFilterMarked);
-//
-//                        {
-//                            GPP::GeometricProcessingOperatorParameter parameter;
-//                            parameter.SetParameter<float>("range_min", 0.0f)
-//                            OPERATOR(OperatorPointCloudDensity);
-//                        }
-//
-//                        OPERATOR(OperatorShowMarks);
-//
-//                        EXECUTE_AND_VISUALIZE_RETURN();
-//                    }
-//#pragma endregion
+#pragma region Candidate
+                    {
+                        OPERATOR(OperatorCurvatureDeviation)->
+                            SetNeighborSearchOffset(1)->
+                            SetSearchRadiusMultiplier(0.3333333f)->
+                            SetVisualizationSigma(5.0f);
+					}
+#pragma endregion
 
 #pragma region Candidate
                     {

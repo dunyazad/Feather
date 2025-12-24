@@ -521,7 +521,7 @@ void VisualDebugging::AddWiredBox(const std::string& tag, const glm::vec3& cente
 
 void VisualDebugging::AddWiredBox(const std::string& tag, const Eigen::AABB& aabb, const Eigen::Vector4f& color)
 {
-	AddWiredBox(tag, { glm::vec3(aabb.min.x(), aabb.min.y(), aabb.min.z()) }, { glm::vec3(aabb.max.x(), aabb.max.y(), aabb.max.z()) }, glm::vec4(color.x(), color.y(), color.z(), color.w()));
+	AddWiredBox(tag, { glm::vec3(aabb.min.x(), aabb.min.y(), aabb.min.z()), glm::vec3(aabb.max.x(), aabb.max.y(), aabb.max.z()) }, glm::vec4(color.x(), color.y(), color.z(), color.w()));
 }
 
 void VisualDebugging::AddWiredBox(const std::string& tag, const Eigen::Vector3f& center, const Eigen::Vector3f& dimensions, const Eigen::Vector4f& color)

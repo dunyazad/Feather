@@ -41,51 +41,13 @@ static inline bool IsTooth(int deepLearningClass)
 	switch (deepLearningClass)
 	{
 	case DL_TOOTH:
-		return true;
-	case DL_GINGIVA1:
-		return false;
-	case DL_GINGIVA2:
-		return false;
-	case DL_TONGUE:
-		return false;
-	case DL_CHEEK:
-		return false;
-	case DL_LIP:
-		return false;
-	case DL_ETC:
-		return false;
 	case DL_DENTIFORM_TOOTH:
-		return true;
-	case DL_DENTIFORM_GINGIVA1:
-		return false;
-	case DL_DENTIFORM_GINGIVA2:
-		return false;
-	case DL_PLASTER:
-		return false;
-	case DL_FINGER:
-		return false;
 	case DL_METAL:
-		return true;
-	case DL_PALATAL:
-		return false;
 	case DL_ABUTMENT:
-		return true;
 	case DL_SCANBODY:
 		return true;
-	case DL_GINGIVA3:
-		return false;
-	case DL_OBTURA:
-		return false;
-	case DL_3DPRTMODEL:
-		return false;
-	case DL_RETRACTOR:
-		return false;
-	case DL_CLASS_LAST:
-		return false;
-
 	default:
 		return false;
-		break;
 	}
 }
 
@@ -203,9 +165,9 @@ namespace GeometricProcessingPipeline
 		uint64_t GetKey(int x, int y, int z) const;
 
 		Eigen::Vector3i GetIndex(const Eigen::Vector3f& position) const;
-		
+
 		void Build(const GeometricProcessingPipeline::PointCloud& pc, float cellSize);
-		
+
 		int GetClosestPoint(const std::vector<Eigen::Vector3f>& points, const Eigen::Vector3f& queryPos, float& outDist);
 
 		void GetKNearestNeighbors(
@@ -214,12 +176,12 @@ namespace GeometricProcessingPipeline
 			int k,
 			std::vector<unsigned int>& outIndices,
 			std::vector<float>& outDistances);
-		
+
 		SparseGridPickResult Pick(const std::vector<Eigen::Vector3f>& points, const Eigen::Ray& ray, float pickRadius);
 
 		SparseGridPickResult PickBruteForce(const std::vector<Eigen::Vector3f>& points, const Eigen::Ray& ray, float pickRadius);
 
-		void Visualize(const GeometricProcessingPipeline::PointCloud& pc);		
+		void Visualize(const GeometricProcessingPipeline::PointCloud& pc);
 	};
 
 	typedef uint64_t DataBlockKey;
@@ -249,7 +211,7 @@ namespace GeometricProcessingPipeline
 			const std::vector<int>& clusterIds,
 			const Eigen::Vector3f& aabbMin);
 
-		void Visualize();		
+		void Visualize();
 	};
 
 	struct MeshGenerator
@@ -474,7 +436,6 @@ namespace GeometricProcessingPipeline
 			for (size_t i = 0; i < cachedPointCloud->numberOfElements; i++)
 			{
 				const auto& p = cachedPointCloud->positions[i];
-				const auto& n = cachedPointCloud->normals[i];
 				const auto& c = cachedPointCloud->colors[i];
 
 				VD::AddSphere("OperatorCustom",
@@ -495,7 +456,9 @@ namespace GeometricProcessingPipeline
 		virtual void Visualize() override;
 
 		inline const std::string& GetPLYFilename() const { return plyFilename; }
-		inline void SetPLYFilename(const std::string& filename) { plyFilename = filename; }
+
+		
+		inline OperatorPointCloudLoader* SetPLYFilename(const std::string& filename) { plyFilename = filename; return this; }
 
 	protected:
 		std::string plyFilename;
@@ -510,7 +473,9 @@ namespace GeometricProcessingPipeline
 		virtual void Visualize() override;
 
 		inline const std::string& GetPLYFilename() const { return plyFilename; }
-		inline void SetPLYFilename(const std::string& filename) { plyFilename = filename; }
+
+		
+		inline OperatorPointCloudSaver* SetPLYFilename(const std::string& filename) { plyFilename = filename; return this; }
 
 	protected:
 		std::string plyFilename;
@@ -559,8 +524,15 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
+		// [Setters]
+		OperatorExpandMarks* SetTargetMarkName(const std::string& name) { targetMarkName = name; return this; }
+		OperatorExpandMarks* SetIterations(int iter) { iterations = iter; return this; }
+		OperatorExpandMarks* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+
 	private:
-		std::string targetMarkName;
+		std::string targetMarkName = "OperatorNormalDivergence";
+		int iterations = 1;
+		int neighborSearchOffset = 1;
 	};
 
 	class OperatorPointCloudVisualization : public IGeometricProcessingOperator<SparseGrid>
@@ -572,6 +544,33 @@ namespace GeometricProcessingPipeline
 		virtual void Visualize() override;
 	};
 
+	class OperatorSOR : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorSOR(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+
+		virtual void Process(int pipelineIndex) override;
+		virtual void Visualize() override;
+
+		// [Method Chaining Setters]
+		OperatorSOR* SetKNeighbors(int k) { kNeighbors = k; return this; }
+		OperatorSOR* SetStdDevMultiplier(float mult) { stdDevMultiplier = mult; return this; }
+		OperatorSOR* SetRemoveOutliers(bool remove) { removeOutliers = remove; return this; }
+
+	private:
+		// Parameters
+		int kNeighbors = 50;           // 주변 이웃 개수 (분석용)
+		float stdDevMultiplier = 1.0f; // 임계값 계수 (Mean + n * StdDev)
+		bool removeOutliers = false;    // true면 실제 데이터 삭제, false면 마킹만
+
+		// Statistics & Data
+		std::vector<float> pointMeanDistances;
+		std::vector<int> outlierIndices; // 시각화용
+		float globalMean = 0.0f;
+		float globalStdDev = 0.0f;
+		float distanceThreshold = 0.0f;
+	};
+
 	class OperatorPointCloudDensity : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
@@ -580,6 +579,12 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
+		// [Setters]
+		OperatorPointCloudDensity* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorPointCloudDensity* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorPointCloudDensity* SetRangeMin(float minVal) { range_min = minVal; return this; }
+		OperatorPointCloudDensity* SetRangeMax(float maxVal) { range_max = maxVal; return this; }
+
 	private:
 		std::vector<float> pointDensities;
 
@@ -587,7 +592,6 @@ namespace GeometricProcessingPipeline
 		float densityStdDev = 0.0f;
 
 		float searchRadiusMultiplier = 1.5f;
-		float visualizationScale = 1.0f;
 		int neighborSearchOffset = 1;
 
 		float range_min = 0.0f;
@@ -601,6 +605,15 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
+
+		// [Setters]
+		OperatorMeanShift* SetBandwidthMultiplier(float mult) { bandwidthMultiplier = mult; return this; }
+		OperatorMeanShift* SetConvergenceThreshold(float th) { convergenceThreshold = th; return this; }
+		OperatorMeanShift* SetMaxIterations(int iter) { maxIterations = iter; return this; }
+		OperatorMeanShift* SetUpdatePositions(bool update) { updatePositions = update; return this; }
+		OperatorMeanShift* SetVisualizationScale(float scale) { visualizationScale = scale; return this; }
+		OperatorMeanShift* SetInvertDirection(bool invert) { invertDirection = invert; return this; }
+		OperatorMeanShift* SetMarkedPointsOnly(bool markedOnly) { markedPointsOnly = markedOnly; return this; }
 
 	private:
 		std::vector<Eigen::Vector3f> shiftedPositions;
@@ -623,20 +636,18 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetIterations(int iter) { iterations = iter; }
 		inline int GetIterations() const { return iterations; }
-
-		inline void SetSmoothingFactor(float lambda) { smoothingFactor = std::clamp(lambda, 0.0f, 1.0f); }
 		inline float GetSmoothingFactor() const { return smoothingFactor; }
-
 		inline float GetSearchRadiusMultiplier() const { return searchRadiusMultiplier; }
-		inline void SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; }
-
 		inline int GetNeighborSearchOffset() const { return neighborSearchOffset; }
-		inline void SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; }
-
 		inline bool IsPreserveMarks() const { return preserveMarks; }
-		inline void SetPreserveMarks(bool preserve) { preserveMarks = preserve; }
+
+		// [Setters]
+		OperatorPointCloudLaplacianSmoothing* SetIterations(int iter) { iterations = iter; return this; }
+		OperatorPointCloudLaplacianSmoothing* SetSmoothingFactor(float lambda) { smoothingFactor = std::clamp(lambda, 0.0f, 1.0f); return this; }
+		OperatorPointCloudLaplacianSmoothing* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorPointCloudLaplacianSmoothing* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorPointCloudLaplacianSmoothing* SetPreserveMarks(bool preserve) { preserveMarks = preserve; return this; }
 
 	private:
 		int iterations = 3;
@@ -654,16 +665,15 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetK(int k) { kNeighbors = k; }
 		inline int GetK() const { return kNeighbors; }
-
-		inline void SetIterations(int iter) { iterations = iter; }
 		inline int GetIterations() const { return iterations; }
-
-		inline void SetSmoothingFactor(float factor) { smoothingFactor = std::clamp(factor, 0.0f, 1.0f); }
 		inline float GetSmoothingFactor() const { return smoothingFactor; }
 
-		inline void SetPreserveMarks(bool preserve) { preserveMarks = preserve; }
+		// [Setters]
+		OperatorKNNSmoothing* SetK(int k) { kNeighbors = k; return this; }
+		OperatorKNNSmoothing* SetIterations(int iter) { iterations = iter; return this; }
+		OperatorKNNSmoothing* SetSmoothingFactor(float factor) { smoothingFactor = std::clamp(factor, 0.0f, 1.0f); return this; }
+		OperatorKNNSmoothing* SetPreserveMarks(bool preserve) { preserveMarks = preserve; return this; }
 
 	private:
 		int kNeighbors = 8;
@@ -680,9 +690,11 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetKNeighbors(int k) { kNeighbors = k; }
-		inline void SetUpdateNormals(bool update) { updateNormals = update; }
-		inline void SetPreserveMarks(bool preserve) { preserveMarks = preserve; }
+		// [Setters]
+		OperatorSurfaceFitting* SetKNeighbors(int k) { kNeighbors = k; return this; }
+		OperatorSurfaceFitting* SetIteration(int iter) { iteration = iter; return this; }
+		OperatorSurfaceFitting* SetUpdateNormals(bool update) { updateNormals = update; return this; }
+		OperatorSurfaceFitting* SetPreserveMarks(bool preserve) { preserveMarks = preserve; return this; }
 
 	private:
 		int kNeighbors = 32;
@@ -702,13 +714,13 @@ namespace GeometricProcessingPipeline
 		virtual void Visualize() override;
 
 		inline float GetSearchRadiusScale() const { return searchRadiusScale; }
-		inline void SetSearchRadiusScale(float scale) { searchRadiusScale = scale; }
-
 		inline int GetNeighborSearchOffset() const { return neighborSearchOffset; }
-		inline void SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; }
-
 		inline float GetMinDensity() const { return minDensity; }
 		inline float GetMaxDensity() const { return maxDensity; }
+
+		// [Setters]
+		OperatorPointDensity* SetSearchRadiusScale(float scale) { searchRadiusScale = scale; return this; }
+		OperatorPointDensity* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
 
 	private:
 		std::vector<float> densities;
@@ -726,11 +738,12 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetMaxNormalAngle(float degrees) { maxNormalAngle = degrees; }
 		inline float GetMaxNormalAngle() const { return maxNormalAngle; }
-
-		inline void SetOverlapDistanceThreshold(float threshold) { overlapDistanceThreshold = threshold; }
 		inline int GetOverlappingCount() const { return overlappingCount; }
+
+		// [Setters]
+		OperatorFindOverlappingPoints* SetMaxNormalAngle(float degrees) { maxNormalAngle = degrees; return this; }
+		OperatorFindOverlappingPoints* SetOverlapDistanceThreshold(float threshold) { overlapDistanceThreshold = threshold; return this; }
 
 	private:
 		float overlapDistanceThreshold = 1e-4f;
@@ -750,7 +763,7 @@ namespace GeometricProcessingPipeline
 			float radius,
 			int mode,
 			int neighborSearchOffset = 1);
-		
+
 		static void MarkOverlappingPointsAbove(
 			std::shared_ptr<PointCloud> cloud,
 			SparseGrid* grid,
@@ -765,7 +778,14 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
-		
+
+		// [Setters]
+		OperatorApplyMorphology* SetOperation(const std::string& op) { operation = op; return this; }
+		OperatorApplyMorphology* SetRadius(float r) { radius = r; return this; }
+		OperatorApplyMorphology* SetOverlapDist(float dist) { overlapDist = dist; return this; }
+		OperatorApplyMorphology* SetMaxAngle(float angle) { maxAngle = angle; return this; }
+		OperatorApplyMorphology* SetMarkingOnly(bool marking) { markingOnly = marking; return this; }
+
 	private:
 		std::string operation = "Erosion";
 		float radius = 0.05f;
@@ -781,6 +801,14 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
+
+		// [Setters]
+		OperatorErosionAndClustering* SetErosionRadius(float r) { erosionRadius = r; return this; }
+		OperatorErosionAndClustering* SetErosionIterations(int iter) { erosionIterations = iter; return this; }
+		OperatorErosionAndClustering* SetClusterDistance(float dist) { clusterDistance = dist; return this; }
+		OperatorErosionAndClustering* SetMinClusterSize(int size) { minClusterSize = size; return this; }
+		OperatorErosionAndClustering* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorErosionAndClustering* SetVisualizeErodedOnly(bool vis) { visualizeErodedOnly = vis; return this; }
 
 		struct AtomicDisjointSet
 		{
@@ -843,10 +871,12 @@ namespace GeometricProcessingPipeline
 		void VisualizeDefault();
 		void VisualizeHeatmap();
 
-		inline void SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; }
-		inline void SetMaxDeviationAngle(float angle) { maxDeviationAngle = angle; }
-
 		inline const std::vector<float>& GetDeviations() const { return deviations; }
+
+		// [Setters]
+		OperatorNormalDeviation* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorNormalDeviation* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorNormalDeviation* SetMaxDeviationAngle(float angle) { maxDeviationAngle = angle; return this; }
 
 	private:
 		float searchRadiusMultiplier = 2.0f;
@@ -864,11 +894,14 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; }
-		inline void SetVisualizationSigma(float sigma) { visualizationSigma = sigma; }
-
 		inline float GetGradientMean() const { return gradientMean; }
 		inline float GetGradientStdDev() const { return gradientStdDev; }
+
+		// [Setters]
+		OperatorNormalGradient* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorNormalGradient* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorNormalGradient* SetVisualizationSigma(float sigma) { visualizationSigma = sigma; return this; }
+		OperatorNormalGradient* SetUseAlphaGradient(bool use) { useAlphaGradient = use; return this; }
 
 	private:
 		std::vector<float> gradients;
@@ -890,12 +923,13 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		// Setter / Getter
-		inline void SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; }
-		inline void SetVisualizationSigma(float sigma) { visualizationSigma = sigma; }
-
 		inline float GetVarianceMean() const { return varianceMean; }
 		inline float GetVarianceStdDev() const { return varianceStdDev; }
+
+		// [Setters]
+		OperatorNormalVariance* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorNormalVariance* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorNormalVariance* SetVisualizationSigma(float sigma) { visualizationSigma = sigma; return this; }
 
 	private:
 		// 결과 데이터: 각 점의 법선 분산값
@@ -919,7 +953,9 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; }
+		// [Setters]
+		OperatorNormalDivergence* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorNormalDivergence* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
 
 	private:
 		std::vector<float> normalDivergences;
@@ -937,11 +973,13 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; }
-		inline void SetVisualizationSigma(float sigma) { visualizationSigma = sigma; }
-
 		inline float GetGradientMean() const { return gradientMean; }
 		inline float GetGradientStdDev() const { return gradientStdDev; }
+
+		// [Setters]
+		OperatorNormalDivergenceGradient* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorNormalDivergenceGradient* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorNormalDivergenceGradient* SetVisualizationSigma(float sigma) { visualizationSigma = sigma; return this; }
 
 	private:
 		std::vector<float> normalDivergences;
@@ -955,7 +993,7 @@ namespace GeometricProcessingPipeline
 		float gradientStdDev = 0.0f;
 	};
 #pragma endregion
-	
+
 	template<typename IterateFunctor>
 	class OperatorPointCloudIterator : public IGeometricProcessingOperator<SparseGrid>
 	{
@@ -968,7 +1006,7 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override
 		{
 			TS(PointCloudIterator);
-			
+
 			auto currentPointCloud = pipeline->GetCurrentPointCloud();
 			if (currentPointCloud->numberOfElements == 0) return;
 
@@ -1131,21 +1169,29 @@ namespace GeometricProcessingPipeline
 
 		inline Eigen::Vector3f GetFittedPoint(int index) const
 		{
-			if(index >= 0 && index < fittedPoints.size()) return fittedPoints[index];
+			if (index >= 0 && index < fittedPoints.size()) return fittedPoints[index];
 			return Eigen::Vector3f::Zero();
 		}
 
 		inline std::vector<Eigen::Vector3f>& GetFiitedPoints() { return fittedPoints; }
 		inline const std::vector<Eigen::Vector3f>& GetFiitedPoints() const { return fittedPoints; }
 
+		// [Setters]
+		OperatorLocalPlaneFitting* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorLocalPlaneFitting* SetUpdatePositions(bool update) { updatePositions = update; return this; }
+		OperatorLocalPlaneFitting* SetUpdateThreshold(float threshold) { updateThreshold = threshold; return this; }
+		OperatorLocalPlaneFitting* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorLocalPlaneFitting* SetMarkedPointsOnly(bool markedOnly) { markedPointsOnly = markedOnly; return this; }
+
 	private:
 		float searchRadiusMultiplier = 2.0f;
-		float visualizationScale = 2.0f;
 		bool updatePositions = false;
-		float updateThreshold = 0.01f;
+		float updateThreshold = 0.0f;
 		bool markedPointsOnly = false;
 
 		int neighborSearchOffset = 3;
+
+		float updateRatio = 0.5f;
 
 		std::vector<float> fittingResiduals;
 		std::vector<Eigen::Vector3f> fittedPoints;
@@ -1161,7 +1207,10 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetComparisonThreshold(float dist) { comparisonDistanceThresholdSq = dist * dist; }
+		// [Setters]
+		OperatorCompareSameIndexOrderedPointCloud* SetComparisonDistanceThreshold(float dist) { comparisonDistanceThresholdSq = dist * dist; return this; }
+		OperatorCompareSameIndexOrderedPointCloud* SetIndexA(int idx) { indexA = idx; return this; }
+		OperatorCompareSameIndexOrderedPointCloud* SetIndexB(int idx) { indexB = idx; return this; }
 
 	private:
 		std::vector<char> matchedFlags;
@@ -1169,6 +1218,8 @@ namespace GeometricProcessingPipeline
 		std::shared_ptr<PointCloud> pointCloudB;
 		float comparisonDistanceThresholdSq = 1e-5f;
 		int deletedCount = 0;
+		int indexA = 0;
+		int indexB = -1;
 	};
 
 	class OperatorComparePointCloudUsingDistance : public IGeometricProcessingOperator<SparseGrid>
@@ -1179,10 +1230,10 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		inline void SetComparisonDistanceThreshold(float t)
-		{
-			comparisonDistanceThreshold = t;
-		}
+		// [Setters]
+		OperatorComparePointCloudUsingDistance* SetComparisonDistanceThreshold(float t) { comparisonDistanceThreshold = t; return this; }
+		OperatorComparePointCloudUsingDistance* SetIndexA(int idx) { indexA = idx; return this; }
+		OperatorComparePointCloudUsingDistance* SetIndexB(int idx) { indexB = idx; return this; }
 
 	private:
 		float comparisonDistanceThreshold = 0.0000001f;
@@ -1191,6 +1242,8 @@ namespace GeometricProcessingPipeline
 
 		std::shared_ptr<PointCloud> pointCloudA;
 		std::shared_ptr<PointCloud> pointCloudB;
+		int indexA = 0;
+		int indexB = -1;
 	};
 
 	class OperatorCompareWithLastPointCloud : public IGeometricProcessingOperator<SparseGrid>
@@ -1200,9 +1253,11 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
-		
+
 		inline float GetComparisonDistanceThreshold() const { return comparisonDistanceThreshold; }
-		inline void SetComparisonDistanceThreshold(float threshold) { comparisonDistanceThreshold = threshold; }
+
+		
+		inline OperatorCompareWithLastPointCloud* SetComparisonDistanceThreshold(float threshold) { comparisonDistanceThreshold = threshold; return this; }
 
 	private:
 		float comparisonDistanceThreshold = 0.0001f;
@@ -1270,10 +1325,12 @@ namespace GeometricProcessingPipeline
 		virtual void Visualize() override;
 
 		inline bool IsUseMarksForClustering() const { return useMarksForClustering; }
-		inline void SetUseMarksForClustering(bool useMarks) { useMarksForClustering = useMarks; }
+
+		inline OperatorClustering* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		inline OperatorClustering* SetUseMarksForClustering(bool useMarks) { useMarksForClustering = useMarks; return this; }
 
 	protected:
-		//float searchRadiusMultiplier = 1.5f;
+		float searchRadiusMultiplier = 0.5f;
 		bool useMarksForClustering = true;
 	};
 
@@ -1284,7 +1341,7 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
-		
+
 	protected:
 		std::vector<int> borderPointIndices;
 		std::mutex borderIndicesMutex;
@@ -1306,6 +1363,14 @@ namespace GeometricProcessingPipeline
 		};
 
 		ClusteringParams params;
+
+		// [Setters]
+		OperatorClusteringComplex* SetSearchRadiusMult(float val) { params.searchRadiusMult = val; return this; }
+		OperatorClusteringComplex* SetAngleThreshold(float val) { params.angleThreshold = val; return this; }
+		OperatorClusteringComplex* SetPlaneOffsetThreshold(float val) { params.planeOffsetThreshold = val; return this; }
+		OperatorClusteringComplex* SetColorThreshold(float val) { params.colorThreshold = val; return this; }
+		OperatorClusteringComplex* SetCurvatureDiffThreshold(float val) { params.curvatureDiffThreshold = val; return this; }
+		OperatorClusteringComplex* SetUseDeepLearningClasses(bool val) { params.useDeepLearningClasses = val; return this; }
 
 		std::vector<int> pointClusterIds;
 		std::vector<float> pointCurvatures;
@@ -1347,7 +1412,7 @@ namespace GeometricProcessingPipeline
 			}
 		};
 
-		virtual void Process(int pipelineIndex) override;		
+		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 	};
 
@@ -1359,11 +1424,15 @@ namespace GeometricProcessingPipeline
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
+		// [Setters]
+		OperatorCurvatureEstimation* SetCurvatureThreshold(float th) { curvatureThreshold = th; return this; }
+		OperatorCurvatureEstimation* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorCurvatureEstimation* SetSearchRadiusScale(float scale) { searchRadiusScale = scale; return this; }
+
 	private:
 		float curvatureThreshold = 0.1f;
 		int neighborSearchOffset = 3;
 		float searchRadiusScale = 5.0f;
-		float visualScale = 5.0f;
 
 		std::vector<float> curvatures;
 
@@ -1398,6 +1467,12 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
+
+		// [Setters]
+		OperatorCurvatureEstimationAppliedNormal* SetCurvatureThreshold(float th) { curvatureThreshold = th; return this; }
+		OperatorCurvatureEstimationAppliedNormal* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorCurvatureEstimationAppliedNormal* SetSearchRadiusScale(float scale) { searchRadiusScale = scale; return this; }
+		OperatorCurvatureEstimationAppliedNormal* SetVisualScale(float scale) { visualScale = scale; return this; }
 
 	private:
 		float curvatureThreshold = 0.1f;
@@ -1438,6 +1513,10 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
+
+		// [Setters]
+		OperatorCurvatureDivergence* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorCurvatureDivergence* SetVisualizationScale(float scale) { visualizationScale = scale; return this; }
 
 	private:
 		std::vector<float> curvatures;
@@ -1493,6 +1572,45 @@ namespace GeometricProcessingPipeline
 		}
 	};
 
+	class OperatorCurvatureDeviation : public IGeometricProcessingOperator<SparseGrid>
+	{
+	public:
+		OperatorCurvatureDeviation(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+
+		virtual void Process(int pipelineIndex) override;
+		virtual void Visualize() override;
+		void VisualizeHeatmap();
+		void VisualizeMarker();
+
+		inline float GetDeviationMean() const { return deviationMean; }
+		inline float GetDeviationStdDev() const { return deviationStdDev; }
+		inline const std::vector<float>& GetDeviations() const { return deviations; }
+
+		// [Method Chaining Setters]
+		OperatorCurvatureDeviation* SetSearchRadiusMultiplier(float mult) { searchRadiusMultiplier = mult; return this; }
+		OperatorCurvatureDeviation* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
+		OperatorCurvatureDeviation* SetVisualizationSigma(float sigma) { visualizationSigma = sigma; return this; }
+		OperatorCurvatureDeviation* SetDeviationThreshold(float threshold) { deviationThreshold = threshold; return this; }
+
+	private:
+		// Parameters
+		float searchRadiusMultiplier = 2.0f;
+		int neighborSearchOffset = 1;
+		float visualizationSigma = 3.0f;
+
+		// Data
+		std::vector<float> curvatures;
+		std::vector<float> deviations;
+
+		// Statistics
+		float deviationMean = 0.0f;
+		float deviationStdDev = 0.0f;
+		float deviationThreshold = 0.5f;
+
+		// Helper
+		inline Eigen::Vector3f ComputeEigenValuesSymmetric(const Eigen::Matrix3f& M);
+	};
+
 	class OperatorMeshGeneration : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
@@ -1500,18 +1618,20 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
-		
+
 		void ExportPLY(const std::string& filename);
 
 		inline float GetMeshVoxelSize() const { return meshVoxelSize; }
-		inline void SetMeshVoxelSize(float size) { meshVoxelSize = size; }
-
-		inline void SetShowMesh(bool show) { showMesh = show; }
-		inline void SetShowHoles(bool show) { showHoles = show; }
-		inline void SetDetectHoles(bool detect) { detectHoles = detect; }
 
 		inline std::vector<Triangle>& GetTriangles() { return meshGenerator.triangles; }
 		inline const std::vector<Triangle>& GetTriangles() const { return meshGenerator.triangles; }
+
+		// [Setters]
+		OperatorMeshGeneration* SetMeshVoxelSize(float size) { meshVoxelSize = size; return this; }
+		OperatorMeshGeneration* SetExportFilename(const std::string& filename) { exportFilename = filename; return this; }
+		OperatorMeshGeneration* SetShowMesh(bool show) { showMesh = show; return this; }
+		OperatorMeshGeneration* SetShowHoles(bool show) { showHoles = show; return this; }
+		OperatorMeshGeneration* SetDetectHoles(bool detect) { detectHoles = detect; return this; }
 
 	private:
 		float meshVoxelSize = Configuration::voxelSize;
@@ -1533,11 +1653,13 @@ namespace GeometricProcessingPipeline
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
-		
+
 		void SetReferenceMesh(const std::vector<Triangle>& meshTriangles);
 
-		inline void SetThresholdMultiplier(float mult) { thresholdMultiplier = mult; }
 		inline float GetAverageDistance() const { return averageDistance; }
+
+		
+		inline OperatorMeshDistanceFilter* SetThresholdMultiplier(float mult) { thresholdMultiplier = mult; return this; }
 
 	private:
 		std::vector<Triangle> referenceMesh;
@@ -1562,9 +1684,9 @@ namespace GeometricProcessingPipeline
 		Eigen::Vector3f triGridMin = Eigen::Vector3f::Zero();
 
 		void BuildTriangleGrid();
-		
+
 		float GetClosestDistanceFromMesh(const Eigen::Vector3f& p);
-		
+
 		float SqDistPointTriangle(const Eigen::Vector3f& p, const Triangle& tri);
 	};
 }
