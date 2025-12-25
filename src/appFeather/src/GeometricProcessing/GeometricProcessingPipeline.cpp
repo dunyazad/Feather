@@ -6171,6 +6171,7 @@ namespace GeometricProcessingPipeline
 		std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
 			{
 				const Eigen::Vector3f& p = currentPointCloud->positions[i];
+				const Eigen::Vector3f& n = currentPointCloud->normals[i]; // 현재 점의 Normal
 
 				// 이웃 수집
 				std::vector<int> neighbors;
@@ -6191,6 +6192,17 @@ namespace GeometricProcessingPipeline
 							int curr = it->second;
 							while (curr != -1) {
 								if (curr != i) {
+									// [Ignore Opposite Normals Check]
+									// 법선 방향이 반대인 경우(내적이 음수) 이웃 계산에서 제외
+									if (ignoreOppositeNormals)
+									{
+										if (n.dot(currentPointCloud->normals[curr]) < 0.0f)
+										{
+											curr = spatialPartitioning->nextPoint[curr];
+											continue;
+										}
+									}
+
 									if ((p - currentPointCloud->positions[curr]).squaredNorm() <= searchRadiusSq) {
 										neighbors.push_back(curr);
 										centroid += currentPointCloud->positions[curr];
@@ -6240,6 +6252,7 @@ namespace GeometricProcessingPipeline
 		std::for_each(std::execution::par, indices.begin(), indices.end(), [&](int i)
 			{
 				const Eigen::Vector3f& p = currentPointCloud->positions[i];
+				const Eigen::Vector3f& n = currentPointCloud->normals[i]; // 현재 점의 Normal
 				float myCurv = curvatures[i];
 
 				float diffSum = 0.0f;
@@ -6259,6 +6272,17 @@ namespace GeometricProcessingPipeline
 							int curr = it->second;
 							while (curr != -1) {
 								if (curr != i) {
+									// [Ignore Opposite Normals Check]
+									// 편차 계산 시에도 반대 방향 법선은 제외 (얇은 벽 등의 간섭 방지)
+									if (ignoreOppositeNormals)
+									{
+										if (n.dot(currentPointCloud->normals[curr]) < 0.0f)
+										{
+											curr = spatialPartitioning->nextPoint[curr];
+											continue;
+										}
+									}
+
 									float distSq = (p - currentPointCloud->positions[curr]).squaredNorm();
 									if (distSq <= searchRadiusSq && distSq > 1e-8f) {
 										float dist = std::sqrt(distSq);
@@ -6279,7 +6303,7 @@ namespace GeometricProcessingPipeline
 				{
 					deviations[i] = diffSum / weightSum;
 
-					if(deviations[i] > deviationThreshold)
+					if (deviations[i] > deviationThreshold)
 					{
 						currentPointCloud->marks[i] = 1;
 					}

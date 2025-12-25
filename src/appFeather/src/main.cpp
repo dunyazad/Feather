@@ -20,7 +20,7 @@ namespace GPP = GeometricProcessingPipeline;
 #define OPERATOR_PARAMETER(operatorName, parameter) pipeline.AddOperator<GPP::operatorName>(#operatorName, parameter);
 #define EXECUTE_AND_VISUALIZE_RETURN() { pipeline.Execute(); pipeline.VisualizeLast(); return; }
 
-std::string plyFilename = "D:\\Temp\\PLY\\Compound_E.ply";
+std::string plyFilename = "D:\\Temp\\PLY\\Compound_G.ply";
 
 void LoadPointCloudFromPLY(const std::string& filename, GPP::PointCloud& pointCloud)
 {
@@ -490,15 +490,18 @@ int main(int argc, char** argv)
                         OPERATOR(OperatorStorePointCloud);
 
                         OPERATOR(OperatorCurvatureDeviation)->
+							SetIgnoreOppositeNormals(true)->
                             SetNeighborSearchOffset(1)->
                             SetSearchRadiusMultiplier(0.3333333f)->
-                            SetDeviationThreshold(0.06f);
+                            SetDeviationThreshold(0.07f);
 
                         OPERATOR(OperatorFilterMarked);
 
-                        OPERATOR(OperatorClustering)->SetSearchRadiusMultiplier(0.3f);
+                        OPERATOR(OperatorClustering)->SetSearchRadiusMultiplier(0.35f);
 
                         OPERATOR(OperatorFilterLeaveLargestOnly);
+
+                        //OPERATOR(OperatorPointCloudSaver)->SetPLYFilename("D:\\Temp\\PLY\\Compound_G_Filtered.ply");
 
                         OPERATOR(OperatorComparePointCloudUsingDistance);
 
@@ -507,6 +510,7 @@ int main(int argc, char** argv)
                         OPERATOR(OperatorClustering)->SetSearchRadiusMultiplier(0.3f);
 
                         OPERATOR(OperatorFilterLeaveLargestOnly);
+
 
                         OPERATOR(OperatorComparePointCloudUsingDistance);
 

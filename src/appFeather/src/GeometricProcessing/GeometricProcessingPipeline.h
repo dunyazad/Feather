@@ -1591,12 +1591,14 @@ namespace GeometricProcessingPipeline
 		OperatorCurvatureDeviation* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
 		OperatorCurvatureDeviation* SetVisualizationSigma(float sigma) { visualizationSigma = sigma; return this; }
 		OperatorCurvatureDeviation* SetDeviationThreshold(float threshold) { deviationThreshold = threshold; return this; }
+		OperatorCurvatureDeviation* SetIgnoreOppositeNormals(bool ignore) { ignoreOppositeNormals = ignore; return this; }
 
 	private:
 		// Parameters
 		float searchRadiusMultiplier = 2.0f;
 		int neighborSearchOffset = 1;
 		float visualizationSigma = 3.0f;
+		bool ignoreOppositeNormals = true;
 
 		// Data
 		std::vector<float> curvatures;
