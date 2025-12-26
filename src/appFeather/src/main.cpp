@@ -16,8 +16,6 @@ namespace GPP = GeometricProcessingPipeline;
 
 #include <Eigen/Core>
 
-#define OPERATOR(operatorName) pipeline.AddOperator<GPP::operatorName>(#operatorName)
-#define OPERATOR_PARAMETER(operatorName, parameter) pipeline.AddOperator<GPP::operatorName>(#operatorName, parameter);
 #define EXECUTE_AND_VISUALIZE_RETURN() { pipeline.Execute(); pipeline.VisualizeLast(); return; }
 
 std::string plyFilename = "D:\\Temp\\PLY\\Compound_G.ply";
@@ -89,7 +87,7 @@ void LoadPointCloudFromPLY(const std::string& filename, GPP::PointCloud& pointCl
 
             renderable->AddInstanceColor({ r, g, b, a });
 
-			pointCloud.colors[i] = Eigen::Vector3f(r, g, b);
+			pointCloud.SetColor(i, r, g, b);
         }
         else
         {
@@ -99,14 +97,14 @@ void LoadPointCloudFromPLY(const std::string& filename, GPP::PointCloud& pointCl
 
             renderable->AddInstanceColor({ r, g, b, 1.0f });
 
-            pointCloud.colors[i] = Eigen::Vector3f(r, g, b);
+            pointCloud.SetColor(i, r, g, b);
         }
 
-		pointCloud.positions[i] = Eigen::Vector3f(px, py, pz);
-		pointCloud.normals[i] = Eigen::Vector3f(nx, ny, nz);
+		pointCloud.SetPosition(i, px, py, pz);
+		pointCloud.SetNormal(i, nx, ny, nz);
         if (false == ply.GetDeepLearningClasses().empty())
         {
-            pointCloud.pointDeepLearningClassIDs[i] = ply.GetDeepLearningClasses()[i];
+            pointCloud.SetPointDeepLearningClassID(i, ply.GetDeepLearningClasses()[i]);
         }
 
         glm::mat4 tm = glm::identity<glm::mat4>();
@@ -124,10 +122,6 @@ void LoadPointCloudFromPLY(const std::string& filename, GPP::PointCloud& pointCl
         renderable->AddInstanceTransform(tm);
         renderable->IncreaseNumberOfInstances();
     }
-
-	auto [mx, my, mz] = ply.GetAABBMin();
-	auto [Mx, My, Mz] = ply.GetAABBMax();
-    pointCloud.aabb = Eigen::AABB{ Eigen::Vector3f(mx, my, mz), Eigen::Vector3f(Mx, My, Mz) };
 }
 
 int main(int argc, char** argv)
@@ -339,14 +333,17 @@ int main(int argc, char** argv)
 
                 Eigen::Ray ray{ rayOrigin, rayDir };
 
-                auto result = pipeline.GetSparseGrid()->PickBruteForce(pipeline.GetCurrentPointCloud()->positions, ray, GeometricProcessingPipeline::Configuration::pointVisualizationRadius);
+                auto result = pipeline.GetSparseGrid()->PickBruteForce(
+                    pipeline.GetCurrentPointCloud()->GetPositions(),
+                    ray,
+                    GeometricProcessingPipeline::Configuration::pointVisualizationRadius);
 
                 if (result.hasHit)
                 {
                     VD::Clear("PickedPoint");
                     VD::Clear("PickedCell");
 
-                    auto p = pipeline.GetCurrentPointCloud()->positions[result.pointIndex];
+                    auto p = pipeline.GetCurrentPointCloud()->GetPosition(result.pointIndex);
                     //VD::AddSphere("PickedPoint", p, GeometricProcessingPipeline::Configuration::pointVisualizationRadius * 1.1f, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
 
                     if (Feather.IsKeyPressed(GLFW_KEY_LEFT_CONTROL) || Feather.IsKeyPressed(GLFW_KEY_RIGHT_CONTROL))
@@ -480,39 +477,73 @@ int main(int argc, char** argv)
             }
 #endif // 0
 
-
             std::thread([&]()
                 {
-                    OPERATOR(OperatorPointCloudLoader)->SetPLYFilename(plyFilename);
-
-#pragma region Working
                     {
-                        OPERATOR(OperatorStorePointCloud);
+                        pipeline.LoadPointCloudFromPLYFile()->SetPLYFilename(plyFilename);
 
-                        OPERATOR(OperatorCurvatureDeviation)->
+                        pipeline.StorePointCloud();
+
+                        //pipeline.CurvatureEstimationAppliedNormal();
+
+                        pipeline.SOR();
+
+						//pipeline.ShowMarks();
+
+                        //pipeline.CurvatureEstimationAppliedNormal();
+
+                        //pipeline.CurvatureDeviation()->
+                        //    SetIgnoreOppositeNormals(true)->
+                        //    SetNeighborSearchOffset(1)->
+                        //    SetSearchRadiusMultiplier(0.3333333f)->
+                        //    SetDeviationThreshold(0.07f);
+
+                        EXECUTE_AND_VISUALIZE_RETURN();
+                    }
+
+                    {
+                        pipeline.StorePointCloud();
+
+						pipeline.CurvatureEstimationAppliedNormal();
+
+                        EXECUTE_AND_VISUALIZE_RETURN();
+
+                        pipeline.CurvatureDeviation()->
+                            SetIgnoreOppositeNormals(true)->
+                            SetNeighborSearchOffset(1)->
+                            SetSearchRadiusMultiplier(0.3333333f)->
+                            SetDeviationThreshold(0.07f);
+
+                        EXECUTE_AND_VISUALIZE_RETURN();
+                    }
+
+#pragma region Working => Need to be refined
+                    {
+                        pipeline.StorePointCloud();
+
+                        pipeline.CurvatureDeviation()->
 							SetIgnoreOppositeNormals(true)->
                             SetNeighborSearchOffset(1)->
                             SetSearchRadiusMultiplier(0.3333333f)->
                             SetDeviationThreshold(0.07f);
 
-                        OPERATOR(OperatorFilterMarked);
+                        pipeline.FilterMarked();
 
-                        OPERATOR(OperatorClustering)->SetSearchRadiusMultiplier(0.35f);
+                        pipeline.Clustering()->SetSearchRadiusMultiplier(0.35f);
 
-                        OPERATOR(OperatorFilterLeaveLargestOnly);
+                        pipeline.FilterLeaveLargestOnly();
 
-                        //OPERATOR(OperatorPointCloudSaver)->SetPLYFilename("D:\\Temp\\PLY\\Compound_G_Filtered.ply");
+						//pipeline.SavePointCloudToPLYFile()->SetPLYFilename("D:\\Temp\\PLY\\Compound_G_Filtered.ply");
 
-                        OPERATOR(OperatorComparePointCloudUsingDistance);
+                        pipeline.ComparePointCloudUsingDistance();
 
                         EXECUTE_AND_VISUALIZE_RETURN();
 
-                        OPERATOR(OperatorClustering)->SetSearchRadiusMultiplier(0.3f);
+                        pipeline.Clustering()->SetSearchRadiusMultiplier(0.3f);
 
-                        OPERATOR(OperatorFilterLeaveLargestOnly);
+                        pipeline.FilterLeaveLargestOnly();
 
-
-                        OPERATOR(OperatorComparePointCloudUsingDistance);
+                        pipeline.ComparePointCloudUsingDistance();
 
                         EXECUTE_AND_VISUALIZE_RETURN();
                     }
@@ -520,9 +551,9 @@ int main(int argc, char** argv)
 
 #pragma region Candidate
                     {
-                        OPERATOR(OperatorStorePointCloud);
+                        pipeline.StorePointCloud();
 
- /*                       OPERATOR(OperatorCurvatureDeviation)->
+ /*                       pipeline.CurvatureDeviation()->
                             SetNeighborSearchOffset(1)->
                             SetSearchRadiusMultiplier(0.3333333f)->
                             SetDeviationThreshold(0.0125f);
@@ -531,37 +562,37 @@ int main(int argc, char** argv)
 
                         for (size_t i = 0; i < 1; i++)
                         {
-                            OPERATOR(OperatorCurvatureDeviation)->
+                            pipeline.CurvatureDeviation()->
                             SetNeighborSearchOffset(1)->
                             SetSearchRadiusMultiplier(0.3333333f)->
                             SetDeviationThreshold(0.0125f);
 
-                            OPERATOR(OperatorLocalPlaneFitting)->
+                            pipeline.LocalPlaneFitting()->
 								SetNeighborSearchOffset(1)->
                                 //SetSearchRadiusMultiplier(0.333333f)->
                                 SetMarkedPointsOnly(true)->
                                 SetUpdatePositions(true);
 
-                            OPERATOR(OperatorClustering)->SetUseMarksForClustering(false);
+                            pipeline.Clustering()->SetUseMarksForClustering(false);
 
-                            OPERATOR(OperatorFilterLeaveLargestOnly);
+                            pipeline.FilterLeaveLargestOnly();
 
-							OPERATOR(OperatorPointCloudSaver)->SetPLYFilename("D:\\Temp\\PLY\\Compound_E_Filtered.ply");
+							pipeline.SavePointCloudToPLYFile()->SetPLYFilename("D:\\Temp\\PLY\\Compound_E_Filtered.ply");
 
-                            OPERATOR(OperatorComparePointCloudUsingDistance);
+                            pipeline.ComparePointCloudUsingDistance();
 
-                            //OPERATOR(OperatorSOR)->SetStdDevMultiplier(2.0f)->SetKNeighbors(15);
+                            //pipeline.SOR()->SetStdDevMultiplier(2.0f)->SetKNeighbors(15);
 
-                            //OPERATOR(OperatorLocalPlaneFitting)->
+                            //pipeline.LocalPlaneFitting()->
                             //    SetNeighborSearchOffset(3)->
                             //    SetSearchRadiusMultiplier(5.0f)->
                             //    SetMarkedPointsOnly(true)->
                             //    SetUpdatePositions(true);
 
-                            //OPERATOR(OperatorSOR)->SetStdDevMultiplier(2.0f)->SetKNeighbors(10);
+                            //pipeline.SOR()->SetStdDevMultiplier(2.0f)->SetKNeighbors(10);
                         }
 
-                        //OPERATOR(OperatorCurvatureDeviation)->
+                        //pipeline.CurvatureDeviation()->
                         //    SetNeighborSearchOffset(1)->
                         //    SetSearchRadiusMultiplier(0.3333333f)->
                         //    SetDeviationThreshold(0.0125f);
@@ -570,10 +601,9 @@ int main(int argc, char** argv)
                     }
 #pragma endregion
 
-
 #pragma region Candidate
                     {
-                        OPERATOR(OperatorCurvatureDeviation)->
+                        pipeline.CurvatureDeviation()->
                             SetNeighborSearchOffset(1)->
                             SetSearchRadiusMultiplier(0.3333333f)->
                             SetVisualizationSigma(5.0f);
@@ -582,17 +612,17 @@ int main(int argc, char** argv)
 
 #pragma region Candidate
                     {
-                        OPERATOR(OperatorStorePointCloud);
+                        pipeline.StorePointCloud();
 
-                        //OPERATOR(OperatorFilterETC);
+                        //pipeline.FilterETC();
 
-                        OPERATOR(OperatorClustering);
+                        pipeline.Clustering();
 
-                        OPERATOR(OperatorCurvatureEstimationAppliedNormal);
+                        pipeline.CurvatureEstimationAppliedNormal();
 
-                        OPERATOR(OperatorNormalDivergence);
+                        pipeline.NormalDivergence();
 
-                        OPERATOR(OperatorShowMarks);
+                        pipeline.ShowMarks();
 
                         EXECUTE_AND_VISUALIZE_RETURN();
                     }

@@ -176,3 +176,92 @@ std::string Miliseconds(const std::chrono::steady_clock::time_point beginTime, c
 #define alogt(tag, ...) printf("\033[38;5;1m\033[48;5;15m [%d] (^(OO)^) /V/\033[0m\t" tag, __VA_ARGS__)
 
 #define aerr(...) printf("\033[38;5;15m\033[48;5;1m(x(OO)x) /V/ [ERROR] @%s:%d\033[0m\t" __VA_ARGS__, __FILE__, __LINE__)
+
+
+namespace TypeUtils
+{
+	// [내부용] 맹글링된 이름을 사람이 읽을 수 있게 변환
+	static std::string Demangle(const char* name)
+	{
+#if defined(__GNUC__) || defined(__clang__)
+		int status = 0;
+		std::unique_ptr<char, void(*)(void*)> res{
+			abi::__cxa_demangle(name, nullptr, nullptr, &status),
+			std::free
+		};
+		return (status == 0) ? res.get() : name;
+#else
+		// MSVC: "class " 등의 접두사 제거
+		std::string sName = name;
+		const std::string prefixes[] = { "class ", "struct ", "enum " };
+		for (const auto& prefix : prefixes) {
+			if (sName.find(prefix) == 0) {
+				return sName.substr(prefix.length());
+			}
+		}
+		return sName;
+#endif
+	}
+
+	// [내부용] 전체 이름에서 '::' 뒤의 짧은 이름만 추출
+	static std::string ExtractShortName(const std::string& fullName)
+	{
+		size_t lastColon = fullName.find_last_of(':');
+		if (lastColon != std::string::npos && lastColon + 1 < fullName.length()) {
+			return fullName.substr(lastColon + 1);
+		}
+		return fullName;
+	}
+
+	// ------------------------------------------------------------------------
+	// [사용자 호출용 1] 타입 T (템플릿 등에서 사용)
+	// ------------------------------------------------------------------------
+	template <typename T>
+	static std::string GetShortTypeName()
+	{
+		return ExtractShortName(Demangle(typeid(T).name()));
+	}
+
+	// ------------------------------------------------------------------------
+	// [사용자 호출용 2] 일반 객체 참조 (RTTI 작동)
+	// 예: GetRuntimeClassName(*ptr)
+	// ------------------------------------------------------------------------
+	template <typename T>
+	static std::string GetRuntimeClassName(const T& obj)
+	{
+		// obj가 Polymorphic(가상함수 보유)하다면 실제 자식 클래스 이름 반환
+		return ExtractShortName(Demangle(typeid(obj).name()));
+	}
+
+	// ------------------------------------------------------------------------
+	// [사용자 호출용 3] Raw Pointer 오버로딩
+	// 예: GetRuntimeClassName(ptr)
+	// ------------------------------------------------------------------------
+	template <typename T>
+	static std::string GetRuntimeClassName(const T* obj)
+	{
+		if (!obj) return "nullptr";
+		return GetRuntimeClassName(*obj); // 역참조하여 객체 버전 호출
+	}
+
+	// ------------------------------------------------------------------------
+	// [사용자 호출용 4] std::shared_ptr 오버로딩
+	// 예: GetRuntimeClassName(sharedPtr)
+	// ------------------------------------------------------------------------
+	template <typename T>
+	static std::string GetRuntimeClassName(const std::shared_ptr<T>& obj)
+	{
+		if (!obj) return "nullptr";
+		return GetRuntimeClassName(*obj); // 역참조하여 객체 버전 호출
+	}
+
+	// ------------------------------------------------------------------------
+	// [사용자 호출용 5] std::unique_ptr 오버로딩
+	// ------------------------------------------------------------------------
+	template <typename T>
+	static std::string GetRuntimeClassName(const std::unique_ptr<T>& obj)
+	{
+		if (!obj) return "nullptr";
+		return GetRuntimeClassName(*obj); // 역참조하여 객체 버전 호출
+	}
+}

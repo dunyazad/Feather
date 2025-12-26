@@ -107,6 +107,76 @@ namespace GeometricProcessingPipeline
 	class PointCloud
 	{
 	public:
+		void Clear();
+		void Resize(size_t newSize);
+		[[nodiscard]] PointCloud Clone() const;
+		void CopyFrom(const PointCloud& src);
+		void CopyTo(PointCloud& dst) const;
+		void FromPLY(const std::string& plyFileName);
+		void FromPLY(const PLYFormat& ply);
+		void ToPLY(const std::string& plyFileName) const;
+		void ToPLY(PLYFormat& ply) const;
+
+		void UpdateAABB();
+
+		inline size_t Size() const { return numberOfElements; }
+		
+		inline const Eigen::Vector3f& GetPosition(size_t index) const { return positions[index]; }
+		inline void SetPosition(size_t index, const Eigen::Vector3f& pos) { positions[index] = pos; aabb.Expand(pos); }
+		inline void SetPosition(size_t index, float x, float y, float z) { positions[index] = Eigen::Vector3f(x, y, z); aabb.Expand(positions[index]); }
+
+		inline const std::vector<Eigen::Vector3f>& GetPositions() const { return positions; }
+		inline std::vector<Eigen::Vector3f>& GetPositions() { return positions; }
+		inline void SetPositions(const std::vector<Eigen::Vector3f>& posList)
+		{
+			Resize(posList.size());
+			positions = posList;
+			UpdateAABB();
+		}
+
+		inline const Eigen::Vector3f& GetNormal(size_t index) const { return normals[index]; }
+		inline void SetNormal(size_t index, const Eigen::Vector3f& norm) { normals[index] = norm; }
+		inline void SetNormal(size_t index, float x, float y, float z) { normals[index] = Eigen::Vector3f(x, y, z); }
+
+		inline const std::vector<Eigen::Vector3f>& GetNormals() const { return normals; }
+		inline std::vector<Eigen::Vector3f>& GetNormals() { return normals; }
+		inline void SetNormals(const std::vector<Eigen::Vector3f>& normList) { normals = normList; }
+
+		inline const Eigen::Vector3f& GetColor(size_t index) const { return colors[index]; }
+		inline void SetColor(size_t index, const Eigen::Vector3f& color) { colors[index] = color; }
+		inline void SetColor(size_t index, float r, float g, float b) { colors[index] = Eigen::Vector3f(r, g, b); }
+
+		inline const std::vector<Eigen::Vector3f>& GetColors() const { return colors; }
+		inline std::vector<Eigen::Vector3f>& GetColors() { return colors; }
+		inline void SetColors(const std::vector<Eigen::Vector3f>& colorList) { colors = colorList; }
+
+		inline int GetPointDeepLearningClassID(size_t index) const { return pointDeepLearningClassIDs[index]; }
+		inline void SetPointDeepLearningClassID(size_t index, int dlClassID) { pointDeepLearningClassIDs[index] = dlClassID; }
+
+		inline const std::vector<int>& GetPointDeepLearningClassIDs() const { return pointDeepLearningClassIDs; }
+		inline std::vector<int>& GetPointDeepLearningClassIDs() { return pointDeepLearningClassIDs; }
+		inline void SetPointDeepLearningClassIDs(const std::vector<int>& dlClassIDList) { pointDeepLearningClassIDs = dlClassIDList; }
+
+		inline int GetPointClusterID(size_t index) const { return pointClusterIDs[index]; }
+		inline void SetPointClusterID(size_t index, int clusterID) { pointClusterIDs[index] = clusterID; }
+
+		inline const std::vector<int>& GetPointClusterIDs() const { return pointClusterIDs; }
+		inline std::vector<int>& GetPointClusterIDs() { return pointClusterIDs; }
+		inline void SetPointClusterIDs(const std::vector<int>& clusterIDList) { pointClusterIDs = clusterIDList; }
+
+		inline int GetMark(size_t index) const { return marks[index]; }
+		inline void SetMark(size_t index, int mark) { marks[index] = mark; }
+
+		inline const std::vector<int>& GetMarks() const { return marks; }
+		inline std::vector<int>& GetMarks() { return marks; }
+		inline void SetMarks(const std::vector<int>& markList) { marks = markList; }
+		
+		inline const Eigen::AABB& GetAABB() const { return aabb; }
+		
+		const std::vector<std::pair<int, int>>& GetSortedClusters() const { return sortedClusters; }
+		std::vector<std::pair<int, int>>& GetSortedClusters() { return sortedClusters; }
+
+	private:
 		size_t numberOfElements = 0;
 		std::vector<Eigen::Vector3f> positions;
 		std::vector<Eigen::Vector3f> normals;
@@ -118,16 +188,6 @@ namespace GeometricProcessingPipeline
 		Eigen::AABB aabb;
 
 		std::vector<std::pair<int, int>> sortedClusters;
-
-		void Clear();
-		void Resize(size_t newSize);
-		[[nodiscard]] PointCloud Clone() const;
-		void CopyFrom(const PointCloud& src);
-		void CopyTo(PointCloud& dst) const;
-		void FromPLY(const std::string& plyFileName);
-		void FromPLY(const PLYFormat& ply);
-		void ToPLY(const std::string& plyFileName) const;
-		void ToPLY(PLYFormat& ply) const;
 	};
 
 	class Voxel
@@ -255,51 +315,22 @@ namespace GeometricProcessingPipeline
 		void DetectHoles();
 	};
 
-	struct GeometricProcessingOperatorParameter
+	namespace Operators
 	{
-		std::map<std::string, std::any> parameters;
-
-		template<typename T>
-		void SetParameter(const std::string& name, const T& value)
-		{
-			parameters[name] = value;
-		}
-
-		template<typename T>
-		T GetParameter(const std::string& name, const T& defaultValue) const
-		{
-			auto it = parameters.find(name);
-			if (it != parameters.end())
-			{
-				try
-				{
-					return std::any_cast<T>(it->second);
-				}
-				catch (const std::bad_any_cast&)
-				{
-					return defaultValue;
-				}
-			}
-			return defaultValue;
-		}
-
-		bool needToDeleteSpatialPartitioning = false;
-		bool needToRebuildSpatialPartitioning = false;
-		bool needToStorePointCloud = false;
-	};
-
 	class IGeometricProcessingOperatorBase {};
 
 	template<typename SpatialPartitioningType>
 	class IGeometricProcessingOperator : public IGeometricProcessingOperatorBase
 	{
 	public:
-		IGeometricProcessingOperator(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
-			: pipeline(pipeline), parameter(parameter) {
+		IGeometricProcessingOperator(Pipeline* pipeline)
+			: pipeline(pipeline)
+		{
 		}
+
 		virtual ~IGeometricProcessingOperator()
 		{
-			if (parameter.needToDeleteSpatialPartitioning)
+			if (needToDeleteSpatialPartitioning)
 			{
 				SAFE_DELETE(spatialPartitioning);
 			}
@@ -319,106 +350,36 @@ namespace GeometricProcessingPipeline
 
 		inline SpatialPartitioningType* GetSpatialPartitioning() const { return spatialPartitioning; }
 
-		inline GeometricProcessingOperatorParameter& GetParameter() { return parameter; }
-
 		inline int GetPipelineIndex() const { return pipelineIndex; }
 
-		inline void SetGeometricProcessingOperatorParameter(const GeometricProcessingOperatorParameter& param) { parameter = param; }
 		inline const std::vector<int>& GetPointTags() const { return pointTags; }
 		inline void SetPointTags(const std::vector<int>& tags) { pointTags = tags; }
 
+		inline bool NeedToDeleteSpatialPartitioning() const { return needToDeleteSpatialPartitioning; }
+		inline void SetNeedToDeleteSpatialPartitioning(bool needToDelete) { needToDeleteSpatialPartitioning = needToDelete; }
+
+		inline bool NeedToRebuildSpatialPartitioning() const { return needToRebuildSpatialPartitioning; }
+		inline void SetNeedToRebuildSpatialPartitioning(bool needToRebuild) { needToRebuildSpatialPartitioning = needToRebuild; }
+
+		inline bool SetIncrementalMarking(bool incremental) { incrementalMarking = incremental; return incrementalMarking; }
 	protected:
 		Pipeline* pipeline = nullptr;
-		GeometricProcessingOperatorParameter parameter;
 		int pipelineIndex = -1;
 		SpatialPartitioningType* spatialPartitioning = nullptr;
 		std::vector<int> pointTags;
 		std::shared_ptr<PointCloud> cachedPointCloud = nullptr;
-	};
 
-	class Pipeline
-	{
-	public:
-		Pipeline() = default;
-		~Pipeline();
+		bool needToDeleteSpatialPartitioning = false;
+		bool needToRebuildSpatialPartitioning = false;
 
-		void BuildSparseGrid(PointCloud& pointCloud);
-
-		template<typename OperatorType>
-		std::shared_ptr<OperatorType> AddOperator(const std::string& tag)
-		{
-			auto op = std::make_shared<OperatorType>(this, GeometricProcessingOperatorParameter());
-			operators.emplace_back(std::make_tuple(tag, op));
-			return op;
-		}
-
-		template<typename OperatorType>
-		std::shared_ptr<OperatorType> AddOperator(const std::string& tag, const GeometricProcessingOperatorParameter& parameter)
-		{
-			auto op = std::make_shared<OperatorType>(this, parameter);
-			operators.emplace_back(std::make_tuple(tag, op));
-			return op;
-		}
-
-		void Execute();
-		void VisualizeAll();
-		void VisualizeLast();
-		void Clear();
-
-		int CreatePointCloud();
-		void StorePointCloud();
-		void RestoreInitialPointCloud();
-		void RestoreLastPointCloud();
-
-		inline SparseGrid* GetSparseGrid() const { return sparseGrid; }
-
-		inline std::shared_ptr<PointCloud> GetCurrentPointCloud()
-		{
-			if (-1 == currentPointCloudIndex || currentPointCloudIndex >= pointClouds.size()) return nullptr;
-			else return pointClouds[currentPointCloudIndex];
-		}
-
-		inline std::shared_ptr<PointCloud> GetInitialPointCloud() { return pointClouds.empty() ? nullptr : pointClouds[0]; }
-		inline std::shared_ptr<PointCloud> GetLastPointCloud() { return pointClouds.empty() ? nullptr : pointClouds.back(); }
-		inline std::shared_ptr<PointCloud> GetPointCloud(int index)
-		{
-			if (-1 == index) return GetLastPointCloud();
-			else if (pointClouds.empty()) return nullptr;
-			else return pointClouds[index];
-		}
-
-		inline std::shared_ptr<IGeometricProcessingOperator<SparseGrid>> GetOperator(int index)
-		{
-			if (-1 == index)
-			{
-				auto& [opTag, op] = operators.back();
-				return op;
-			}
-			else if (index >= operators.size())
-			{
-				return nullptr;
-			}
-			else
-			{
-				auto& [opTag, op] = operators[index];
-				return op;
-			}
-		}
-
-	protected:
-		std::vector<std::tuple<std::string, std::shared_ptr<IGeometricProcessingOperator<SparseGrid>>>> operators;
-		SparseGrid* sparseGrid = nullptr;
-		std::vector<Triangle> generatedMeshTriangles;
-
-		std::vector<std::shared_ptr<PointCloud>> pointClouds;
-		int currentPointCloudIndex = -1;
+		bool incrementalMarking = true;
 	};
 
 	template<typename Functor>
 	class OperatorCustom : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorCustom(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+		OperatorCustom(Pipeline* pipeline)
 			: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
 		{
 		}
@@ -447,35 +408,36 @@ namespace GeometricProcessingPipeline
 		}
 	};
 
-	class OperatorPointCloudLoader : public IGeometricProcessingOperator<SparseGrid>
+#pragma region Load/Save - Store/Restore PointCloud
+	class OperatorLoadPointCloudFromPLYFile : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorPointCloudLoader(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorLoadPointCloudFromPLYFile(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
 		inline const std::string& GetPLYFilename() const { return plyFilename; }
 
-		
-		inline OperatorPointCloudLoader* SetPLYFilename(const std::string& filename) { plyFilename = filename; return this; }
+
+		inline OperatorLoadPointCloudFromPLYFile* SetPLYFilename(const std::string& filename) { plyFilename = filename; return this; }
 
 	protected:
 		std::string plyFilename;
 	};
 
-	class OperatorPointCloudSaver : public IGeometricProcessingOperator<SparseGrid>
+	class OperatorSavePointCloudToPLYFile : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorPointCloudSaver(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorSavePointCloudToPLYFile(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
 		inline const std::string& GetPLYFilename() const { return plyFilename; }
 
-		
-		inline OperatorPointCloudSaver* SetPLYFilename(const std::string& filename) { plyFilename = filename; return this; }
+
+		inline OperatorSavePointCloudToPLYFile* SetPLYFilename(const std::string& filename) { plyFilename = filename; return this; }
 
 	protected:
 		std::string plyFilename;
@@ -484,7 +446,7 @@ namespace GeometricProcessingPipeline
 	class OperatorStorePointCloud : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorStorePointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorStorePointCloud(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -493,7 +455,7 @@ namespace GeometricProcessingPipeline
 	class OperatorRestoreInitialPointCloud : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorRestoreInitialPointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorRestoreInitialPointCloud(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -502,16 +464,17 @@ namespace GeometricProcessingPipeline
 	class OperatorRestoreLastPointCloud : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorRestoreLastPointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorRestoreLastPointCloud(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 	};
+#pragma endregion
 
 	class OperatorShowMarks : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorShowMarks(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorShowMarks(Pipeline* pipeline);
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 	};
@@ -519,7 +482,7 @@ namespace GeometricProcessingPipeline
 	class OperatorExpandMarks : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorExpandMarks(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorExpandMarks(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -538,7 +501,7 @@ namespace GeometricProcessingPipeline
 	class OperatorPointCloudVisualization : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorPointCloudVisualization(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorPointCloudVisualization(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -547,25 +510,23 @@ namespace GeometricProcessingPipeline
 	class OperatorSOR : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorSOR(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorSOR(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		// [Method Chaining Setters]
 		OperatorSOR* SetKNeighbors(int k) { kNeighbors = k; return this; }
 		OperatorSOR* SetStdDevMultiplier(float mult) { stdDevMultiplier = mult; return this; }
 		OperatorSOR* SetRemoveOutliers(bool remove) { removeOutliers = remove; return this; }
 
 	private:
-		// Parameters
-		int kNeighbors = 50;           // 주변 이웃 개수 (분석용)
-		float stdDevMultiplier = 1.0f; // 임계값 계수 (Mean + n * StdDev)
-		bool removeOutliers = false;    // true면 실제 데이터 삭제, false면 마킹만
+		int kNeighbors = 50;
+		float stdDevMultiplier = 1.0f;
+		bool removeOutliers = false;
 
 		// Statistics & Data
 		std::vector<float> pointMeanDistances;
-		std::vector<int> outlierIndices; // 시각화용
+		std::vector<int> outlierIndices;
 		float globalMean = 0.0f;
 		float globalStdDev = 0.0f;
 		float distanceThreshold = 0.0f;
@@ -574,7 +535,7 @@ namespace GeometricProcessingPipeline
 	class OperatorPointCloudDensity : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorPointCloudDensity(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorPointCloudDensity(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -601,7 +562,7 @@ namespace GeometricProcessingPipeline
 	class OperatorMeanShift : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorMeanShift(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorMeanShift(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -631,7 +592,7 @@ namespace GeometricProcessingPipeline
 	class OperatorPointCloudLaplacianSmoothing : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorPointCloudLaplacianSmoothing(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorPointCloudLaplacianSmoothing(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -660,7 +621,7 @@ namespace GeometricProcessingPipeline
 	class OperatorKNNSmoothing : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorKNNSmoothing(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorKNNSmoothing(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -685,7 +646,7 @@ namespace GeometricProcessingPipeline
 	class OperatorSurfaceFitting : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorSurfaceFitting(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorSurfaceFitting(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -708,7 +669,7 @@ namespace GeometricProcessingPipeline
 	class OperatorPointDensity : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorPointDensity(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorPointDensity(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -733,7 +694,7 @@ namespace GeometricProcessingPipeline
 	class OperatorFindOverlappingPoints : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorFindOverlappingPoints(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorFindOverlappingPoints(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -752,7 +713,6 @@ namespace GeometricProcessingPipeline
 		int overlappingCount = 0;
 	};
 
-#pragma region Morphological
 	class MorphologyHelper
 	{
 	public:
@@ -774,7 +734,7 @@ namespace GeometricProcessingPipeline
 	class OperatorApplyMorphology : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorApplyMorphology(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorApplyMorphology(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -797,7 +757,7 @@ namespace GeometricProcessingPipeline
 	class OperatorErosionAndClustering : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorErosionAndClustering(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorErosionAndClustering(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -857,13 +817,11 @@ namespace GeometricProcessingPipeline
 
 		std::vector<Eigen::Vector3f> erodedPositions;
 	};
-#pragma endregion
 
-#pragma region About Normal
 	class OperatorNormalDeviation : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorNormalDeviation(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorNormalDeviation(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -889,7 +847,7 @@ namespace GeometricProcessingPipeline
 	class OperatorNormalGradient : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorNormalGradient(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorNormalGradient(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -918,7 +876,7 @@ namespace GeometricProcessingPipeline
 	class OperatorNormalVariance : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorNormalVariance(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorNormalVariance(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -948,7 +906,7 @@ namespace GeometricProcessingPipeline
 	class OperatorNormalDivergence : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorNormalDivergence(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorNormalDivergence(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -968,7 +926,7 @@ namespace GeometricProcessingPipeline
 	class OperatorNormalDivergenceGradient : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorNormalDivergenceGradient(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorNormalDivergenceGradient(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -992,13 +950,12 @@ namespace GeometricProcessingPipeline
 		float gradientMean = 0.0f;
 		float gradientStdDev = 0.0f;
 	};
-#pragma endregion
 
 	template<typename IterateFunctor>
 	class OperatorPointCloudIterator : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorPointCloudIterator(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+		OperatorPointCloudIterator(Pipeline* pipeline)
 			: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
 		{
 		}
@@ -1039,7 +996,7 @@ namespace GeometricProcessingPipeline
 	class OperatorCustomFilter : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorCustomFilter(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter)
+		OperatorCustomFilter(Pipeline* pipeline)
 			: IGeometricProcessingOperator<SparseGrid>(pipeline, parameter)
 		{
 		}
@@ -1126,7 +1083,7 @@ namespace GeometricProcessingPipeline
 	class OperatorFilterLeaveLargestOnly : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorFilterLeaveLargestOnly(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorFilterLeaveLargestOnly(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1135,7 +1092,7 @@ namespace GeometricProcessingPipeline
 	class OperatorFilterMarked : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorFilterMarked(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorFilterMarked(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1144,7 +1101,7 @@ namespace GeometricProcessingPipeline
 	class OperatorFilterUnmarked : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorFilterUnmarked(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorFilterUnmarked(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1153,7 +1110,7 @@ namespace GeometricProcessingPipeline
 	class OperatorFilterETC : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorFilterETC(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorFilterETC(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1162,7 +1119,7 @@ namespace GeometricProcessingPipeline
 	class OperatorLocalPlaneFitting : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorLocalPlaneFitting(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorLocalPlaneFitting(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1202,7 +1159,7 @@ namespace GeometricProcessingPipeline
 	class OperatorCompareSameIndexOrderedPointCloud : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorCompareSameIndexOrderedPointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorCompareSameIndexOrderedPointCloud(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1225,7 +1182,7 @@ namespace GeometricProcessingPipeline
 	class OperatorComparePointCloudUsingDistance : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorComparePointCloudUsingDistance(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorComparePointCloudUsingDistance(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1249,7 +1206,7 @@ namespace GeometricProcessingPipeline
 	class OperatorCompareWithLastPointCloud : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorCompareWithLastPointCloud(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorCompareWithLastPointCloud(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1267,7 +1224,7 @@ namespace GeometricProcessingPipeline
 	class OperatorClustering : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorClustering(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorClustering(Pipeline* pipeline);
 
 		struct AtomicDisjointSet
 		{
@@ -1337,7 +1294,7 @@ namespace GeometricProcessingPipeline
 	class OperatorClusterBorderFinding : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorClusterBorderFinding(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorClusterBorderFinding(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1350,7 +1307,7 @@ namespace GeometricProcessingPipeline
 	class OperatorClusteringComplex : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorClusteringComplex(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorClusteringComplex(Pipeline* pipeline);
 
 		struct ClusteringParams
 		{
@@ -1419,12 +1376,11 @@ namespace GeometricProcessingPipeline
 	class OperatorCurvatureEstimation : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorCurvatureEstimation(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorCurvatureEstimation(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
 
-		// [Setters]
 		OperatorCurvatureEstimation* SetCurvatureThreshold(float th) { curvatureThreshold = th; return this; }
 		OperatorCurvatureEstimation* SetNeighborSearchOffset(int offset) { neighborSearchOffset = offset; return this; }
 		OperatorCurvatureEstimation* SetSearchRadiusScale(float scale) { searchRadiusScale = scale; return this; }
@@ -1463,7 +1419,7 @@ namespace GeometricProcessingPipeline
 	class OperatorCurvatureEstimationAppliedNormal : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorCurvatureEstimationAppliedNormal(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorCurvatureEstimationAppliedNormal(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1509,7 +1465,7 @@ namespace GeometricProcessingPipeline
 	class OperatorCurvatureDivergence : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorCurvatureDivergence(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorCurvatureDivergence(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1543,7 +1499,7 @@ namespace GeometricProcessingPipeline
 						int curr = it->second;
 						while (curr != -1) {
 							if (curr != idx) {
-								if ((p - cachedPointCloud->positions[curr]).squaredNorm() <= rSq) {
+								if ((p - cachedPointCloud->GetPosition(curr)).squaredNorm() <= rSq) {
 									func(curr);
 								}
 							}
@@ -1575,7 +1531,7 @@ namespace GeometricProcessingPipeline
 	class OperatorCurvatureDeviation : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorCurvatureDeviation(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorCurvatureDeviation(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1616,7 +1572,7 @@ namespace GeometricProcessingPipeline
 	class OperatorMeshGeneration : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorMeshGeneration(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorMeshGeneration(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1651,7 +1607,7 @@ namespace GeometricProcessingPipeline
 	class OperatorMeshDistanceFilter : public IGeometricProcessingOperator<SparseGrid>
 	{
 	public:
-		OperatorMeshDistanceFilter(Pipeline* pipeline, const GeometricProcessingOperatorParameter& parameter);
+		OperatorMeshDistanceFilter(Pipeline* pipeline);
 
 		virtual void Process(int pipelineIndex) override;
 		virtual void Visualize() override;
@@ -1690,5 +1646,249 @@ namespace GeometricProcessingPipeline
 		float GetClosestDistanceFromMesh(const Eigen::Vector3f& p);
 
 		float SqDistPointTriangle(const Eigen::Vector3f& p, const Triangle& tri);
+	};
+	}
+
+	class Pipeline
+	{
+	public:
+		Pipeline() = default;
+		~Pipeline();
+
+		void BuildSparseGrid(PointCloud& pointCloud);
+
+		template<typename OperatorType>
+		std::shared_ptr<OperatorType> AddOperator()
+		{
+			auto op = std::make_shared<OperatorType>(this);
+			operators.emplace_back(op);
+			return op;
+		}
+
+		void Execute();
+		void VisualizeAll();
+		void VisualizeLast();
+		void Clear();
+
+		int CreatePointCloud();
+		void StorePointCloud();
+		void RestoreInitialPointCloud();
+		void RestoreLastPointCloud();
+
+		inline SparseGrid* GetSparseGrid() const { return sparseGrid; }
+
+		inline std::shared_ptr<PointCloud> GetCurrentPointCloud()
+		{
+			if (-1 == currentPointCloudIndex || currentPointCloudIndex >= pointClouds.size()) return nullptr;
+			else return pointClouds[currentPointCloudIndex];
+		}
+
+		inline std::shared_ptr<PointCloud> GetInitialPointCloud() { return pointClouds.empty() ? nullptr : pointClouds[0]; }
+		inline std::shared_ptr<PointCloud> GetLastPointCloud() { return pointClouds.empty() ? nullptr : pointClouds.back(); }
+		inline std::shared_ptr<PointCloud> GetPointCloud(int index)
+		{
+			if (-1 == index) return GetLastPointCloud();
+			else if (pointClouds.empty()) return nullptr;
+			else return pointClouds[index];
+		}
+
+		inline std::shared_ptr<Operators::IGeometricProcessingOperator<SparseGrid>> GetOperator(int index)
+		{
+			if (-1 == index)
+			{
+				if (operators.empty()) return nullptr;
+				return operators.back();
+			}
+			else if (index >= operators.size())
+			{
+				return nullptr;
+			}
+			else
+			{
+				return operators[index];
+			}
+		}
+
+		// ------------------------------------------------------------------------
+		// Operator Inline Helpers
+		// ------------------------------------------------------------------------
+
+		// IO & Management
+		inline std::shared_ptr<Operators::OperatorLoadPointCloudFromPLYFile> LoadPointCloudFromPLYFile() {
+			return AddOperator<Operators::OperatorLoadPointCloudFromPLYFile>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorSavePointCloudToPLYFile> SavePointCloudToPLYFile() {
+			return AddOperator<Operators::OperatorSavePointCloudToPLYFile>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorStorePointCloud> StorePointCloudState() {
+			return AddOperator<Operators::OperatorStorePointCloud>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorRestoreInitialPointCloud> RestoreInitialState() {
+			return AddOperator<Operators::OperatorRestoreInitialPointCloud>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorRestoreLastPointCloud> RestoreLastState() {
+			return AddOperator<Operators::OperatorRestoreLastPointCloud>();
+		}
+
+		// Visualization & Marks
+		inline std::shared_ptr<Operators::OperatorShowMarks> ShowMarks() {
+			return AddOperator<Operators::OperatorShowMarks>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorExpandMarks> ExpandMarks() {
+			return AddOperator<Operators::OperatorExpandMarks>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorPointCloudVisualization> VisualizePointCloud() {
+			return AddOperator<Operators::OperatorPointCloudVisualization>();
+		}
+
+		// Smoothing & Density
+		inline std::shared_ptr<Operators::OperatorSOR> SOR() {
+			return AddOperator<Operators::OperatorSOR>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorPointCloudDensity> PointCloudDensity() {
+			return AddOperator<Operators::OperatorPointCloudDensity>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorMeanShift> MeanShift() {
+			return AddOperator<Operators::OperatorMeanShift>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorPointCloudLaplacianSmoothing> LaplacianSmoothing() {
+			return AddOperator<Operators::OperatorPointCloudLaplacianSmoothing>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorKNNSmoothing> KNNSmoothing() {
+			return AddOperator<Operators::OperatorKNNSmoothing>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorSurfaceFitting> SurfaceFitting() {
+			return AddOperator<Operators::OperatorSurfaceFitting>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorPointDensity> PointDensity() {
+			return AddOperator<Operators::OperatorPointDensity>();
+		}
+
+		// Morphology & Overlap
+		inline std::shared_ptr<Operators::OperatorFindOverlappingPoints> FindOverlappingPoints() {
+			return AddOperator<Operators::OperatorFindOverlappingPoints>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorApplyMorphology> ApplyMorphology() {
+			return AddOperator<Operators::OperatorApplyMorphology>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorErosionAndClustering> ErosionAndClustering() {
+			return AddOperator<Operators::OperatorErosionAndClustering>();
+		}
+
+		// Normal Analysis
+		inline std::shared_ptr<Operators::OperatorNormalDeviation> NormalDeviation() {
+			return AddOperator<Operators::OperatorNormalDeviation>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorNormalGradient> NormalGradient() {
+			return AddOperator<Operators::OperatorNormalGradient>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorNormalVariance> NormalVariance() {
+			return AddOperator<Operators::OperatorNormalVariance>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorNormalDivergence> NormalDivergence() {
+			return AddOperator<Operators::OperatorNormalDivergence>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorNormalDivergenceGradient> NormalDivergenceGradient() {
+			return AddOperator<Operators::OperatorNormalDivergenceGradient>();
+		}
+
+		// Filtering
+		inline std::shared_ptr<Operators::OperatorFilterLeaveLargestOnly> FilterLeaveLargestOnly() {
+			return AddOperator<Operators::OperatorFilterLeaveLargestOnly>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorFilterMarked> FilterMarked() {
+			return AddOperator<Operators::OperatorFilterMarked>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorFilterUnmarked> FilterUnmarked() {
+			return AddOperator<Operators::OperatorFilterUnmarked>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorFilterETC> FilterETC() {
+			return AddOperator<Operators::OperatorFilterETC>();
+		}
+
+		// Fitting & Comparison
+		inline std::shared_ptr<Operators::OperatorLocalPlaneFitting> LocalPlaneFitting() {
+			return AddOperator<Operators::OperatorLocalPlaneFitting>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorCompareSameIndexOrderedPointCloud> CompareSameIndexOrderedPointCloud() {
+			return AddOperator<Operators::OperatorCompareSameIndexOrderedPointCloud>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorComparePointCloudUsingDistance> ComparePointCloudUsingDistance() {
+			return AddOperator<Operators::OperatorComparePointCloudUsingDistance>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorCompareWithLastPointCloud> CompareWithLastPointCloud() {
+			return AddOperator<Operators::OperatorCompareWithLastPointCloud>();
+		}
+
+		// Clustering
+		inline std::shared_ptr<Operators::OperatorClustering> Clustering() {
+			return AddOperator<Operators::OperatorClustering>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorClusterBorderFinding> ClusterBorderFinding() {
+			return AddOperator<Operators::OperatorClusterBorderFinding>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorClusteringComplex> ClusteringComplex() {
+			return AddOperator<Operators::OperatorClusteringComplex>();
+		}
+
+		// Curvature
+		inline std::shared_ptr<Operators::OperatorCurvatureEstimation> CurvatureEstimation() {
+			return AddOperator<Operators::OperatorCurvatureEstimation>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorCurvatureEstimationAppliedNormal> CurvatureEstimationAppliedNormal() {
+			return AddOperator<Operators::OperatorCurvatureEstimationAppliedNormal>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorCurvatureDivergence> CurvatureDivergence() {
+			return AddOperator<Operators::OperatorCurvatureDivergence>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorCurvatureDeviation> CurvatureDeviation() {
+			return AddOperator<Operators::OperatorCurvatureDeviation>();
+		}
+
+		// Mesh
+		inline std::shared_ptr<Operators::OperatorMeshGeneration> MeshGeneration() {
+			return AddOperator<Operators::OperatorMeshGeneration>();
+		}
+
+		inline std::shared_ptr<Operators::OperatorMeshDistanceFilter> MeshDistanceFilter() {
+			return AddOperator<Operators::OperatorMeshDistanceFilter>();
+		}
+
+	protected:
+		std::vector<std::shared_ptr<Operators::IGeometricProcessingOperator<SparseGrid>>> operators;
+		SparseGrid* sparseGrid = nullptr;
+		std::vector<Triangle> generatedMeshTriangles;
+
+		std::vector<std::shared_ptr<PointCloud>> pointClouds;
+		int currentPointCloudIndex = -1;
 	};
 }
