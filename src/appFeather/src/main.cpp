@@ -18,7 +18,7 @@ namespace GPP = GeometricProcessingPipeline;
 
 #define EXECUTE_AND_VISUALIZE_RETURN() { pipeline.Execute(); pipeline.VisualizeLast(); return; }
 
-std::string plyFilename = "D:\\Temp\\PLY\\Compound_G.ply";
+std::string plyFilename = "D:\\Temp\\PLY\\Compound_H.ply";
 
 void LoadPointCloudFromPLY(const std::string& filename, GPP::PointCloud& pointCloud)
 {
@@ -484,9 +484,21 @@ int main(int argc, char** argv)
 
                         pipeline.StorePointCloud();
 
-                        //pipeline.CurvatureEstimationAppliedNormal();
+                        pipeline.Clustering();
 
-                        pipeline.SOR();
+                        pipeline.FilterLeaveLargestOnly();
+
+                        //EXECUTE_AND_VISUALIZE_RETURN();
+
+                        pipeline.CurvatureEstimationAppliedNormal()->SetSearchRadiusScale(0.5f);
+
+                        EXECUTE_AND_VISUALIZE_RETURN();
+
+                        pipeline.SOR()
+                            ->SetKNeighbors(26)
+                            ->SetStdDevMultiplier(3.0f);
+
+                        //pipeline.NormalDivergence();
 
 						//pipeline.ShowMarks();
 
@@ -501,132 +513,144 @@ int main(int argc, char** argv)
                         EXECUTE_AND_VISUALIZE_RETURN();
                     }
 
-                    {
-                        pipeline.StorePointCloud();
+      //              {
+      //                  pipeline.LoadPointCloudFromPLYFile()->SetPLYFilename(plyFilename);
 
-						pipeline.CurvatureEstimationAppliedNormal();
+      //                  pipeline.StorePointCloud();
 
-                        EXECUTE_AND_VISUALIZE_RETURN();
+						//pipeline.CurvatureEstimationAppliedNormal();
 
-                        pipeline.CurvatureDeviation()->
-                            SetIgnoreOppositeNormals(true)->
-                            SetNeighborSearchOffset(1)->
-                            SetSearchRadiusMultiplier(0.3333333f)->
-                            SetDeviationThreshold(0.07f);
+      //                  EXECUTE_AND_VISUALIZE_RETURN();
 
-                        EXECUTE_AND_VISUALIZE_RETURN();
-                    }
+      //                  pipeline.CurvatureDeviation()->
+      //                      SetIgnoreOppositeNormals(true)->
+      //                      SetNeighborSearchOffset(1)->
+      //                      SetSearchRadiusMultiplier(0.3333333f)->
+      //                      SetDeviationThreshold(0.07f);
 
-#pragma region Working => Need to be refined
-                    {
-                        pipeline.StorePointCloud();
+      //                  EXECUTE_AND_VISUALIZE_RETURN();
+      //              }
 
-                        pipeline.CurvatureDeviation()->
-							SetIgnoreOppositeNormals(true)->
-                            SetNeighborSearchOffset(1)->
-                            SetSearchRadiusMultiplier(0.3333333f)->
-                            SetDeviationThreshold(0.07f);
+//#pragma region Working => Need to be refined
+//                    {
+//                        pipeline.LoadPointCloudFromPLYFile()->SetPLYFilename(plyFilename);
+//
+//                        pipeline.StorePointCloud();
+//
+//                        pipeline.CurvatureDeviation()->
+//							SetIgnoreOppositeNormals(true)->
+//                            SetNeighborSearchOffset(1)->
+//                            SetSearchRadiusMultiplier(0.3333333f)->
+//                            SetDeviationThreshold(0.07f);
+//
+//                        pipeline.FilterMarked();
+//
+//                        pipeline.Clustering()->SetSearchRadiusMultiplier(0.35f);
+//
+//                        pipeline.FilterLeaveLargestOnly();
+//
+//						//pipeline.SavePointCloudToPLYFile()->SetPLYFilename("D:\\Temp\\PLY\\Compound_G_Filtered.ply");
+//
+//                        pipeline.ComparePointCloudUsingDistance();
+//
+//                        EXECUTE_AND_VISUALIZE_RETURN();
+//
+//                        pipeline.Clustering()->SetSearchRadiusMultiplier(0.3f);
+//
+//                        pipeline.FilterLeaveLargestOnly();
+//
+//                        pipeline.ComparePointCloudUsingDistance();
+//
+//                        EXECUTE_AND_VISUALIZE_RETURN();
+//                    }
+//#pragma endregion
 
-                        pipeline.FilterMarked();
+//#pragma region Candidate
+//                    {
+//                        pipeline.LoadPointCloudFromPLYFile()->SetPLYFilename(plyFilename);
+//
+//                        pipeline.StorePointCloud();
+//
+// /*                       pipeline.CurvatureDeviation()->
+//                            SetNeighborSearchOffset(1)->
+//                            SetSearchRadiusMultiplier(0.3333333f)->
+//                            SetDeviationThreshold(0.0125f);
+//
+//                        EXECUTE_AND_VISUALIZE_RETURN();*/
+//
+//                        for (size_t i = 0; i < 1; i++)
+//                        {
+//                            pipeline.CurvatureDeviation()->
+//                            SetNeighborSearchOffset(1)->
+//                            SetSearchRadiusMultiplier(0.3333333f)->
+//                            SetDeviationThreshold(0.0125f);
+//
+//                            pipeline.LocalPlaneFitting()->
+//								SetNeighborSearchOffset(1)->
+//                                //SetSearchRadiusMultiplier(0.333333f)->
+//                                SetMarkedPointsOnly(true)->
+//                                SetUpdatePositions(true);
+//
+//                            pipeline.Clustering()->SetUseMarksForClustering(false);
+//
+//                            pipeline.FilterLeaveLargestOnly();
+//
+//							//pipeline.SavePointCloudToPLYFile()->SetPLYFilename("D:\\Temp\\PLY\\Compound_E_Filtered.ply");
+//
+//                            pipeline.ComparePointCloudUsingDistance();
+//
+//                            //pipeline.SOR()->SetStdDevMultiplier(2.0f)->SetKNeighbors(15);
+//
+//                            //pipeline.LocalPlaneFitting()->
+//                            //    SetNeighborSearchOffset(3)->
+//                            //    SetSearchRadiusMultiplier(5.0f)->
+//                            //    SetMarkedPointsOnly(true)->
+//                            //    SetUpdatePositions(true);
+//
+//                            //pipeline.SOR()->SetStdDevMultiplier(2.0f)->SetKNeighbors(10);
+//                        }
+//
+//                        //pipeline.CurvatureDeviation()->
+//                        //    SetNeighborSearchOffset(1)->
+//                        //    SetSearchRadiusMultiplier(0.3333333f)->
+//                        //    SetDeviationThreshold(0.0125f);
+//
+//                        EXECUTE_AND_VISUALIZE_RETURN();
+//                    }
+//#pragma endregion
 
-                        pipeline.Clustering()->SetSearchRadiusMultiplier(0.35f);
+//#pragma region Candidate
+//                    {
+//                        pipeline.LoadPointCloudFromPLYFile()->SetPLYFilename(plyFilename);
+//
+//                        pipeline.StorePointCloud();
+// 
+//                        pipeline.CurvatureDeviation()->
+//                            SetNeighborSearchOffset(1)->
+//                            SetSearchRadiusMultiplier(0.3333333f)->
+//                            SetVisualizationSigma(5.0f);
+//					}
+//#pragma endregion
 
-                        pipeline.FilterLeaveLargestOnly();
-
-						//pipeline.SavePointCloudToPLYFile()->SetPLYFilename("D:\\Temp\\PLY\\Compound_G_Filtered.ply");
-
-                        pipeline.ComparePointCloudUsingDistance();
-
-                        EXECUTE_AND_VISUALIZE_RETURN();
-
-                        pipeline.Clustering()->SetSearchRadiusMultiplier(0.3f);
-
-                        pipeline.FilterLeaveLargestOnly();
-
-                        pipeline.ComparePointCloudUsingDistance();
-
-                        EXECUTE_AND_VISUALIZE_RETURN();
-                    }
-#pragma endregion
-
-#pragma region Candidate
-                    {
-                        pipeline.StorePointCloud();
-
- /*                       pipeline.CurvatureDeviation()->
-                            SetNeighborSearchOffset(1)->
-                            SetSearchRadiusMultiplier(0.3333333f)->
-                            SetDeviationThreshold(0.0125f);
-
-                        EXECUTE_AND_VISUALIZE_RETURN();*/
-
-                        for (size_t i = 0; i < 1; i++)
-                        {
-                            pipeline.CurvatureDeviation()->
-                            SetNeighborSearchOffset(1)->
-                            SetSearchRadiusMultiplier(0.3333333f)->
-                            SetDeviationThreshold(0.0125f);
-
-                            pipeline.LocalPlaneFitting()->
-								SetNeighborSearchOffset(1)->
-                                //SetSearchRadiusMultiplier(0.333333f)->
-                                SetMarkedPointsOnly(true)->
-                                SetUpdatePositions(true);
-
-                            pipeline.Clustering()->SetUseMarksForClustering(false);
-
-                            pipeline.FilterLeaveLargestOnly();
-
-							pipeline.SavePointCloudToPLYFile()->SetPLYFilename("D:\\Temp\\PLY\\Compound_E_Filtered.ply");
-
-                            pipeline.ComparePointCloudUsingDistance();
-
-                            //pipeline.SOR()->SetStdDevMultiplier(2.0f)->SetKNeighbors(15);
-
-                            //pipeline.LocalPlaneFitting()->
-                            //    SetNeighborSearchOffset(3)->
-                            //    SetSearchRadiusMultiplier(5.0f)->
-                            //    SetMarkedPointsOnly(true)->
-                            //    SetUpdatePositions(true);
-
-                            //pipeline.SOR()->SetStdDevMultiplier(2.0f)->SetKNeighbors(10);
-                        }
-
-                        //pipeline.CurvatureDeviation()->
-                        //    SetNeighborSearchOffset(1)->
-                        //    SetSearchRadiusMultiplier(0.3333333f)->
-                        //    SetDeviationThreshold(0.0125f);
-
-                        EXECUTE_AND_VISUALIZE_RETURN();
-                    }
-#pragma endregion
-
-#pragma region Candidate
-                    {
-                        pipeline.CurvatureDeviation()->
-                            SetNeighborSearchOffset(1)->
-                            SetSearchRadiusMultiplier(0.3333333f)->
-                            SetVisualizationSigma(5.0f);
-					}
-#pragma endregion
-
-#pragma region Candidate
-                    {
-                        pipeline.StorePointCloud();
-
-                        //pipeline.FilterETC();
-
-                        pipeline.Clustering();
-
-                        pipeline.CurvatureEstimationAppliedNormal();
-
-                        pipeline.NormalDivergence();
-
-                        pipeline.ShowMarks();
-
-                        EXECUTE_AND_VISUALIZE_RETURN();
-                    }
-#pragma endregion
+//#pragma region Candidate
+//                    {
+//                        pipeline.LoadPointCloudFromPLYFile()->SetPLYFilename(plyFilename);
+//
+//                        pipeline.StorePointCloud();
+//
+//                        //pipeline.FilterETC();
+//
+//                        pipeline.Clustering();
+//
+//                        pipeline.CurvatureEstimationAppliedNormal();
+//
+//                        pipeline.NormalDivergence();
+//
+//                        pipeline.ShowMarks();
+//
+//                        EXECUTE_AND_VISUALIZE_RETURN();
+//                    }
+//#pragma endregion
 
                     EXECUTE_AND_VISUALIZE_RETURN();
                 }).detach();

@@ -3837,7 +3837,7 @@ namespace GeometricProcessingPipeline
 				double variance = (sqSum / count) - (mean * mean);
 				double stdDev = std::sqrt(std::max(0.0, variance));
 
-				float sigmaMultiplier = 2.0f;
+				float sigmaMultiplier = 7.0f;
 
 				float limit = (float)(stdDev * sigmaMultiplier);
 
